@@ -44,14 +44,6 @@ def base36encode(number):
 
     return base36
 
-class AppuserroleTodel(models.Model):
-    appuserid = models.IntegerField(db_column='AppUserId')  # Field name made lowercase.
-    roles = models.CharField(db_column='Roles', max_length=50, blank=True, null=True)  # Field name made lowercase.
-
-    class Meta:
-        managed = False
-        db_table = 'AppUserRole_TODEL'
-
 
 # class Attendancedata(models.Model):
 #     attendanceid = models.AutoField(db_column='AttendanceID')  # Field name made lowercase.

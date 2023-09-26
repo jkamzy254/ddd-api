@@ -1,1 +1,1 @@
-web: gunicorn dj_api.wsgi --log-file -
+web: gunicorn ddd.wsgi --log-file -

@@ -57,7 +57,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_nested',
-    'ddd',
     'api',
     'bb',
     'debug_toolbar',

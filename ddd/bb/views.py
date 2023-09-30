@@ -17,12 +17,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.db import connection
-import jwt, datetime
-import json
+import jwt, datetime, json
 
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import authentication_classes, permission_classes
 
 # Create your views here.
 
@@ -32,7 +28,6 @@ class BBStatusGrpViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            print(payload)  
             user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spBBGroupViewGetRecords %s', (user.uid,))

@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'rest_framework_nested',
     'ddd',
     'api',
+    'members',
     'bb',
     'fmp',
     'debug_toolbar',

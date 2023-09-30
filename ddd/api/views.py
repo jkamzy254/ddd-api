@@ -4,6 +4,8 @@ from rest_framework.decorators import api_view
 from ddd.utils import encode_jwt
 from rest_framework_simplejwt.tokens import RefreshToken
 from jwt.algorithms import get_default_algorithms
+
+from ddd.utils import decode_jwt
     
 
 from api.filters import MemberFilter, BBDataFilter, SeasonFilter, ReportFilter
@@ -24,8 +26,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.db import connection
-import jwt, datetime
-import json
+import jwt, datetime, json
 
 class MemberViewSet(ModelViewSet):
     queryset = Memberdata.objects.all()
@@ -231,4 +232,19 @@ class LoginView(APIView):
         response.set_cookie(key='token',value=token, httponly=True)
         response.data = {'token': token}
         return response
-   
+
+
+class UserMembersViewSet(APIView):
+    def get(self, request):
+        
+        try:
+            payload = decode_jwt(request)   
+            user = Memberdata.objects.filter(id = payload['ID']).first()
+            with connection.cursor() as cursor:
+                cursor.execute('EXEC spUserGroupViewGetMembers %s', (user.uid,))
+                fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(fmprecs, status=status.HTTP_200_OK)

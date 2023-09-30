@@ -19,13 +19,11 @@ import json
 
 # Create your views here.
 
-
 class FMPStatusGrpViewSet(APIView):
     def post(self, request):
         
         try:
             payload = decode_jwt(request)   
-            print(payload)  
             user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spFMPGroupViewGetRecords %s', (user.uid,))

@@ -721,11 +721,23 @@ class Jiraticket(models.Model):
 
 
 class Logindata(models.Model):
+    id = models.IntegerField(db_column='ID', unique=True)  # Field name made lowercase.
     uid = models.CharField(db_column='UID', max_length=50, blank=True, primary_key=True)  # Field name made lowercase.
-    username = models.CharField(db_column='Username', max_length=50, blank=True, null=True)  # Field name made lowercase.
+    username = models.CharField(db_column='Username', max_length=50, unique=True)  # Field name made lowercase.
     password = models.CharField(db_column='Password', max_length=50, blank=True, null=True)  # Field name made lowercase.
     status = models.CharField(db_column='Status', max_length=50, blank=True, null=True)  # Field name made lowercase.
     telid = models.BigIntegerField(db_column='TelID', blank=True, null=True)  # Field name made lowercase.
+    is_authenticated = models.BooleanField(db_column='Is_Authenticated', blank=True, null=True)  # Field name made lowercase.
+    is_anonymous = models.BooleanField(db_column='Is_Anonymous', blank=True, null=True)  # Field name made lowercase.
+    is_superuser = models.BooleanField(db_column='Is_Superuser', blank=True, null=True)  # Field name made lowercase.
+    is_staff = models.BooleanField(db_column='Is_Staff', blank=True, null=True)  # Field name made lowercase.
+    is_active = models.BooleanField(db_column='Is_Active', blank=True, null=True)  # Field name made lowercase.
+    
+    def __str__(self):
+        return self.name
+    
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = []
 
     class Meta:
         managed = False
@@ -773,8 +785,8 @@ class Memberdata(models.Model):
     # last_name = models.TextField(db_column='LAST_NAME', blank=True, null=True)  # Field name made lowercase.
     # preferred_name = models.TextField(db_column='PREFERRED_NAME', blank=True, null=True)  # Field name made lowercase.
     # k_name = models.TextField(db_column='K_NAME', blank=True, null=True)  # Field name made lowercase.
-    # username = models.TextField(db_column='UserName', blank=True, null=True)  # Field name made lowercase.
-    # password = models.TextField(db_column='PassWord', blank=True, null=True)  # Field name made lowercase.
+    username = models.TextField(db_column='UserName', unique=True, null=True)  # Field name made lowercase.
+    password = models.TextField(db_column='PassWord', blank=True, null=True)  # Field name made lowercase.
     uid = models.CharField(db_column='UID', max_length=255, blank=True, unique=True)  # Field name made lowercase.
     
     def __str__(self):
@@ -815,7 +827,6 @@ class Memberuserdata(models.Model):
     password = models.CharField(db_column='Password', max_length=255)  # Field name made lowercase.
     last_login = models.DateTimeField(db_column='Last_Login', blank=True, null=True)  # Field name made lowercase.
     username = models.CharField(db_column='Username', max_length=255, blank=True, null=True)  # Field name made lowercase.
-    is_superuser = models.BooleanField(db_column='Is_Superuser', blank=True, null=True)  # Field name made lowercase.
     first_name = models.CharField(db_column='First_Name', max_length=255, blank=True, null=True)  # Field name made lowercase.
     last_name = models.CharField(db_column='Last_Name', max_length=255, blank=True, null=True)  # Field name made lowercase.
     is_staff = models.BooleanField(db_column='Is_Staff', blank=True, null=True)  # Field name made lowercase.
@@ -823,6 +834,7 @@ class Memberuserdata(models.Model):
     is_authenticated = models.BooleanField(db_column='Is_Authenticated', blank=True, null=True)  # Field name made lowercase.
     date_joined = models.DateTimeField(db_column='Date_Joined', blank=True, null=True)  # Field name made lowercase.
     is_anonymous = models.BooleanField(db_column='Is_Anonymous', blank=True, null=True)  # Field name made lowercase.
+    is_superuser = models.BooleanField(db_column='Is_Superuser', blank=True, null=True)  # Field name made lowercase.
     uid = models.CharField(db_column='UID', max_length=50, blank=True, null=True)  # Field name made lowercase.
 
     class Meta:

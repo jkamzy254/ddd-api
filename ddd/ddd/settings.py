@@ -56,10 +56,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
+    # 'rest_framework_simplejwt',
     'rest_framework_nested',
     'ddd',
     'api',
     'bb',
+    'fmp',
     'debug_toolbar',
     'django_filters'
 ]
@@ -81,7 +83,7 @@ CORS_ORIGIN_WHITELIST = (
     'http://127.0.0.1:4200',
     'http://127.0.0.1:8000',
     'http://localhost:62376',
-    'https://ang-dj.herokuapp.com/'
+    'https://ang-dj.herokuapp.com'
 )
 CORS_ALLOW_CREDENTIALS = True
 
@@ -159,12 +161,34 @@ CACHES = {
     }
 }
 
+# REST_FRAMEWORK = {
+
+# }
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-    'PAGE_SIZE': 3
-
+    'PAGE_SIZE': 3,
+    # 'DEFAULT_PERMISSION_CLASSES': (
+    #     'rest_framework.permissions.IsAuthenticated',
+    # ),
+    # 'DEFAULT_AUTHENTICATION_CLASSES': (
+    #     'rest_framework_simplejwt.authentication.JWTAuthentication',
+    # ),
 }
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=120),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    'SLIDING_TOKEN_LIFETIME': timedelta(days=1),
+    'SLIDING_TOKEN_REFRESH_LIFETIME_GRACE_PERIOD': timedelta(days=7),
+    'SLIDING_TOKEN_REFRESH_LIFETIME_ALLOW_RENEWAL': True,
+    'SLIDING_TOKEN_LIFETIME_ALLOW_RENEWAL': True,
+    'SIGNING_KEY': open(os.path.join(BASE_DIR, 'ddd/config', 'private_key.pem')).read(),
+    'VERIFYING_KEY': open(os.path.join(BASE_DIR, 'ddd/config', 'public_key.pem')).read(),
+
+    'JWT_ALGORITHM': 'RS256',
+
+    # Other JWT settings...
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
@@ -189,7 +213,7 @@ STATICFILES_DIRS = [
     os.path.join(PROJECT_ROOT, 'static'),
 ]
 
-# AUTH_USER_MODEL = 'users.Memberuserdata'
+AUTH_USER_MODEL = 'ddd.Logindata'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field

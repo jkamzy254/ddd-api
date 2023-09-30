@@ -21,7 +21,7 @@ bbstudents_router.register('bbreports', views.BBStudentViewSet, basename='bbstud
 
 bbs_router = routers.NestedDefaultRouter(router, 'bbs', lookup="bb")
 bbs_router.register("reports", views.BBReportsViewSet, basename="bbdata-report")
-bbs_router.register("group", views.BBStatusGrpViewSet, basename="bbdata-groups")
+# bbs_router.register("group", views.BBStatusGrpViewSet, basename="bbdata-groups")
 
 
 urlpatterns = router.urls
@@ -32,6 +32,7 @@ urlpatterns = [
     path("", include(members_router.urls)),
     path("", include(bbstudents_router.urls)),
 	path('bb/', include('bb.urls')),
+	path('fmp/', include('fmp.urls')),
 	path('login/', views.LoginView.as_view()),
 ]
 

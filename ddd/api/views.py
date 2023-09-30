@@ -1,6 +1,10 @@
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from rest_framework.decorators import api_view
+from ddd.utils import encode_jwt
+from rest_framework_simplejwt.tokens import RefreshToken
+from jwt.algorithms import get_default_algorithms
+    
 
 from api.filters import MemberFilter, BBDataFilter, SeasonFilter, ReportFilter
 from .serializers import MemberSerializer, EvseasonSerializer, BBDataSerializer, ReportSerializer,BBGroupSerializer
@@ -42,7 +46,8 @@ class MemberViewSet(ModelViewSet):
             raise Http404("Object not found.")
         
         self.check_object_permissions(self.request, obj)
-        return obj
+        # return obj
+        return Response('Hey')
 
 class BBDataViewSet(ModelViewSet):
     queryset = Bbdata.objects.all()
@@ -63,7 +68,8 @@ class BBDataViewSet(ModelViewSet):
             raise Http404("Object not found.")
         
         self.check_object_permissions(self.request, obj)
-        return obj
+        # return obj
+        return Response('Hey')
     
 # class BBStudentViewSet(ModelViewSet):
     # print()
@@ -75,6 +81,7 @@ class BBDataViewSet(ModelViewSet):
     #     return {"bbt_id": self.kwargs["bbt_pk"]}
     
 class BBStudentsViewSet(ModelViewSet):
+    
     serializer_class = BBDataSerializer
     
     def get_queryset(self):
@@ -82,7 +89,8 @@ class BBStudentsViewSet(ModelViewSet):
         return Bbdata.objects.filter(bbt_id=self.kwargs["bbt_pk"]).select_related('bbt_id')
     
     def get_serializer_context(self):
-        return {"bbt_id": self.kwargs["bbt_pk"]}
+        # return {"bbt_id": self.kwargs["bbt_pk"]}
+        return Response('Hey')
     
 class BBStudentViewSet(ModelViewSet):
     serializer_class = BBDataSerializer
@@ -130,29 +138,7 @@ class BBReportsViewSet(ModelViewSet):
     def get_serializer_context(self):
         print(self.kwargs)
         return {"uid": self.kwargs["bb_pk"]}
-    
-class BBStatusGrpViewSet(ViewSet):
-    def list(self, request):
-        token = request.COOKIES.get('token')
-        
-        if not token:
-            raise AuthenticationFailed('Unauthorized!')
 
-        try:
-            payload = jwt.decode(token, 'secret', algorithms=['HS256'])
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('Unauthorized!')
-        
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute('EXEC spGevaGetMember %s', (payload['id'],))
-                bbrecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-        except Exception as e:
-            # Handle exceptions here, e.g., logging or returning an error response
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response(bbrecs, status=status.HTTP_200_OK)
-    
     
     # pagination_class = PageNumberPagination
 
@@ -199,6 +185,7 @@ class BBStatusGrpViewSet(ViewSet):
 class LoginView(APIView):
     def post(self, request):
         print(request.data)
+        get_default_algorithms()
         username = request.data['username']
         password = request.data['password']
         print(username)
@@ -226,15 +213,20 @@ class LoginView(APIView):
 
         if user.password != password:
             raise AuthenticationFailed('Incorrect password')
+        
+        # refresh = token.for_user(user)
+
+        # Generate an access token
+        # token = str(refresh.access_token)
 
         payload = {
-            'id': user.id,
+            "ID":user.id,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=(60*24)),
             'iat': datetime.datetime.utcnow(),
             'user': serializer.data,
             'roles': wlid
         }
-        token = jwt.encode(payload, 'secret', algorithm='HS256')
+        token = encode_jwt(payload)
         response = Response()
         response.set_cookie(key='token',value=token, httponly=True)
         response.data = {'token': token}

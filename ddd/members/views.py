@@ -6,6 +6,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from jwt.algorithms import get_default_algorithms
 
 from ddd.utils import encode_jwt, decode_jwt
+
+from .serializers import MemberSerializer
     
 from ddd.models import Memberdata, Evseason, Bbdata, Report
 from ddd.models import Memberuserdata as User

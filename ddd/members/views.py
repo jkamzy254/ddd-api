@@ -94,3 +94,35 @@ class UserMembersViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(fmprecs, status=status.HTTP_200_OK)
+
+
+class GetGroupViewSet(APIView):
+    def get(self, request):
+        
+        try:
+            payload = decode_jwt(request)   
+            user = Memberdata.objects.filter(id = payload['ID']).first()
+            with connection.cursor() as cursor:
+                cursor.execute('EXEC spUserGroupViewGetGroups %s', (user.uid,))
+                fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(fmprecs, status=status.HTTP_200_OK)
+
+
+class GetDeptViewSet(APIView):
+    def get(self, request):
+        
+        try:
+            payload = decode_jwt(request)   
+            user = Memberdata.objects.filter(id = payload['ID']).first()
+            with connection.cursor() as cursor:
+                cursor.execute('EXEC spUserGroupViewGetDepts %s', (user.uid,))
+                fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(fmprecs, status=status.HTTP_200_OK)

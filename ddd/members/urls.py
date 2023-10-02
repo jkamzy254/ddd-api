@@ -9,5 +9,7 @@ import debug_toolbar
 
 urlpatterns = [
 	path('login/', views.LoginView.as_view()),
-	path('group/', views.UserMembersViewSet.as_view()),
+	path('memberlist/', views.UserMembersViewSet.as_view()),
+	path('groups/', views.GetGroupViewSet.as_view()),
+	path('depts/', views.GetDeptViewSet.as_view()),
 ]

@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404, render
 from django.http import Http404
 from rest_framework.decorators import api_view
+from ddd.utils import decode_jwt
 
 from ddd.models import Memberdata, Evseason, Report
 from rest_framework.response import Response

@@ -23,14 +23,30 @@ import jwt, datetime, json
 # Create your views here.
 
 
-class BBStatusGrpViewSet(APIView):
+class BBStatusGrpPerBBTViewSet(APIView):
     def get(self, request):
         
         try:
             payload = decode_jwt(request)   
             user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spBBGroupViewGetRecords %s', (user.uid,))
+                cursor.execute('EXEC spBBGroupViewGetPerBBT %s', (user.uid,))
+                bbrecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(bbrecs, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class BBStatusGrpPerLeafViewSet(APIView):
+    def get(self, request):
+        
+        try:
+            payload = decode_jwt(request)   
+            user = Memberdata.objects.filter(id = payload['ID']).first()
+            with connection.cursor() as cursor:
+                cursor.execute('EXEC spBBGroupViewGetPerLeaves %s', (user.uid,))
                 bbrecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(bbrecs, status=status.HTTP_200_OK)

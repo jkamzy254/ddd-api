@@ -20,7 +20,7 @@ import json
 # Create your views here.
 
 class FMPStatusGrpViewSet(APIView):
-    def post(self, request):
+    def get(self, request):
         
         try:
             payload = decode_jwt(request)   

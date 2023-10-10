@@ -1031,6 +1031,10 @@ class Report(models.Model):
         managed = False
         db_table = 'Report'
 
+class ProImage(models.Model):
+    product = models.ForeignKey(Memberdata, on_delete=models.CASCADE, related_name="pro_uid")
+    image = models.ImageField(upload_to="img", default="", null=True, blank=True)
+
 
 class Reportmotivationdata(models.Model):
     rid = models.AutoField(db_column='RID', primary_key=True)  # Field name made lowercase.

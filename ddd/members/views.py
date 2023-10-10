@@ -25,7 +25,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.db import connection
-import jwt, datetime, json
+import jwt, datetime, json, pandas as pd
 
 
 # Create your views here.
@@ -38,11 +38,20 @@ class LoginView(APIView):
         print(username)
         print(password)
         wlid = []
+        conn = connection.cursor();
         
         user = User.objects.filter(username=username).first()
         print(user)
         wl = WL.objects.filter(wid__in=WLR.objects.filter(memberid=user.uid))
-        print(wl)
+        with connection.cursor() as cursor:
+            cursor.execute("""SELECT MemberID, WLID FROM WhiteListRecData WHERE WLID IN (SELECT WID FROM WhiteListData WHERE Title IN ('All','CSAM'))
+                                UNION
+                                SELECT UID MemberID, PID WLID FROM TGWPositionLog WHERE EndDate IS NULL AND PID IN (6,8,9)
+                            """)
+            pid = pd.DataFrame(cursor.fetchall())
+            pid.columns = [i[0] for i in cursor.description]
+            pid = pid[pid['MemberID']==user.uid]
+            print( pid['WLID'].values[0])
         for i in wl:
             wlid.append(i.title)
         member = Member.objects.filter(id = user.id).first()
@@ -51,6 +60,10 @@ class LoginView(APIView):
             wlid.append('Leader')
         if int(member.internal_position) < 3 or 'All' in wlid:
             wlid.append('EVLeader')
+        if pid['WLID'].values[0] >= 6:
+            wlid.append('IDept')
+        if pid['WLID'].values[0] >= 8:
+            wlid.append('Dept')
         if member.bbt or 'All' in wlid:
             wlid.append('BBT')
         serializer = MemberSerializer(member)     

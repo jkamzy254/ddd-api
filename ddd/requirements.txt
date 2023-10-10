@@ -31,7 +31,7 @@ redis==4.5.5
 simplejson==3.17.6
 sqlparse==0.4.2
 tomlkit==0.12.1
-tzdata==2021.5
+tzdata==2022.1
 whitenoise==6.1.0
 wrapt==1.15.0
 colorama==0.4.6

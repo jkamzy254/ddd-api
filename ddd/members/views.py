@@ -86,7 +86,7 @@ class LoginView(APIView):
             'user': serializer.data,
             'roles': wlid
         }
-        token = encode_jwt(payload)
+        token = ('Bearer '+encode_jwt(payload).decode()).encode()
         response = Response()
         response.set_cookie(key='token',value=token, httponly=True)
         response.data = {'token': token}

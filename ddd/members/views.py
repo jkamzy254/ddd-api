@@ -40,7 +40,9 @@ class LoginView(APIView):
         wlid = []
         conn = connection.cursor();
         
-        user = User.objects.filter(username=username).first()
+        user = Member.objects.filter(username=username).first()
+        if user is None:
+            raise AuthenticationFailed('User not found!')
         print(user)
         wl = WL.objects.filter(wid__in=WLR.objects.filter(memberid=user.uid))
         with connection.cursor() as cursor:

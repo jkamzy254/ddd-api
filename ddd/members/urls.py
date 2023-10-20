@@ -12,6 +12,7 @@ urlpatterns = [
 	path('memberlist/', views.UserMembersViewSet.as_view()),
 	path('groups/', views.GetGroupViewSet.as_view()),
 	path('depts/', views.GetDeptViewSet.as_view()),
-	path('goals/', views.UserGoalsViewSet.as_view()),
+	path('bbgoals/', views.UserBBGoalsViewSet.as_view()),
+	path('fmpgoals/', views.UserFMPGoalsViewSet.as_view()),
 	path('post/', views.UserPostViewSet.as_view()),
 ]

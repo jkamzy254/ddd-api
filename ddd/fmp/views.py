@@ -34,6 +34,31 @@ class FMPStatusGrpViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(fmprecs, status=status.HTTP_200_OK)
+
+class FMPStatusGrpPrevCTViewSet(APIView):
+    def get(self, request):
+        
+        try:
+            payload = decode_jwt(request)   
+            user = Memberdata.objects.filter(id = payload['ID']).first()
+            with connection.cursor() as cursor:
+                cursor.execute('EXEC spFMPGroupViewGetPrevCTRecords %s', (user.uid,))
+                fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            
+            with connection.cursor() as seasonCursor:
+                seasonCursor.execute("""SELECT TOP 1 * FROM EVSeason 
+                WHERE EndDate < GETDATE() 
+                AND Region = (Select Region From MemberData Where UID = %s)
+                AND Dept = 'All' ORDER BY ID DESC""",(user.uid,)) 
+                season = seasonCursor.fetchall()
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        data = {
+            'season': season,
+            'recs': fmprecs
+        }
+        return Response(data, status=status.HTTP_200_OK)
     
     
     # pagination_class = PageNumberPagination

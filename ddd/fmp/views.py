@@ -50,12 +50,12 @@ class FMPStatusGrpPrevCTViewSet(APIView):
                 WHERE EndDate < GETDATE() 
                 AND Region = (Select Region From MemberData Where UID = %s)
                 AND Dept = 'All' ORDER BY ID DESC""",(user.uid,)) 
-                season = seasonCursor.fetchall()
+                season = [dict(zip([column[0] for column in seasonCursor.description], record)) for record in seasonCursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         data = {
-            'season': season,
+            'season': season[0],
             'recs': fmprecs
         }
         return Response(data, status=status.HTTP_200_OK)

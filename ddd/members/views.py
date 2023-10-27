@@ -48,7 +48,7 @@ class LoginView(APIView):
         with connection.cursor() as cursor:
             cursor.execute("""SELECT MemberID, WLID FROM WhiteListRecData WHERE WLID IN (SELECT WID FROM WhiteListData WHERE Title IN ('All','CSAM'))
                                 UNION
-                                SELECT UID MemberID, PID WLID FROM TGWPositionLog WHERE EndDate IS NULL AND PID IN (6,8,9)
+                                SELECT UID MemberID, PID WLID FROM TGWPositionLog WHERE EndDate IS NULL AND PID IN (6,8,9,20,22,24)
                             """)
             pid = pd.DataFrame(cursor.fetchall())
             pid.columns = [i[0] for i in cursor.description]
@@ -60,12 +60,14 @@ class LoginView(APIView):
         print(member.internal_position)
         if member.internal_position == 1 or (member.membergroup == 'Department' and member.tgw and member.condition == 'Active') or 'All' in wlid:
             wlid.append('Leader')
-        if int(member.internal_position) < 3 or 'All' in wlid:
+        if int(member.internal_position) < 2 or 'All' in wlid:
             wlid.append('EVLeader')
         if pid['WLID'].values[0] >= 6:
             wlid.append('IDept')
         if pid['WLID'].values[0] >= 8:
             wlid.append('Dept')
+        if pid['WLID'].values[0] >= 20:
+            wlid.append('Church')
         if member.bbt or 'All' in wlid:
             wlid.append('BBT')
         serializer = MemberSerializer(member)     

@@ -53,6 +53,31 @@ class BBStatusGrpPerLeafViewSet(APIView):
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class BBGetUserStudentsViewSet(APIView):
+    def get(self, request):
+        
+        try:
+            payload = decode_jwt(request)   
+            user = Memberdata.objects.filter(id = payload['ID']).first()
+            with connection.cursor() as cursor:
+                cursor.execute(f"""
+                               SELECT F.UID, MB.PREFERRED_NAME AS BBT, MB.UID 'BBTID', M1.PREFERRED_NAME AS L1, F.L1_ID, M2.PREFERRED_NAME AS L2, F.L2_ID, F.FishName, F.FishUser, F.FishPhone, F.EVPlatform, B.Label 
+                                FROM BBData AS B 
+                                LEFT JOIN MemberData AS M1 ON B.L1_ID = M1.UID 
+                                LEFT JOIN MemberData AS M2 ON B.L2_ID = M2.UID 
+                                LEFT JOIN MemberData AS MB ON B.BBT_ID = MB.UID 
+                                LEFT JOIN FruitData F ON F.UID = B.UID 
+                                WHERE B.BBT_ID = '{user.uid}' AND B.Completed = 0
+                               """)
+                studs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(studs, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
     
     
     # pagination_class = PageNumberPagination

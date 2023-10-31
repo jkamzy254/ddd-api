@@ -59,6 +59,35 @@ class FMPStatusGrpPrevCTViewSet(APIView):
             'recs': fmprecs
         }
         return Response(data, status=status.HTTP_200_OK)
+
+class FMPGetFruitsViewSet(APIView):
+    def get(self, request):
+        
+        try:
+            payload = decode_jwt(request)   
+            user = Memberdata.objects.filter(id = payload['ID']).first()
+            
+            with connection.cursor() as cursor:
+                if user.group_imwy == 'MCT':
+                    if user.Internal_Position > 3:
+                        # Use Django ORM for queries
+                        cursor.execute(f"EXEC spAutoComp_CM {user.uid}")
+                        result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                    else:
+                        cursor.execute(f"EXEC spAutoComp_CT {user.uid}, '{user.group_imwy}', {user.region}")
+                        result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                else:
+                    if user.Internal_Position > 2:
+                        cursor.execute(f"EXEC spAutoComp_CM {user.uid}")
+                        result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                    else:
+                        cursor.execute(f"EXEC spAutoComp_EV {user.uid}, {user.membergroup}")
+                        result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+     
+        return Response(result, status=status.HTTP_200_OK)
     
     
     # pagination_class = PageNumberPagination

@@ -8,7 +8,7 @@ from jwt.algorithms import get_default_algorithms
 from ddd.utils import encode_jwt, decode_jwt
 
 from .serializers import MemberSerializer
-    
+
 from ddd.models import Memberdata, Evseason, Bbdata, Report
 from ddd.models import Memberuserdata as User
 from ddd.models import Memberdata as Member
@@ -26,6 +26,7 @@ from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.db import connection
 import jwt, datetime, json, pandas as pd
+from api.redis import Redis
 
 
 # Create your views here.
@@ -39,7 +40,7 @@ class LoginView(APIView):
         print(password)
         wlid = []
         conn = connection.cursor();
-        
+
         user = Member.objects.filter(username=username).first()
         if user is None:
             raise AuthenticationFailed('User not found!')
@@ -70,14 +71,14 @@ class LoginView(APIView):
             wlid.append('Church')
         if member.bbt or 'All' in wlid:
             wlid.append('BBT')
-        serializer = MemberSerializer(member)     
-        
+        serializer = MemberSerializer(member)
+
         if user is None:
             raise AuthenticationFailed('User not found!')
 
         if user.password != password:
             raise AuthenticationFailed('Incorrect password')
-        
+
         # refresh = token.for_user(user)
 
         # Generate an access token
@@ -99,13 +100,19 @@ class LoginView(APIView):
 
 class UserMembersViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             user = Memberdata.objects.filter(id = payload['ID']).first()
+
+            if(Redis.checkExists('getMember', user.uid)):
+                print("Key exists in Redis")
+                return Response(json.loads(Redis.hget('getMember', user.uid)), status=status.HTTP_200_OK)
+
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spUserGroupViewGetMembers %s', (user.uid,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                Redis.hset('getMember', user.uid, json.dumps(recs, separators=(',', ':')))
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -115,13 +122,19 @@ class UserMembersViewSet(APIView):
 
 class GetGroupViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             user = Memberdata.objects.filter(id = payload['ID']).first()
+
+            if(Redis.checkExists('getGroup', user.uid)):
+                print("Key exists in Redis")
+                return Response(json.loads(Redis.hget('getGroup', user.uid)), status=status.HTTP_200_OK)
+
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spUserGroupViewGetGroups %s', (user.uid,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                Redis.hset('getGroup', user.uid, json.dumps(recs, separators=(',', ':')))
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -131,9 +144,9 @@ class GetGroupViewSet(APIView):
 
 class GetDeptViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spUserGroupViewGetDepts %s', (user.uid,))
@@ -147,13 +160,19 @@ class GetDeptViewSet(APIView):
 
 class GetSDivisionViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             user = Memberdata.objects.filter(id = payload['ID']).first()
+
+            if(Redis.checkExists('getDepartment', user.uid)):
+                print("Key exists in Redis")
+                return Response(json.loads(Redis.hget('getDepartment', user.uid)), status=status.HTTP_200_OK)
+
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spUserGroupViewGetSDivisions %s', (user.uid,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                Redis.hset('getDepartment', user.uid, json.dumps(recs, separators=(',', ':')))
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -162,9 +181,9 @@ class GetSDivisionViewSet(APIView):
 
 class UserBBGoalsViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spUserGroupViewGetGoals %s', (user.uid,))
@@ -177,9 +196,9 @@ class UserBBGoalsViewSet(APIView):
 
 class UserFMPGoalsViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spUserGroupViewGetFMPGoals %s', (user.uid,))
@@ -192,12 +211,28 @@ class UserFMPGoalsViewSet(APIView):
 
 class UserPostViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spUserGroupViewGetPost %s', (user.uid,))
+                recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(recs, status=status.HTTP_200_OK)
+
+
+class UserGetFishersViewSet(APIView):
+    def get(self, request):
+
+        try:
+            payload = decode_jwt(request)
+            user = Memberdata.objects.filter(id = payload['ID']).first()
+            with connection.cursor() as cursor:
+                cursor.execute('EXEC spAutoCompM %s', (user.region,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

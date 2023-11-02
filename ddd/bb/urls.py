@@ -14,5 +14,6 @@ urlpatterns = [
     # path("", include(bbstudents_router.urls)),
 	# path('bb/', include('bb.urls')),
 	path('perbbt/', views.BBStatusGrpPerBBTViewSet.as_view()),
+	path('getStuds/', views.BBGetUserStudentsViewSet.as_view()),
 	path('perleaves/', views.BBStatusGrpPerLeafViewSet.as_view()),
 ]

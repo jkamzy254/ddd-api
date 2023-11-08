@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_nested import routers
 from django.contrib import admin
 from django.views.generic.base import TemplateView
+from api.mfa import OTP, VerifyOTP, RemoveAuthenticated, CheckAuthenticated
 
 from django.urls import path
 import debug_toolbar
@@ -31,6 +32,10 @@ urlpatterns = [
     path("", include(bbs_router.urls)),
     # path("", include(members_router.urls)),
     # path("", include(bbstudents_router.urls)),
+    path('mfa/send', OTP.as_view()),
+	path('mfa/verify', VerifyOTP.as_view()),
+	path('mfa/validate', CheckAuthenticated.as_view()),
+	path('mfa/revoke', RemoveAuthenticated.as_view()),
 	path('bb/', include('bb.urls')),
 	path('fmp/', include('fmp.urls')),
 	path('members/', include('members.urls')),

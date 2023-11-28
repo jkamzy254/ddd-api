@@ -103,16 +103,17 @@ class UserMembersViewSet(APIView):
 
         try:
             payload = decode_jwt(request)
-            user = Memberdata.objects.filter(id = payload['ID']).first()
+            userID = payload['UID']
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
 
-            if(Redis.checkExists('getMember', user.uid)):
+            if(Redis.checkExists('getMember', userID)):
                 print("Key exists in Redis")
-                return Response(json.loads(Redis.hget('getMember', user.uid)), status=status.HTTP_200_OK)
+                return Response(json.loads(Redis.hget('getMember', userID)), status=status.HTTP_200_OK)
 
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spUserGroupViewGetMembers %s', (user.uid,))
+                cursor.execute('EXEC spUserGroupViewGetMembers %s', (userID,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                Redis.hset('getMember', user.uid, json.dumps(recs, separators=(',', ':')))
+                Redis.hset('getMember', userID, json.dumps(recs, separators=(',', ':')))
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -125,16 +126,17 @@ class GetGroupViewSet(APIView):
 
         try:
             payload = decode_jwt(request)
-            user = Memberdata.objects.filter(id = payload['ID']).first()
+            userID = payload['UID']
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
 
-            if(Redis.checkExists('getGroup', user.uid)):
+            if(Redis.checkExists('getGroup', userID)):
                 print("Key exists in Redis")
-                return Response(json.loads(Redis.hget('getGroup', user.uid)), status=status.HTTP_200_OK)
+                return Response(json.loads(Redis.hget('getGroup', userID)), status=status.HTTP_200_OK)
 
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spUserGroupViewGetGroups %s', (user.uid,))
+                cursor.execute('EXEC spUserGroupViewGetGroups %s', (userID,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                Redis.hset('getGroup', user.uid, json.dumps(recs, separators=(',', ':')))
+                Redis.hset('getGroup', userID, json.dumps(recs, separators=(',', ':')))
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -163,16 +165,17 @@ class GetSDivisionViewSet(APIView):
 
         try:
             payload = decode_jwt(request)
-            user = Memberdata.objects.filter(id = payload['ID']).first()
+            userID = payload['UID']
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
 
-            if(Redis.checkExists('getDepartment', user.uid)):
+            if(Redis.checkExists('getDepartment', userID)):
                 print("Key exists in Redis")
-                return Response(json.loads(Redis.hget('getDepartment', user.uid)), status=status.HTTP_200_OK)
+                return Response(json.loads(Redis.hget('getDepartment', userID)), status=status.HTTP_200_OK)
 
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spUserGroupViewGetSDivisions %s', (user.uid,))
+                cursor.execute('EXEC spUserGroupViewGetSDivisions %s', (userID,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                Redis.hset('getDepartment', user.uid, json.dumps(recs, separators=(',', ':')))
+                Redis.hset('getDepartment', userID, json.dumps(recs, separators=(',', ':')))
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -184,16 +187,17 @@ class UserBBGoalsViewSet(APIView):
 
         try:
             payload = decode_jwt(request)
-            user = Memberdata.objects.filter(id = payload['ID']).first()
+            userID = payload['UID']
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
 
-            if(Redis.checkExists('getBbGoal', user.uid)):
+            if(Redis.checkExists('getBbGoal', userID)):
                 print("Key exists in Redis")
-                return Response(json.loads(Redis.hget('getBbGoal', user.uid)), status=status.HTTP_200_OK)
+                return Response(json.loads(Redis.hget('getBbGoal', userID)), status=status.HTTP_200_OK)
 
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spUserGroupViewGetGoals %s', (user.uid,))
+                cursor.execute('EXEC spUserGroupViewGetGoals %s', (userID,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                Redis.hset('getBbGoal', user.uid, json.dumps(recs, separators=(',', ':')))
+                Redis.hset('getBbGoal', userID, json.dumps(recs, separators=(',', ':')))
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -205,16 +209,17 @@ class UserFMPGoalsViewSet(APIView):
 
         try:
             payload = decode_jwt(request)
-            user = Memberdata.objects.filter(id = payload['ID']).first()
+            userID = payload['UID']
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
 
-            if(Redis.checkExists('getFmpGoal', user.uid)):
+            if(Redis.checkExists('getFmpGoal', userID)):
                 print("Key exists in Redis")
-                return Response(json.loads(Redis.hget('getFmpGoal', user.uid)), status=status.HTTP_200_OK)
+                return Response(json.loads(Redis.hget('getFmpGoal', userID)), status=status.HTTP_200_OK)
 
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spUserGroupViewGetFMPGoals %s', (user.uid,))
+                cursor.execute('EXEC spUserGroupViewGetFMPGoals %s', (userID,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                Redis.hset('getFmpGoal', user.uid, json.dumps(recs, separators=(',', ':')))
+                Redis.hset('getFmpGoal', userID, json.dumps(recs, separators=(',', ':')))
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

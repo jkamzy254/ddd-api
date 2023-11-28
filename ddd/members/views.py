@@ -185,9 +185,15 @@ class UserBBGoalsViewSet(APIView):
         try:
             payload = decode_jwt(request)
             user = Memberdata.objects.filter(id = payload['ID']).first()
+
+            if(Redis.checkExists('getBbGoal', user.uid)):
+                print("Key exists in Redis")
+                return Response(json.loads(Redis.hget('getBbGoal', user.uid)), status=status.HTTP_200_OK)
+
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spUserGroupViewGetGoals %s', (user.uid,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                Redis.hset('getBbGoal', user.uid, json.dumps(recs, separators=(',', ':')))
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -200,9 +206,15 @@ class UserFMPGoalsViewSet(APIView):
         try:
             payload = decode_jwt(request)
             user = Memberdata.objects.filter(id = payload['ID']).first()
+
+            if(Redis.checkExists('getFmpGoal', user.uid)):
+                print("Key exists in Redis")
+                return Response(json.loads(Redis.hget('getFmpGoal', user.uid)), status=status.HTTP_200_OK)
+
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spUserGroupViewGetFMPGoals %s', (user.uid,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                Redis.hset('getFmpGoal', user.uid, json.dumps(recs, separators=(',', ':')))
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

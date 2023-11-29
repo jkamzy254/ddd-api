@@ -28,9 +28,10 @@ class BBStatusGrpPerBBTViewSet(APIView):
 
         try:
             payload = decode_jwt(request)
-            user = Memberdata.objects.filter(id = payload['ID']).first()
+            userID = payload['UID']
+            #user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spBBGroupViewGetPerBBT %s', (user.uid,))
+                cursor.execute('EXEC spBBGroupViewGetPerBBT %s', (userID,))
                 bbrecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(bbrecs, status=status.HTTP_200_OK)
@@ -44,16 +45,17 @@ class BBStatusGrpPerLeafViewSet(APIView):
 
         try:
             payload = decode_jwt(request)
-            user = Memberdata.objects.filter(id = payload['ID']).first()
+            userID = payload['UID']
+            #user = Memberdata.objects.filter(id = payload['ID']).first()
 
-            if(Redis.checkExists('my_fruits', user.uid)):
+            if(Redis.checkExists('my_fruits', userID)):
                 print("Key exists in Redis")
-                return Response(json.loads(Redis.hget('my_fruits', user.uid)), status=status.HTTP_200_OK)
+                return Response(json.loads(Redis.hget('my_fruits', userID)), status=status.HTTP_200_OK)
 
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spBBGroupViewGetPerLeaves %s', (user.uid,))
+                cursor.execute('EXEC spBBGroupViewGetPerLeaves %s', (userID,))
                 bbrecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                Redis.hset('my_fruits', user.uid, json.dumps(bbrecs, separators=(',', ':')))
+                Redis.hset('my_fruits', userID, json.dumps(bbrecs, separators=(',', ':')))
             return Response(bbrecs, status=status.HTTP_200_OK)
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -65,11 +67,12 @@ class BBGetUserStudentsViewSet(APIView):
 
         try:
             payload = decode_jwt(request)
-            user = Memberdata.objects.filter(id = payload['ID']).first()
+            userID = payload['UID']
+            #user = Memberdata.objects.filter(id = payload['ID']).first()
 
-            if(Redis.checkExists('my_studs', user.uid)):
+            if(Redis.checkExists('my_studs', userID)):
                 print("Key exists in Redis")
-                return Response(json.loads(Redis.hget('my_studs', user.uid)), status=status.HTTP_200_OK)
+                return Response(json.loads(Redis.hget('my_studs', userID)), status=status.HTTP_200_OK)
 
             with connection.cursor() as cursor:
                 cursor.execute(f"""
@@ -79,10 +82,10 @@ class BBGetUserStudentsViewSet(APIView):
                                 LEFT JOIN MemberData AS M2 ON B.L2_ID = M2.UID
                                 LEFT JOIN MemberData AS MB ON B.BBT_ID = MB.UID
                                 LEFT JOIN FruitData F ON F.UID = B.UID
-                                WHERE B.BBT_ID = '{user.uid}' AND B.Completed = 0
+                                WHERE B.BBT_ID = '{userID}' AND B.Completed = 0
                                """)
                 studs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                Redis.hset('my_studs', user.uid, json.dumps(studs, separators=(',', ':')))
+                Redis.hset('my_studs', userID, json.dumps(studs, separators=(',', ':')))
             return Response(studs, status=status.HTTP_200_OK)
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

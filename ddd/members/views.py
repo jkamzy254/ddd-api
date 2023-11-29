@@ -149,9 +149,10 @@ class GetDeptViewSet(APIView):
 
         try:
             payload = decode_jwt(request)
-            user = Memberdata.objects.filter(id = payload['ID']).first()
+            userID = payload['UID']
+            #user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spUserGroupViewGetDepts %s', (user.uid,))
+                cursor.execute('EXEC spUserGroupViewGetDepts %s', (userID,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -231,9 +232,10 @@ class UserPostViewSet(APIView):
 
         try:
             payload = decode_jwt(request)
-            user = Memberdata.objects.filter(id = payload['ID']).first()
+            userID = payload['UID']
+            #user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spUserGroupViewGetPost %s', (user.uid,))
+                cursor.execute('EXEC spUserGroupViewGetPost %s', (userID,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

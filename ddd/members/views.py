@@ -234,9 +234,15 @@ class UserPostViewSet(APIView):
             payload = decode_jwt(request)
             userID = payload['UID']
             #user = Memberdata.objects.filter(id = payload['ID']).first()
+
+            if(Redis.checkExists('getPost', userID)):
+                print("Key exists in Redis")
+                return Response(json.loads(Redis.hget('getPost', userID)), status=status.HTTP_200_OK)
+
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spUserGroupViewGetPost %s', (userID,))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                Redis.hset('getPost', userID, json.dumps(recs, separators=(',', ':')))
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

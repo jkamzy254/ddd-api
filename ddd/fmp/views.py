@@ -25,9 +25,9 @@ class FMPStatusGrpViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            user = Memberdata.objects.filter(id = payload['ID']).first()
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spFMPGroupViewGetRecords %s', (user.uid,))
+                cursor.execute("EXEC spFMPGroupViewGetRecords {0}".format(payload['UID']))
                 fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -40,16 +40,16 @@ class FMPStatusGrpPrevCTViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            user = Memberdata.objects.filter(id = payload['ID']).first()
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spFMPGroupViewGetPrevCTRecords %s', (user.uid,))
+                cursor.execute("EXEC spFMPGroupViewGetPrevCTRecords {0}".format(payload['UID']))
                 fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             
             with connection.cursor() as seasonCursor:
                 seasonCursor.execute("""SELECT TOP 1 * FROM EVSeason 
                 WHERE EndDate < GETDATE() 
-                AND Region = (Select Region From MemberData Where UID = %s)
-                AND Dept = 'All' ORDER BY ID DESC""",(user.uid,)) 
+                AND Region = (Select Region From MemberData Where UID = {0})
+                AND Dept = 'All' ORDER BY ID DESC""".format(payload['UID'])) 
                 season = [dict(zip([column[0] for column in seasonCursor.description], record)) for record in seasonCursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -68,20 +68,20 @@ class FMPGetFruitsViewSet(APIView):
             user = Memberdata.objects.filter(id = payload['ID']).first()
             
             with connection.cursor() as cursor:
-                if user.group_imwy == 'MCT':
+                if payload['Dept'] == 'MCT':
                     if user.Internal_Position > 3:
                         # Use Django ORM for queries
-                        cursor.execute(f"EXEC spAutoComp_CM {user.uid}")
+                        cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                     else:
-                        cursor.execute(f"EXEC spAutoComp_CT {user.uid}, '{user.group_imwy}', {user.region}")
+                        cursor.execute("EXEC spAutoComp_CT {0}, '{1}', {2}".format(payload['UID'], payload['Dept'], payload['Region']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 else:
                     if user.Internal_Position > 2:
-                        cursor.execute(f"EXEC spAutoComp_CM {user.uid}")
+                        cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                     else:
-                        cursor.execute(f"EXEC spAutoComp_EV {user.uid}, {user.membergroup}")
+                        cursor.execute("EXEC spAutoComp_EV {0}, {1}".format(payload['UID'], payload['Group']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

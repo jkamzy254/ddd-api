@@ -30,7 +30,7 @@ class BBStatusGrpPerBBTViewSet(APIView):
             payload = decode_jwt(request)   
             user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spBBGroupViewGetPerBBT %s', (user['uid'],))
+                cursor.execute('EXEC spBBGroupViewGetPerBBT %s', (payload['UID'],))
                 bbrecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(bbrecs, status=status.HTTP_200_OK)
@@ -44,9 +44,9 @@ class BBStatusGrpPerLeafViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            user = payload['user']
+            
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spBBGroupViewGetPerLeaves %s', (user['uid'],))
+                cursor.execute('EXEC spBBGroupViewGetPerLeaves %s', (payload['UID'],))
                 bbrecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(bbrecs, status=status.HTTP_200_OK)
@@ -60,7 +60,7 @@ class BBGetUserStudentsViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            user = payload['user']
+            
             with connection.cursor() as cursor:
                 cursor.execute("""
                                SELECT F.UID, MB.PREFERRED_NAME AS BBT, MB.UID 'BBTID', M1.PREFERRED_NAME AS L1, F.L1_ID, M2.PREFERRED_NAME AS L2, F.L2_ID, F.FishName, F.FishUser, F.FishPhone, F.EVPlatform, B.Label 
@@ -70,7 +70,7 @@ class BBGetUserStudentsViewSet(APIView):
                                 LEFT JOIN MemberData AS MB ON B.BBT_ID = MB.UID 
                                 LEFT JOIN FruitData F ON F.UID = B.UID 
                                 WHERE B.BBT_ID = '{0}' AND B.Completed = 0
-                               """.format(user['uid'],))
+                               """.format(payload['UID'],))
                 studs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(studs, status=status.HTTP_200_OK)
@@ -103,14 +103,14 @@ class BBGetMEViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            user = payload['user']
+            
             me_cursor.execute("""
                             SELECT B.UID, FruitName, LastUpdate, (SELECT Short FROM BBTopicData WHERE ID = B.LastTopic) 'Last_Topic' 
                             FROM BBData B 
                             LEFT JOIN MissEduData M ON M.UID = B.UID
                             WHERE BBT_ID = '{0}' AND Completed = 0 AND Status = 'Missed Education'
                             AND (CAST(M.ReportDate AS DATE) IS NULL OR CAST(M.ReportDate AS DATE) < CAST(B.NextClassDate AS DATE))
-                            """.format(user['uid'],))
+                            """.format(payload['UID'],))
             me_recs = [dict(zip([column[0] for column in me_cursor.description], record)) for record in me_cursor.fetchall()]
             exp_cursor.execute("""
                             SELECT UID, FruitName, LastUpdate, (SELECT Short FROM BBTopicData WHERE ID = B.LastTopic) 'Last_Topic' 
@@ -119,13 +119,13 @@ class BBGetMEViewSet(APIView):
                             AND Completed = 0 
                             AND CAST(NextClassDate AS DATE) = CAST((SELECT SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') AS DATE)
                             AND Status != 'Missed Education';
-                            """.format(user['uid'],))
+                            """.format(payload['UID'],))
             exp_recs = [dict(zip([column[0] for column in exp_cursor.description], record)) for record in exp_cursor.fetchall()]
-            pick_cursor.execute("EXEC spStudentList_GetPPList '{0}'".format(user['uid'],))
+            pick_cursor.execute("EXEC spStudentList_GetPPList '{0}'".format(payload['UID'],))
             pick_recs = [ dict( zip( [column[0] for column in pick_cursor.description] , record ) ) for record in pick_cursor.fetchall()]
-            expmeet_cursor.execute("EXEC spFMPGetExpMeet '{0}'".format(user['uid'],))
+            expmeet_cursor.execute("EXEC spFMPGetExpMeet '{0}'".format(payload['UID'],))
             expmeet_recs = [ dict( zip( [column[0] for column in expmeet_cursor.description] , record ) ) for record in expmeet_cursor.fetchall()]
-            exppick_cursor.execute("EXEC spFMPGetExpPick '{0}'".format(user['uid'],))
+            exppick_cursor.execute("EXEC spFMPGetExpPick '{0}'".format(payload['UID'],))
             exppick_recs = [ dict( zip( [column[0] for column in exppick_cursor.description] , record ) ) for record in exppick_cursor.fetchall()]
             
             data = {

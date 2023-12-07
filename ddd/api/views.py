@@ -222,6 +222,7 @@ class LoginView(APIView):
 
         payload = {
             "ID":user.id,
+            "UID":user.uid,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=(60*24)),
             'iat': datetime.datetime.utcnow(),
             'user': serializer.data,
@@ -239,9 +240,9 @@ class UserMembersViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            user = payload['user']
+            
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spUserGroupViewGetMembers %s', (user.uid,))
+                cursor.execute('EXEC spUserGroupViewGetMembers %s', (payload['UID'],))
                 fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

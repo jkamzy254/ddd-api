@@ -239,7 +239,7 @@ class UserMembersViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            user = Memberdata.objects.filter(id = payload['ID']).first()
+            user = payload['user']
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spUserGroupViewGetMembers %s', (user.uid,))
                 fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]

@@ -27,7 +27,7 @@ class FMPStatusGrpViewSet(APIView):
             payload = decode_jwt(request)   
             user = payload['user']
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spFMPGroupViewGetRecords {0}".format(payload['UID']))
+                cursor.execute("EXEC spFMPGroupViewGetRecords {0}".format(user['uid']))
                 fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -42,14 +42,14 @@ class FMPStatusGrpPrevCTViewSet(APIView):
             payload = decode_jwt(request)   
             user = payload['user']
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spFMPGroupViewGetPrevCTRecords {0}".format(payload['UID']))
+                cursor.execute("EXEC spFMPGroupViewGetPrevCTRecords {0}".format(user['uid']))
                 fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             
             with connection.cursor() as seasonCursor:
                 seasonCursor.execute("""SELECT TOP 1 * FROM EVSeason 
                 WHERE EndDate < GETDATE() 
                 AND Region = (Select Region From MemberData Where UID = '{0})
-                AND Dept = 'All' ORDER BY ID DESC""".format(payload['UID'],)) 
+                AND Dept = 'All' ORDER BY ID DESC""".format(user['uid'],)) 
                 season = [dict(zip([column[0] for column in seasonCursor.description], record)) for record in seasonCursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -71,17 +71,17 @@ class FMPGetFruitsViewSet(APIView):
                 if payload['Dept'] == 'MCT':
                     if user.Internal_Position > 3:
                         # Use Django ORM for queries
-                        cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
+                        cursor.execute("EXEC spAutoComp_CM {0}".format(user['uid']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                     else:
-                        cursor.execute("EXEC spAutoComp_CT {0}, '{1}', {2}".format(payload['UID'], user['group_imwy'], user['region']))
+                        cursor.execute("EXEC spAutoComp_CT {0}, '{1}', {2}".format(user['uid'], user['group_imwy'], user['region']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 else:
                     if user.Internal_Position > 2:
-                        cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
+                        cursor.execute("EXEC spAutoComp_CM {0}".format(user['uid']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                     else:
-                        cursor.execute("EXEC spAutoComp_EV {0}, {1}".format(payload['UID'], user['membergroup']))
+                        cursor.execute("EXEC spAutoComp_EV {0}, {1}".format(user['uid'], user['membergroup']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -96,7 +96,7 @@ class FMPGetDashStatsViewSet(APIView):
             payload = decode_jwt(request)   
             user = payload['user']
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spDashGetFMPStats '{0}'".format(payload['UID']))
+                cursor.execute("EXEC spDashGetFMPStats '{0}'".format(user['uid']))
                 fmp = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

@@ -86,6 +86,7 @@ class LoginView(APIView):
 
         payload = {
             "ID":user.id,
+            "UID": user.uid,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=(60*24)),
             'iat': datetime.datetime.utcnow(),
             'user': serializer.data,
@@ -257,7 +258,7 @@ class UserGetFishersViewSet(APIView):
             payload = decode_jwt(request)
             user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spAutoCompM %s', (user.region,))
+                cursor.execute("EXEC spAutoCompM {0}".format(payload['Region']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

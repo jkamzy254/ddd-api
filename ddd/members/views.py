@@ -49,7 +49,7 @@ class LoginView(APIView):
         uid = pd.read_sql(f"SELECT UID FROM LoginData WHERE Username = '{username}'",connection).iloc[0,0]
         otp_response = send_otp(uid) 
         if otp_response.status_code == status.HTTP_200_OK:
-            return Response("OTP sent, please verify to complete login.", status=status.HTTP_200_OK)
+            return Response(uid, status=status.HTTP_200_OK)
         else:
             return Response("Failed to send OTP.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         

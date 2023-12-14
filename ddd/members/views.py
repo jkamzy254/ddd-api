@@ -76,7 +76,7 @@ class VerifyOTP(APIView):
             print(f'otp_db = {otp_db}, type = {type(otp_db)}')
             print(f'otp = {otp}, type = {type(otp)}')
 
-            if otp != otp_db:
+            if int(otp) != otp_db:
                 print("Invalid OTP")
                 return Response('Invalid OTP!', status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:

@@ -8,7 +8,7 @@ from jwt.algorithms import get_default_algorithms
 from ddd.utils import encode_jwt, decode_jwt
 
 from .serializers import MemberSerializer
-    
+
 from ddd.models import Memberdata, Evseason, Bbdata, Report
 from ddd.models import Memberuserdata as User
 from ddd.models import Memberdata as Member
@@ -45,14 +45,14 @@ class LoginView(APIView):
             raise AuthenticationFailed('User not found!')
         if user.password != password:
             raise AuthenticationFailed('Incorrect password')
-        
+
         uid = pd.read_sql(f"SELECT UID FROM LoginData WHERE Username = '{username}'",connection).iloc[0,0]
-        otp_response = send_otp(uid) 
+        otp_response = send_otp(uid)
         if otp_response.status_code == status.HTTP_200_OK:
-            return Response(uid, status=status.HTTP_200_OK)
+            return Response({'uid':uid}, status=status.HTTP_200_OK)
         else:
             return Response("Failed to send OTP.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 
 class VerifyOTP(APIView):
     def post(self, request):
@@ -64,7 +64,7 @@ class VerifyOTP(APIView):
         print(f'uid = {uid}')
         print(f'otp = {otp}')
         wlid = []
-        
+
         try:
             otp_dataframe = pd.read_sql(f"""SELECT TOP 1 OTP FROM OtpLog WHERE UID = '{uid}'
         AND ValidUntil > CONVERT(DateTime, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') ORDER BY ValidUntil DESC""",connection)
@@ -110,8 +110,8 @@ class VerifyOTP(APIView):
                 wlid.append('Church')
             if member.bbt or 'All' in wlid:
                 wlid.append('BBT')
-            serializer = MemberSerializer(member)     
-                    
+            serializer = MemberSerializer(member)
+
             # refresh = token.for_user(user)
 
             # Generate an access token
@@ -133,9 +133,9 @@ class VerifyOTP(APIView):
 
 class UserMembersViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetMembers {0}".format(payload['UID']))
@@ -149,9 +149,9 @@ class UserMembersViewSet(APIView):
 
 class GetGroupViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetGroups {0}".format(payload['UID']))
@@ -165,9 +165,9 @@ class GetGroupViewSet(APIView):
 
 class GetDeptViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetDepts {0}".format(payload['UID']))
@@ -181,9 +181,9 @@ class GetDeptViewSet(APIView):
 
 class GetSDivisionViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetSDivisions {0}".format(payload['UID']))
@@ -196,9 +196,9 @@ class GetSDivisionViewSet(APIView):
 
 class UserBBGoalsViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetGoals {0}".format(payload['UID']))
@@ -211,9 +211,9 @@ class UserBBGoalsViewSet(APIView):
 
 class UserFMPGoalsViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetFMPGoals {0}".format(payload['UID']))
@@ -226,9 +226,9 @@ class UserFMPGoalsViewSet(APIView):
 
 class UserPostViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetPost {0}".format(payload['UID']))
@@ -242,9 +242,9 @@ class UserPostViewSet(APIView):
 
 class UserGetFishersViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spAutoCompM {0}".format(payload['Region']))

@@ -53,6 +53,12 @@ class LoginView(APIView):
         else:
             return Response("Failed to send OTP.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class OTP(APIView):
+    def post(self, request):
+        uid = request.data['uid']
+        print(uid)
+
+        return send_otp(uid)
 
 class VerifyOTP(APIView):
     def post(self, request):
@@ -118,7 +124,8 @@ class VerifyOTP(APIView):
             # token = str(refresh.access_token)
 
             payload = {
-                "ID":evid,
+                "ID": evid,
+                "UID": uid,
                 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=(60*24)),
                 'iat': datetime.datetime.utcnow(),
                 'user': serializer.data,

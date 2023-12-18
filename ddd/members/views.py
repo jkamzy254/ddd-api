@@ -85,7 +85,6 @@ class LoginView(APIView):
 
         payload = {
             "ID":user.id,
-            "UID": user.uid,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=(60*24)),
             'iat': datetime.datetime.utcnow(),
             'user': serializer.data,
@@ -103,7 +102,7 @@ class UserMembersViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetMembers {0}".format(payload['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
@@ -119,7 +118,7 @@ class GetGroupViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetGroups {0}".format(payload['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
@@ -135,8 +134,7 @@ class GetDeptViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            print(payload)
-            
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetDepts {0}".format(payload['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
@@ -152,7 +150,7 @@ class GetSDivisionViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetSDivisions {0}".format(payload['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
@@ -167,7 +165,7 @@ class UserBBGoalsViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetGoals {0}".format(payload['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
@@ -182,7 +180,7 @@ class UserFMPGoalsViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetFMPGoals {0}".format(payload['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
@@ -197,7 +195,7 @@ class UserPostViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetPost {0}".format(payload['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]

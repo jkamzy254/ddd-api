@@ -1,1 +1,2 @@
 web: gunicorn ddd.wsgi --log-file -
+worker: python manage.py codey

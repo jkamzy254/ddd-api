@@ -25,7 +25,7 @@ class FMPStatusGrpViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spFMPGroupViewGetRecords {0}".format(payload['UID']))
                 fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
@@ -40,7 +40,7 @@ class FMPStatusGrpPrevCTViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
-            
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spFMPGroupViewGetPrevCTRecords {0}".format(payload['UID']))
                 fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
@@ -48,8 +48,8 @@ class FMPStatusGrpPrevCTViewSet(APIView):
             with connection.cursor() as seasonCursor:
                 seasonCursor.execute("""SELECT TOP 1 * FROM EVSeason 
                 WHERE EndDate < GETDATE() 
-                AND Region = (Select Region From MemberData Where UID = '{0}')
-                AND Dept = 'All' ORDER BY ID DESC""".format(payload['UID'],)) 
+                AND Region = (Select Region From MemberData Where UID = {0})
+                AND Dept = 'All' ORDER BY ID DESC""".format(payload['UID'])) 
                 season = [dict(zip([column[0] for column in seasonCursor.description], record)) for record in seasonCursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -88,18 +88,6 @@ class FMPGetFruitsViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
      
         return Response(result, status=status.HTTP_200_OK)
-
-class FMPGetDashStatsViewSet(APIView):
-    def get(self, request):
-        
-        try:
-            payload = decode_jwt(request)   
-            
-            with connection.cursor() as cursor:
-                cursor.execute("EXEC spDashGetFMPStats '{0}'".format(payload['UID']))
-                fmp = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-        except Exception as e:
-            # Handle exceptions here, e.g., logging or returning an error response
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response(fmp[0], status=status.HTTP_200_OK)
+    
+    
+    # pagination_class = PageNumberPagination

@@ -1,16 +1,18 @@
 import pandas as pd
 import numpy as np
 import pypyodbc as odbc
-import Config as C
 import re
+from dotenv import load_dotenv, find_dotenv
+import os
+load_dotenv(find_dotenv())
 
-DRIVER = C.DRIVER
-HOST = C.HOST
-DBPORT = C.DBPORT
-DB = C.DB
-USER = C.USER
-PASS = C.PASS
-PORT = C.PORT
+HOST = os.environ.get('HOST')
+DRIVER = os.environ.get('DRIVER')
+DBPORT = os.environ.get('DBPORT')
+DB = os.environ.get('DB')
+DB_USER = os.environ.get('DB_USER')
+PASS = os.environ.get('PASS')
+PORT = os.environ.get('PORT')
 
 conn_str = """
     Driver={{{0}}};
@@ -18,7 +20,7 @@ conn_str = """
     Database={3};
     Uid={4};
     Pwd={5};
-""".format(DRIVER,HOST,DBPORT,DB,USER,PASS)
+""".format(DRIVER,HOST,DBPORT,DB,DB_USER,PASS)
 
 def deptgroup(d):
     conn = odbc.connect(conn_str)

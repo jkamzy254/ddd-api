@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ddd.models import Memberdata, Bbdata, Evseason, Report, ProImage
+from ddd.models import Memberdata, Bbdata, Evseason, Report
 class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model=Memberdata
@@ -13,11 +13,6 @@ class MemberSerializer(serializers.ModelSerializer):
 class EvseasonSerializer(serializers.ModelSerializer):
     class Meta:
         model=Evseason
-        fields=["id","seasonname","startdate","enddate","closingdate","region","dept"]
-
-class ProductImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model=ProImage
         fields=["id","seasonname","startdate","enddate","closingdate","region","dept"]
 
 class LeafSerializer(serializers.ModelSerializer):

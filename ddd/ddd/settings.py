@@ -64,7 +64,8 @@ INSTALLED_APPS = [
     'bb',
     'fmp',
     'debug_toolbar',
-    'django_filters'
+    'django_filters',
+    'app'
 ]
 
 MIDDLEWARE = [

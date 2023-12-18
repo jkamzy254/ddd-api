@@ -84,9 +84,6 @@ def maillist():
               'israelname': israelname}
     return telIDs
 
-
-
-
 def idlist(access,group_or_dept):
     filter = 'MemberGroup' if access == 'group' else 'Group_IMWY'
     conn = odbc.connect(conn_str)

@@ -82,7 +82,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 def main() -> None:
     """Start the bot."""
     # Create the Application and pass it your bot's token.
-    token = os.environ.get('CODEY_TOKEN')
+    token = os.environ.get('TELEGRAM_TOKEN')
     application = Application.builder().token(token).build()
 
     # on different commands - answer in Telegram

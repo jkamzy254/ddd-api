@@ -1,3 +1,4 @@
 .env
 *.pyc
 *__init__.py
+.gitignore

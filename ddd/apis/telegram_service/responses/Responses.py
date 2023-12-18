@@ -194,5 +194,7 @@ def bot_responses(id,input_text):
                 return 'Sorry, you cannot access this member ID'
         if command == 'lastseasonfmp':
             return SQLCodes.lastseasonfmp(g)
+        if command == 'test':
+            return 'test'
              
     return "Sorry, I don't recognise that command. Please type 'commands' for a list of commands"

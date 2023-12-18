@@ -14,6 +14,10 @@ Basic Echobot example, repeats messages.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
+from dotenv import load_dotenv, find_dotenv
+import os
+load_dotenv(find_dotenv())
+
 from .responses import Responses as R
 import warnings
 import logging
@@ -78,7 +82,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 def main() -> None:
     """Start the bot."""
     # Create the Application and pass it your bot's token.
-    token = '1504807574:AAHXJgJLc6jbjHMEN1z2EdTG2DA17LYM7UE'
+    token = os.environ.get('CODEY_TOKEN')
     application = Application.builder().token(token).build()
 
     # on different commands - answer in Telegram

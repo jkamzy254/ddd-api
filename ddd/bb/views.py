@@ -49,7 +49,6 @@ class BBStatusGrpPerLeafViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spBBGroupViewGetPerLeaves %s', (payload['UID'],))
                 bbrecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                Redis.hset('my_fruits', userID, json.dumps(bbrecs, separators=(',', ':')))
             return Response(bbrecs, status=status.HTTP_200_OK)
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -73,7 +72,7 @@ class BBGetUserStudentsViewSet(APIView):
                                 WHERE B.BBT_ID = '{0}' AND B.Completed = 0
                                """.format(payload['UID'],))
                 studs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                Redis.hset('my_studs', userID, json.dumps(studs, separators=(',', ':')))
+                Redis.hset('my_studs', payload['UID'], json.dumps(studs, separators=(',', ':')))
             return Response(studs, status=status.HTTP_200_OK)
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404, render
 from django.http import Http404
+from api.redis import Redis
 from rest_framework.decorators import api_view
 from ddd.utils import decode_jwt
 
@@ -67,22 +68,30 @@ class FMPGetFruitsViewSet(APIView):
             payload = decode_jwt(request)
             user = Memberdata.objects.filter(id = payload['ID']).first()
 
+            if(Redis.checkExists('my_fruits', payload['UID'])):
+                print("Key exists in Redis")
+                return Response(json.loads(Redis.hget('my_fruits', payload['UID'])), status=status.HTTP_200_OK)
+
             with connection.cursor() as cursor:
                 if payload['Dept'] == 'MCT':
-                    if user.Internal_Position > 3:
+                    if user.internal_position > 3:
                         # Use Django ORM for queries
                         cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                        Redis.hset('my_fruits', payload['UID'], json.dumps(result, separators=(',', ':')))
                     else:
                         cursor.execute("EXEC spAutoComp_CT {0}, '{1}', {2}".format(payload['UID'], payload['Dept'], payload['Region']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                        Redis.hset('my_fruits', payload['UID'], json.dumps(result, separators=(',', ':')))
                 else:
-                    if user.Internal_Position > 2:
+                    if user.internal_position > 2:
                         cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                        Redis.hset('my_fruits', payload['UID'], json.dumps(result, separators=(',', ':')))
                     else:
                         cursor.execute("EXEC spAutoComp_EV {0}, {1}".format(payload['UID'], payload['Group']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                        Redis.hset('my_fruits', payload['UID'], json.dumps(result, separators=(',', ':')))
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

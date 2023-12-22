@@ -143,6 +143,8 @@ def bot_responses(id,input_text):
                 return SQLCodes.deptphone(d)
             if command == 'bbtdept':
                 return SQLCodes.bbtdept()
+            if command == 'bbtbtmstatus':
+                return SQLCodes.bbtbtmstatus()
             
     if access == 'IT':
         

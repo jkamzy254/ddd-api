@@ -34,6 +34,7 @@ urlpatterns = [
 	path('bb/', include('bb.urls')),
 	path('fmp/', include('fmp.urls')),
 	path('members/', include('members.urls')),
+	path('google_sheets/', include('google_sheets.urls')),
 ]
 
 # urlpatterns = [

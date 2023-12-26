@@ -17,7 +17,7 @@ import jwt, datetime, json
 
 
 class GSNewBBTDataGetBBViewSet(APIView):
-    def post(self, request):
+    def get(self, request):
         print(request)
         try:
             with connection.cursor() as cursor:

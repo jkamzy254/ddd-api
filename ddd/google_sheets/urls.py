@@ -10,8 +10,13 @@ import debug_toolbar
 
 
 urlpatterns = [
+    #New BBT Data
 	path('getBB/', nbd.GetBBViewSet.as_view()),
+	path('getBTMFMP/', nbd.GetBTMFMPViewSet.as_view()),
+	path('getBBTData/', nbd.GetBBTDataViewSet.as_view()),
+	path('getBBNotFallen/', nbd.GetBBNotFallenViewSet.as_view()),
  
+	#CT Student EV
 	path('getCurrentJDSN/', cse.GetCurrentJDSNViewSet.as_view()),
 	path('getRegisteredJDSN/', cse.GetRegisteredJDSNViewSet.as_view()),
 	path('getCTTGW/', cse.GetCTTGWViewSet.as_view()),

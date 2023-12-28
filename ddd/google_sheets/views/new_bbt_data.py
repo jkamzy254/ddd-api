@@ -91,8 +91,9 @@ class GetBBTDataViewSet(APIView):
         
 class GetBBNotFallenViewSet(APIView):
     def post(self, request):
-        print(request.data)
-        data = request.data
+        print(request.data.get('season'))
+        print(request.body)
+        data = int(request.data.get('season'))
         try:
             with connection.cursor() as cursor:
                 cursor.execute("""
@@ -102,7 +103,7 @@ class GetBBNotFallenViewSet(APIView):
                     LEFT JOIN GroupInfo GI ON GI.GID = G.GID
                     WHERE Season = {0} AND Stat_Abbr NOT IN ('CCT','FA')
                     ORDER By G.GID, M.Internal_Position
-                """.format(48))
+                """.format(data))
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

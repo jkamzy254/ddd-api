@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from django.db import connection
 
+import json
 
 # Create your views here.
 
@@ -89,8 +90,8 @@ class GetBBTDataViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class GetBBNotFallenViewSet(APIView):
-    def get(self, request):
-        print(request)
+    def post(self, request):
+        print(json.loads(request.body))
         data = request.data
         try:
             with connection.cursor() as cursor:
@@ -101,7 +102,7 @@ class GetBBNotFallenViewSet(APIView):
                     LEFT JOIN GroupInfo GI ON GI.GID = G.GID
                     WHERE Season = {0} AND Stat_Abbr NOT IN ('CCT','FA')
                     ORDER By G.GID, M.Internal_Position
-                """.format(data))
+                """.format(48))
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

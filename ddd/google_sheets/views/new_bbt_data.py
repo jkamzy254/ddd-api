@@ -91,7 +91,7 @@ class GetBBTDataViewSet(APIView):
         
 class GetBBNotFallenViewSet(APIView):
     def post(self, request):
-        print(json.loads(request.body))
+        print(request.data)
         data = request.data
         try:
             with connection.cursor() as cursor:

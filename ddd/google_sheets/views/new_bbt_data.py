@@ -92,7 +92,7 @@ class GetBBTDataViewSet(APIView):
 class GetBBNotFallenViewSet(APIView):
     def post(self, request):
         print(request.data['season'])
-        data = int(request.data['season'])
+        data = int(float(request.data['season']))
         try:
             with connection.cursor() as cursor:
                 cursor.execute("""

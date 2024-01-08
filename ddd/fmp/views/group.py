@@ -61,19 +61,19 @@ class FMPGetFruitsViewSet(APIView):
             
             with connection.cursor() as cursor:
                 if payload['Dept'] == 'MCT':
-                    if user.Internal_Position > 3:
+                    if 'EVLeader' in payload['roles']:
                         # Use Django ORM for queries
-                        cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
-                        result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                    else:
                         cursor.execute("EXEC spAutoComp_CT {0}, '{1}', {2}".format(payload['UID'], payload['Dept'], payload['Region']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                else:
-                    if user.Internal_Position > 2:
+                    else:
                         cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                    else:
+                else:
+                    if 'EVLeader' in payload['roles']:
                         cursor.execute("EXEC spAutoComp_EV {0}, {1}".format(payload['UID'], payload['Group']))
+                        result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                    else:
+                        cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

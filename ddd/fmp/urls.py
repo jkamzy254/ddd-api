@@ -15,6 +15,6 @@ urlpatterns = [
 	path('groupPrevCt/', g.FMPStatusGrpPrevCTViewSet.as_view()),
  
     #Per individual
-	path('getFruits/', i.FMPGetFruitsViewSet.as_view()),
+	path('getIndFruits/', i.FMPGetFruitsViewSet.as_view()),
 	path('getPrevCtFruits/', i.FMPGetPrevCTFruitsViewSet.as_view()),
 ]

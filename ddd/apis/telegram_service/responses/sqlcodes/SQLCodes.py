@@ -2108,6 +2108,42 @@ SELECT 'Total', SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bb
     return result
 
 
+def bbtbtmstatus():
+    conn = odbc.connect(conn_str)
+    header = "🏛BBT Status Summary🏛"
+    bb_dept = f"""SELECT BBTStatus,NP,OP,AB,IB,FA,FP,CA,CI,Total FROM (
+    SELECT CASE WHEN BBTStatus = 'BBT' THEN 2 ELSE 1 END AS Num, BBTStatus, SUM(NP)NP, SUM(OP)OP, SUM(AB)AB, SUM(IB)IB, SUM(FA)FA, SUM(FP)FP, SUM(CA)CA, SUM(CI)CI, SUM(Total)Total
+                    FROM (SELECT CASE WHEN Status = 'Active' Then 'BBT' ELSE BTMNO END AS BBTStatus, * FROM BBTPerformanceView) B
+                    GROUP BY BBTStatus
+    UNION ALL
+    SELECT 3 Num, 'Total', SUM(NP)NP, SUM(OP)OP, SUM(AB)AB, SUM(IB)IB, SUM(FA)FA, SUM(FP)FP, SUM(CA)CA, SUM(CI)CI, SUM(Total)Total
+                    FROM (SELECT CASE WHEN Status = 'Active' Then 'BBT' ELSE BTMNO END AS BBTStatus, * FROM BBTPerformanceView) B
+                    ) s 
+                    ORDER BY Num, BBTStatus"""
+    dd = pd.read_sql(bb_dept, conn)
+    conn.cursor().close()
+    dd = dd.transpose()
+    dd.reset_index(inplace=True)
+
+    rowtitles = ['BBT Status ','NP   ','OP   ','AB   ','ME   ','FA   ','FP   ','CA   ','CI   ','Tot  ']
+
+    dept = str()
+    for r in range(1,10):
+        dept = f"{dept}{rowtitles[r]}["
+        for c in range(len(dd.columns)-1):
+            dept = f"{dept}{' '*(3-len(str(dd.loc[r,c])))}{dd.loc[r,c]}|"
+        dept = f"{dept}]\n"
+    
+    title = '[ 13| 14| 15|W12|BBT|Tot]'
+        
+    result = f"<b><u>{header}</u></b>\n\n<pre>BBT  {title}\n\n{dept}</pre>"
+    result = re.sub(r'\|]',r']',result)  # Replaces '|]' with ']'
+    result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
+    result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
+    result = result.replace('\nTot','\n\nTot') # Shifts bottom Title row down one line
+    return result
+
+
 def whofish(ph):
     return "fished by . . ."
 

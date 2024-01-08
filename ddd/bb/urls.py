@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include, re_path
-from . import views
+from .views import group as g
+from .views import individual as i
 from django.views.generic.base import TemplateView
 
 from django.urls import path
@@ -13,7 +14,13 @@ urlpatterns = [
     # path("", include(members_router.urls)),
     # path("", include(bbstudents_router.urls)),
 	# path('bb/', include('bb.urls')),
-	path('perbbt/', views.BBStatusGrpPerBBTViewSet.as_view()),
-	path('getStuds/', views.BBGetUserStudentsViewSet.as_view()),
-	path('perleaves/', views.BBStatusGrpPerLeafViewSet.as_view()),
+ 
+    #Per Group
+	path('perbbt/', g.BBStatusGrpPerBBTViewSet.as_view()),
+	path('getStuds/', g.BBGetUserStudentsViewSet.as_view()),
+	path('perleaves/', g.BBStatusGrpPerLeafViewSet.as_view()),
+ 
+    #Per Individual
+	path('getStudents/', i.BBGetStudentsViewSet.as_view()),
+	path('getBBFruits/', i.BBGetBBFruitsViewSet.as_view()),
 ]

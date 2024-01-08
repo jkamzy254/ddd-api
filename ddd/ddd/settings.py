@@ -65,7 +65,8 @@ INSTALLED_APPS = [
     'fmp',
     'debug_toolbar',
     'django_filters',
-    'app'
+    'app',
+    'google_sheets'
 ]
 
 MIDDLEWARE = [

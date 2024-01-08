@@ -3,23 +3,15 @@ from django.http import Http404
 from rest_framework.decorators import api_view
 from ddd.utils import decode_jwt
 
-from ddd.models import Memberdata, Evseason, Report
+from ddd.models import Memberdata
+
 from rest_framework.response import Response
-from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework.viewsets import ViewSet, ModelViewSet
-from rest_framework.filters import SearchFilter, OrderingFilter
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.pagination import PageNumberPagination
-from django.db.models import Q
 from django.db import connection
-import jwt, datetime
-import json
+
 
 # Create your views here.
-
 class FMPStatusGrpViewSet(APIView):
     def get(self, request):
         
@@ -69,25 +61,22 @@ class FMPGetFruitsViewSet(APIView):
             
             with connection.cursor() as cursor:
                 if payload['Dept'] == 'MCT':
-                    if user.Internal_Position > 3:
+                    if 'EVLeader' in payload['roles']:
                         # Use Django ORM for queries
-                        cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
-                        result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                    else:
                         cursor.execute("EXEC spAutoComp_CT {0}, '{1}', {2}".format(payload['UID'], payload['Dept'], payload['Region']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                else:
-                    if user.Internal_Position > 2:
+                    else:
                         cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                    else:
+                else:
+                    if 'EVLeader' in payload['roles']:
                         cursor.execute("EXEC spAutoComp_EV {0}, {1}".format(payload['UID'], payload['Group']))
+                        result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                    else:
+                        cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
      
         return Response(result, status=status.HTTP_200_OK)
-    
-    
-    # pagination_class = PageNumberPagination

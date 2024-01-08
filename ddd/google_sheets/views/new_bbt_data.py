@@ -142,3 +142,40 @@ class GetBTMListViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    def post(self, request):
+        print(request.data['season'])
+        data = int(float(request.data['season']))
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT M.Group_IMWY 'Dept', GI.Grp 'Group', M.Name, B.FruitName FROM BBData B
+                    LEFT JOIN MemberData M ON B.BBT_ID = M.UID
+                    LEFT JOIN (Select * From GroupLog Where EndDate IS NULL) G ON G.UID = M.UID
+                    LEFT JOIN GroupInfo GI ON GI.GID = G.GID
+                    WHERE Season = {0} AND Stat_Abbr NOT IN ('CCT','FA')
+                    ORDER By G.GID, M.Internal_Position
+                """.format(data))
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+              
+class GetFebCTDataViewSet(APIView):
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                        SELECT B.* FROM BBTPerformanceView B
+                        LEFT JOIN MemberData BBT ON BBT.UID = B.UID
+                        LEFT JOIN (Select * From GroupLog Where EndDate IS NULL) GL ON GL.UID = B.UID
+                        LEFT JOIN GroupInfo GI ON GL.GID = GI.GID
+                        ORDER BY GI.GID, Internal_Position
+                    """)
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+

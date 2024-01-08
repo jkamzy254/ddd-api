@@ -8,7 +8,7 @@ from jwt.algorithms import get_default_algorithms
 from ddd.utils import encode_jwt, decode_jwt
 
 from .serializers import MemberSerializer
-    
+
 from ddd.models import Memberdata, Evseason, Bbdata, Report
 from ddd.models import Memberuserdata as User
 from ddd.models import Memberdata as Member
@@ -39,7 +39,7 @@ class LoginView(APIView):
         print(password)
         wlid = []
         conn = connection.cursor();
-        
+
         user = Member.objects.filter(username=username).first()
         if user is None:
             raise AuthenticationFailed('User not found!')
@@ -70,14 +70,14 @@ class LoginView(APIView):
             wlid.append('Church')
         if member.bbt or 'All' in wlid:
             wlid.append('BBT')
-        serializer = MemberSerializer(member)     
-        
+        serializer = MemberSerializer(member)
+
         if user is None:
             raise AuthenticationFailed('User not found!')
 
         if user.password != password:
             raise AuthenticationFailed('Incorrect password')
-        
+
         # refresh = token.for_user(user)
 
         # Generate an access token
@@ -85,6 +85,7 @@ class LoginView(APIView):
 
         payload = {
             "ID":user.id,
+            "UID": user.uid,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=(60*24)),
             'iat': datetime.datetime.utcnow(),
             'user': serializer.data,
@@ -99,9 +100,9 @@ class LoginView(APIView):
 
 class UserMembersViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetMembers {0}".format(payload['UID']))
@@ -115,9 +116,9 @@ class UserMembersViewSet(APIView):
 
 class GetGroupViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetGroups {0}".format(payload['UID']))
@@ -131,9 +132,9 @@ class GetGroupViewSet(APIView):
 
 class GetDeptViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetDepts {0}".format(payload['UID']))
@@ -147,9 +148,9 @@ class GetDeptViewSet(APIView):
 
 class GetSDivisionViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetSDivisions {0}".format(payload['UID']))
@@ -162,9 +163,9 @@ class GetSDivisionViewSet(APIView):
 
 class UserBBGoalsViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetGoals {0}".format(payload['UID']))
@@ -177,9 +178,9 @@ class UserBBGoalsViewSet(APIView):
 
 class UserFMPGoalsViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetFMPGoals {0}".format(payload['UID']))
@@ -192,9 +193,9 @@ class UserFMPGoalsViewSet(APIView):
 
 class UserPostViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spUserGroupViewGetPost {0}".format(payload['UID']))
@@ -208,9 +209,9 @@ class UserPostViewSet(APIView):
 
 class UserGetFishersViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            payload = decode_jwt(request)   
+            payload = decode_jwt(request)
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spAutoCompM {0}".format(payload['Region']))

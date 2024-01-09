@@ -17,6 +17,7 @@ urlpatterns = [
 	path('getBBNotFallen/', nbd.GetBBNotFallenViewSet.as_view()),
 	path('getDecCCT/', nbd.GetDecCCTViewSet.as_view()),
 	path('getBTMList/', nbd.GetBTMListViewSet.as_view()),
+	path('getCurrentCTData/', nbd.getCurrentCTDataViewSet.as_view()),
  
 	#CT Student EV
 	path('getCurrentJDSN/', cse.GetCurrentJDSNViewSet.as_view()),

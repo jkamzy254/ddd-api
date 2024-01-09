@@ -180,7 +180,7 @@ class GetFebCTDataViewSet(APIView):
 
 
 
-class getCurrentCTDataViewSet(APIView):
+class GetCurrentCTDataViewSet(APIView):
     def post(self, request):
         print(request.data['season'])
         season = request.data['season']

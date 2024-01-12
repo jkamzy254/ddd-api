@@ -34,13 +34,18 @@ class GetBTMFMPViewSet(APIView):
                 cursor.execute("""
                     DECLARE @CurrDate DATE = CAST((SELECT SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') AS DATE);
                     DECLARE @Date DATE = CASE
-                    WHEN DATEPART(WEEKDAY, @CurrDate) BETWEEN 2 AND 4 THEN (SELECT DATEADD(wk, DATEDIFF(wk,0,@CurrDate)-1, 3))
-                    ELSE (SELECT DATEADD(wk, DATEDIFF(wk,0,@CurrDate), 3))
+                        WHEN DATEPART(WEEKDAY, @CurrDate) BETWEEN 2 AND 4 THEN (SELECT DATEADD(wk, DATEDIFF(wk,0,@CurrDate)-1, 3))
+                        ELSE (SELECT DATEADD(wk, DATEDIFF(wk,0,@CurrDate), 3))
                     END;
+                    DECLARE @SsnStart DATE = (
+                        SELECT MIN(StartDate) FROM EVSeason 
+                        WHERE StartDate <= (SELECT SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') 
+                        AND ClosingDate >= (SELECT SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')
+                    );
                     SELECT M.Group_IMWY, GI.Grp, M.Name, 
-                    (Select COUNT(*) From FruitData Where F_TIME > '2023-11-29' And (F1_ID = M.UID Or F2_ID = M.UID)) 'FS', 
-                    (Select COUNT(*) From FruitData Where M_TIME > '2023-11-29' And (Attendee_1_ID = M.UID Or Attendee_2_ID = M.UID)) 'MS', 
-                    (Select COUNT(*) From FruitData Where P_TIME > '2023-11-29' And (L1_ID = M.UID Or L2_ID = M.UID)) 'PS',
+                    (Select COUNT(*) From FruitData Where F_TIME >= @SsnStart And (F1_ID = M.UID Or F2_ID = M.UID)) 'FS', 
+                    (Select COUNT(*) From FruitData Where M_TIME >= @SsnStart And (Attendee_1_ID = M.UID Or Attendee_2_ID = M.UID)) 'MS', 
+                    (Select COUNT(*) From FruitData Where P_TIME >= @SsnStart And (L1_ID = M.UID Or L2_ID = M.UID)) 'PS',
                     (Select COUNT(*) From FruitData Where F_TIME > @Date And (F1_ID = M.UID Or F2_ID = M.UID)) 'FW', 
                     (Select COUNT(*) From FruitData Where M_TIME > @Date And (Attendee_1_ID = M.UID Or Attendee_2_ID = M.UID)) 'MW', 
                     (Select COUNT(*) From FruitData Where P_TIME > @Date And (L1_ID = M.UID Or L2_ID = M.UID)) 'PW'
@@ -121,7 +126,7 @@ class GetCurrentCCTViewSet(APIView):
                     LEFT JOIN MemberData M ON B.BBT_ID = M.UID
                     LEFT JOIN (Select * From GroupLog Where EndDate IS NULL) G ON G.UID = M.UID
                     LEFT JOIN GroupInfo GI ON GI.GID = G.GID
-                    WHERE Season = {0} AND Stat_Abbr NOT IN ('CCT','FA')
+                    WHERE Season = {0} AND Stat_Abbr = 'CCT'
                     ORDER By G.GID, M.Internal_Position
                 """.format(data))
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]

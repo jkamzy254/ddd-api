@@ -262,3 +262,25 @@ class GetCurrentCTDataViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class GetPViewSet(APIView):
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT 
+                        bbt.Group_IMWY Dept, bbt.MemberGroup Grp, 
+                        bbt.PREFERRED_NAME BBT, FishName Fruit, 
+                        P_TIME PickDate, ISNULL(FE_Date,DATEADD(DAY, 6, P_TIME))FE_Deadline
+                    FROM FruitData f
+                    LEFT JOIN MemberData bbt ON bbt.UID = f.BBT_ID
+                    LEFT JOIN ScottFEData fe ON fe.UID = f.UID
+                    LEFT JOIN BBData b ON b.UID = f.UID
+                    WHERE b.Season = (SELECT dbo.seasonid())
+                    ORDER BY LEN(MemberGroup), Grp, BBT, P_TIME
+                    """)
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

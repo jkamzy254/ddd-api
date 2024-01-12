@@ -129,6 +129,29 @@ class GetCurrentCCTViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class GetPotentialBTMViewSet(APIView):
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    WITH BBwithFE AS (
+                        SELECT * FROM BBDataView WHERE Season = 52 AND UID IN (Select UID From Report)
+                    ), MembersBB AS (
+                        SELECT Group_IMWY 'Dept', GI.Grp, M.Name, (Select COUNT(*) FROM BBwithFE WHERE L1_ID = M.UID OR L2_ID = M.UID) 'CT', GL.GID 
+                        FROM MemberData M 
+                        LEFT JOIN (Select * FROM GroupLog WHERE EndDate IS NULL) GL ON GL.UID = M.UID
+                        LEFT JOIN GroupInfo GI ON GI.GID = GL.GID
+                        WHERE M.Group_IMWY IN ('D1','D2','D3','D4','D5','D6','D7','D8')
+                        AND M.UID NOT IN (Select UID From BBTLog WHERE EndDate IS NULL) AND M.UID NOT IN (Select UID From CTData Where CTNum = 'SMC153')
+                    )
+                    SELECT Dept, Grp, Name, CT FROM MembersBB WHERE CT > 1  ORDER BY GID
+                """)
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
               
 class GetBTMListViewSet(APIView):
     def post(self, request):

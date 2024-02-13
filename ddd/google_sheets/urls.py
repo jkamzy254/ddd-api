@@ -19,8 +19,10 @@ urlpatterns = [
 	path('getBTMList/', nbd.GetBTMListViewSet.as_view()),
  	path('getCurrentCTData/', nbd.GetCurrentCTDataViewSet.as_view()),
   	path('getFebCTData/', nbd.GetFebCTDataViewSet.as_view()),
-
-
+  	path('getPotentialBTM/', nbd.GetPotentialBTMViewSet.as_view()),
+  	path('getCCTInactive/', nbd.GetCCTInactiveViewSet.as_view()),
+  	path('getCurrentCTBBTData/', nbd.GetCurrentCTBBTDataViewSet.as_view()),
+  	path('getP/', nbd.GetPViewSet.as_view()),
  
 	#CT Student EV
 	path('getCurrentJDSN/', cse.GetCurrentJDSNViewSet.as_view()),

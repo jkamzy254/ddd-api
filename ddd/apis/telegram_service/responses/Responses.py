@@ -112,7 +112,7 @@ def bot_responses(id,input_text):
                 # If the rest of the string is a Y value, return X and Y
                 if timerange in ['today', 'yesterday', 'week', 'lastweek', 'season']:
                     if task in ['youth','dept','tgw','member']:
-                        return SQLCodes.deptfmp(task,timerange,d,r,sd)
+                        return SQLCodes.deptfmp(task,timerange,d,r,sd,access)
                     if task in ['gyjn','oev','iev','edu','sv']:
                         return SQLCodes.taskfmp(task,timerange,d,r,sd,access)    
         

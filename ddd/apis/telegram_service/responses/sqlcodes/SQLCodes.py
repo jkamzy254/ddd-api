@@ -454,7 +454,7 @@ def memberfmp(timerange,g,region,seasondept,access):
 
 def deptfmp(task,timerange,d,region,seasondept,access):
     
-    displayMembers = False if task == 'dept' and access in ('All','IT') else True
+    displayMembers = False if task == 'dept' and access in ('All','IT') else True # For filtering out members when typing 'dept' instead of 'youth'
     topleft = 'Grp ' if displayMembers == True else 'Dept'
     
     if task == 'dept':

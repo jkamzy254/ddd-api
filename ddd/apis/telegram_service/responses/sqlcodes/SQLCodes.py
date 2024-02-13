@@ -493,7 +493,7 @@ def deptfmp(task,timerange,d,region,seasondept,access):
     dm.columns = ['Grp','F','M','P','FE']
     dd.columns = ['Dept','F','M','P','FE']
     dt.columns = ['F','M','P','FE']
-    dm['Grp'] = dm['Grp'].str.replace(r'^(\d)', r'G\1')
+    dm['Grp'] = dm['Grp'].str.replace(r'^(\d)', r'G\1') # This regex is not working in the API codey but works in test bot
     dd.replace(r' Dept',r'', regex = True, inplace = True)
 
     conn.cursor().close()

@@ -452,7 +452,10 @@ def memberfmp(timerange,g,region,seasondept,access):
 
 # UNIVERSAL DEPT FMP FUNCTION:
 
-def deptfmp(task,timerange,d,region,seasondept):
+def deptfmp(task,timerange,d,region,seasondept,access):
+    
+    displayMembers = False if task == 'dept' and access in ('All','IT') else True
+    topleft = 'Grp ' if displayMembers == True else 'Dept'
     
     if task == 'dept':
         task = 'youth'
@@ -464,11 +467,11 @@ def deptfmp(task,timerange,d,region,seasondept):
     taskQ = taskvalues[task][1]
   
     if timerange in {'today','yesterday'}:
-        spc = [6,5,4,4,4,'Group [FFF.F|MM.M|PP.P|FF.E]',   'Total ']
+        spc = [6,5,4,4,4,f'{topleft}  [FFF.F|MM.M|PP.P|FF.E]',   'Total ']
     if timerange in {'week','lastweek'}:
-        spc = [5,5,5,4,4,'Grp  [FFF.F|MMM.M|PP.P|FF.E]',   'Total']
+        spc = [5,5,5,4,4,f'{topleft} [FFF.F|MMM.M|PP.P|FF.E]',   'Total']
     if timerange == 'season':
-        spc = [4,6,6,5,5,'Grp [FFFF.F|MMMM.M|PPP.P|FFF.E]','Tot ']   
+        spc = [4,6,6,5,5,f'{topleft}[FFFF.F|MMMM.M|PPP.P|FFF.E]','Tot ']   
 
     timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
                   'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
@@ -493,15 +496,18 @@ def deptfmp(task,timerange,d,region,seasondept):
     dd.replace(r' Dept',r'', regex = True, inplace = True)
 
     conn.cursor().close()
-
+    
     group = str()
-    for r in range(len(dm)):
-        grp = str(dm.loc[r,'Grp']) + '.'*(spc[0]-len(str(dm.loc[r,'Grp'])))
-        f  = ' '*(spc[1]-len(str(dm.loc[r,'F'])))  + str(dm.loc[r,'F'])
-        m  = ' '*(spc[2]-len(str(dm.loc[r,'M'])))  + str(dm.loc[r,'M'])
-        p  = ' '*(spc[3]-len(str(dm.loc[r,'P'])))  + str(dm.loc[r,'P'])
-        fe = ' '*(spc[4]-len(str(dm.loc[r,'FE']))) + str(dm.loc[r,'FE'])
-        group = f'{group}{grp}[{f}|{m}|{p}|{fe}]\n'
+    
+    if displayMembers:
+        for r in range(len(dm)):
+            grp = str(dm.loc[r,'Grp']) + '.'*(spc[0]-len(str(dm.loc[r,'Grp'])))
+            f  = ' '*(spc[1]-len(str(dm.loc[r,'F'])))  + str(dm.loc[r,'F'])
+            m  = ' '*(spc[2]-len(str(dm.loc[r,'M'])))  + str(dm.loc[r,'M'])
+            p  = ' '*(spc[3]-len(str(dm.loc[r,'P'])))  + str(dm.loc[r,'P'])
+            fe = ' '*(spc[4]-len(str(dm.loc[r,'FE']))) + str(dm.loc[r,'FE'])
+            group = f'{group}{grp}[{f}|{m}|{p}|{fe}]\n'
+        group = group + '\n'
 
     dept = str()    
     for r in range(len(dd)):
@@ -523,7 +529,7 @@ def deptfmp(task,timerange,d,region,seasondept):
         
     depttitle = d.replace('__','Youth')
 
-    fmp = f"<b><u>{depttitle}{tasktitle} FMPFE : {timetitle}</u></b>\n\n<pre>{spc[5]}\n\n{group}\n{dept}{total}</pre>"
+    fmp = f"<b><u>{depttitle}{tasktitle} FMPFE : {timetitle}</u></b>\n\n<pre>{spc[5]}\n\n{group}{dept}{total}</pre>"
     fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
     fmp = re.sub(r'(\D)0([^.])',r'\1-\2',fmp)   # Replaces lone '0' with '-'
     return fmp

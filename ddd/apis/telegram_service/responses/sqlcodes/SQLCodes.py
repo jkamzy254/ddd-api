@@ -2141,7 +2141,7 @@ def bbtbtmstatus():
             dept = f"{dept}{' '*(3-len(str(dd.loc[r,c])))}{dd.loc[r,c]}|"
         dept = f"{dept}]\n"
     
-    title = '[ 14| 15|W12|BBT|Tot]'
+    title = '[ 15| 16| 17|W12|BBT|Tot]'
         
     result = f"<b><u>{header}</u></b>\n\n<pre>BBT  {title}\n\n{dept}</pre>"
     result = re.sub(r'\|]',r']',result)  # Replaces '|]' with ']'

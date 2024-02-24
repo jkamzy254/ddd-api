@@ -295,7 +295,8 @@ class GetBTMFruitsViewSet(APIView):
                     WITH BTMs AS (Select UID From BBTLog WHERE BtmNo = '{0}' AND EndDate IS NULL)
                     SELECT 
                         M1.MemberGroup 'L1 Grp', M1.Name 'L1', M2.MemberGroup 'L2 Grp', M2.Name 'L2', 
-                        B.FruitName, B.Status, B.LastClass, B.LastTopic,
+                        B.FruitName, B.Status, 
+                        CASE WHEN B.LastTopic IS NULL THEN NULL ELSE B.LastClass END AS LastClass, B.LastTopic,
                         MB.MemberGroup 'BBT Grp', MB.Name 'BBT'
                     FROM BBDataView B
                     LEFT JOIN MemberData M1 ON M1.UID = B.L1_ID

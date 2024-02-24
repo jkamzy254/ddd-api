@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class BbConfig(AppConfig):
+class SvcConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'bb'
+    name = 'svc'

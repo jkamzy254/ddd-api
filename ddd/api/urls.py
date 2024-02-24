@@ -31,9 +31,9 @@ urlpatterns = [
     path("", include(bbs_router.urls)),
     # path("", include(members_router.urls)),
     # path("", include(bbstudents_router.urls)),
-	path('bb/', include('bb.urls')),
-	path('fmp/', include('fmp.urls')),
-	path('members/', include('members.urls')),
+	path('bb/', include('DDD_Modules.EV.bb.urls')),
+	path('fmp/', include('DDD_Modules.EV.fmp.urls')),
+	path('members/', include('DDD_Modules.members.urls')),
 	path('google_sheets/', include('google_sheets.urls')),
 ]
 

@@ -284,3 +284,29 @@ class GetPViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class GetBTMFruitsViewSet(APIView):
+    def post(self, request):
+        btm = int(float(request.data['btm']))
+        ssn = int(float(request.data['season']))
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    WITH BTMs AS (Select UID From BBTLog WHERE BtmNo = '{0}' AND EndDate IS NULL)
+                    SELECT 
+                        M1.MemberGroup 'L1 Grp', M1.Name 'L1', M2.MemberGroup 'L2 Grp', M2.Name 'L2', 
+                        B.FruitName, B.Status, B.LastClass, B.LastTopic,
+                        MB.MemberGroup 'BBT Grp', MB.Name 'BBT'
+                    FROM BBDataView B
+                    LEFT JOIN MemberData M1 ON M1.UID = B.L1_ID
+                    LEFT JOIN MemberData M2 ON M2.UID = B.L2_ID
+                    LEFT JOIN MemberData MB ON MB.UID = B.BBT_ID
+                    WHERE Season = {1} AND (
+                        L1_ID IN (Select * FROM BTMs) OR L2_ID IN (Select * FROM BTMs)
+                    )
+                """.format(btm, ssn))
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

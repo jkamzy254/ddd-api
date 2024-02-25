@@ -23,4 +23,5 @@ urlpatterns = [
     #Per Individual
 	path('getStudents/', i.BBGetStudentsViewSet.as_view()),
 	path('getBBFruits/', i.BBGetBBFruitsViewSet.as_view()),
+	path('getAllSeasons/', i.BBGetAllSeasonsViewSet.as_view()),
 ]

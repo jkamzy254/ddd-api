@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'DDD_Modules.members',
     'DDD_Modules.EV.bb',
     'DDD_Modules.EV.fmp',
+    'DDD_Modules.MT.svc',
     'debug_toolbar',
     'django_filters',
     'app',

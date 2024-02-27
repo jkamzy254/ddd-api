@@ -62,6 +62,9 @@ def bot_responses(id,input_text):
 
     SQLCodes.functionlog(uid, name, input_text, command)
     
+    if r in ('Geelong','Darwin'):
+        r = 'Online'
+    
     if 'phonenumber' in str(user_message):
         return "Sorry, 'phonenumber' is not a recognised command. However, to check if someone has been fished before, you may enter their phone number starting with '04' e.g. <pre>0412345678</pre> :)"
     if user_message.startswith('04'):
@@ -116,10 +119,11 @@ def bot_responses(id,input_text):
                     if task in ['gyjn','oev','iev','edu','sv']:
                         return SQLCodes.taskfmp(task,timerange,d,r,sd,access)    
         
-        if command == 'bbtstatus':
+        if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('status'):
             if d == '__' and '/' in user_message:
                 i,d = user_message.split('/')
-            return SQLCodes.bbtstatus(d,access)
+            q,i = command.split('status')
+            return SQLCodes.bbtstatus(q,d,access)
         if command == 'tolfull':
             return SQLCodes.tolfull(d)
         if command == 'bbfull':
@@ -141,6 +145,8 @@ def bot_responses(id,input_text):
         if access in ['All','IT']:
             if command == 'deptphone':
                 return SQLCodes.deptphone(d)
+            if command == 'bbtdeptold':
+                return SQLCodes.bbtdeptold()
             if command == 'bbtdept':
                 return SQLCodes.bbtdept()
             if command == 'bbtbtmstatus':

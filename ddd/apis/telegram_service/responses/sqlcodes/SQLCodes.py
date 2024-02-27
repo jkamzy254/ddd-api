@@ -454,8 +454,7 @@ def memberfmp(timerange,g,region,seasondept,access):
 
 def deptfmp(task,timerange,d,region,seasondept,access):
     
-    # Changed here:
-    displayMembers = False if task == 'dept' and access in ('All','IT') else True # For filtering out groups when typing 'dept' instead of 'youth'
+    displayMembers = False if task == 'dept' and access in ('All','IT') else True
     topleft = 'Grp ' if displayMembers == True else 'Dept'
     
     if task == 'dept':
@@ -493,7 +492,7 @@ def deptfmp(task,timerange,d,region,seasondept,access):
     dm.columns = ['Grp','F','M','P','FE']
     dd.columns = ['Dept','F','M','P','FE']
     dt.columns = ['F','M','P','FE']
-    dm['Grp'] = dm['Grp'].str.replace(r'^(\d)', r'G\1') # This regex is not working in the API codey but works in test bot
+    dm['Grp'] = dm['Grp'].str.replace(r'^(\d)', r'G\1')
     dd.replace(r' Dept',r'', regex = True, inplace = True)
 
     conn.cursor().close()
@@ -931,16 +930,22 @@ def pxlist(g):
 
 
 
-def bbtstatus(d, access):
+def bbtstatus(q, d, access):
     
     name = 'BBT' if access == 'IT' else 'BBTCode'
     d = d.capitalize()
     
+    i = q if q in ['bbt','gyjnbbt'] else 'btm'
+    bbtvalues = {'bbt'     : ['BBT',   " AND BbtStatus = 'Active'"],
+                 'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
+                 'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+    bbttype,query = bbtvalues[i]
+    
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM ScottBBTStatusMembers WHERE BBTStatus IN ('Active','Probation') AND Dept LIKE '{d}' ORDER BY LEN(Grp), Grp, {name}"
-    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE BBTStatus IN ('Active','Probation') AND Dept LIKE '{d}' Group BY Grp ORDER BY LEN(Grp), Grp"
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE BBTStatus IN ('Active','Probation') AND Dept LIKE '{d}' Group BY Dept"
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE BBTStatus IN ('Active','Probation')"
+    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} ORDER BY LEN(Grp), Grp, {name}"
+    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} Group BY Grp ORDER BY LEN(Grp), Grp"
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE 1=1{query}"
     
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
@@ -1017,7 +1022,7 @@ def bbtstatus(d, access):
     else:
         youth = str()
     
-    summary = f"<b><u>{str(d).replace('__','Youth')} BBT Status Summary</u></b>\n\n<pre>       [ NP| OP| AB| CA| ME| CI| FP| FA|TOT]\n{member}\n{group}\n{dept}{youth}</pre>"
+    summary = f"<b><u>{str(d).replace('__','Youth')} {bbttype} Status Summary</u></b>\n\n<pre>       [ NP| OP| AB| CA| ME| CI| FP| FA|TOT]\n{member}\n{group}\n{dept}{youth}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -1528,7 +1533,7 @@ ON m.Dept = s.Dept"""
             dept = f"{dept}{' '*(5-len(str(dd.loc[r,c])))}{dd.loc[r,c]}|"
         dept = f"{dept}]\n"
     
-    title = f"[  {d} ]" if d != '__' else '[  D1 |  D2 |  D3 |  D4 |  D5 |  D6 |  D7 |  D8 |Total]'
+    title = f"[  {d} ]" if d != '__' else '[  D1 |  D2 |  D3 |  D4 |  D5 |  D6 |  D7 |  D8 |  D9 |Total]'
         
     result = f"<b><u>{header}</u></b>\n\n<pre>Dept {title}\n\n{dept}</pre>"
     result = re.sub(r'\|]',r']',result)  # Replaces '|]' with ']'
@@ -1807,8 +1812,11 @@ def bbinactive(d):
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
 
+
+
 # REPLACE BBTSTATUS (Old Function) WITH BBTFULL, BBTACTIVE AND BBTINACTIVE (Same as bbfull, bbactive, bbinactive)
 # CODE WILL BE ALMOST EXACTLY THE SAME BUT WILL USE SQL VIEW ScottBBTStatusNumbers RATHER THAN ScottStatusNumbers
+
 
 # NEED TO PLAN THIS ONE FURTHER BEFORE PROCEEDING
 # BECAUSE BBT DATA STILL NEEDS TO BE SEPARATED BETWEEN BBT, BTM12, BTM13 AND BTM14
@@ -1820,10 +1828,12 @@ def bbinactive(d):
 # BTM13FULL, BTM13ACTIVE, BTM13INACTIVE, BTM13FULL/D, BTM13ACTIVE/D, BTM13INACTIVE/D
 # BTM14FULL, BTM14ACTIVE, BTM14INACTIVE, BTM14FULL/D, BTM14ACTIVE/D, BTM14INACTIVE/D
 
+
 # So might be a bit overboard...
 # Also think about sorting by department then name
 # e.g.
 # D1|Scott...[|||]
+
 
 # But it may be necessary to split bbt, btm12, etc. for another reason: When splitting by department, it adds all names
 # But it may go over the character count if it brings up, for example, every D1 BBT, BTM12, BTM13 and BTM14 in the same list
@@ -1979,7 +1989,7 @@ def deptfm(d):
 
 def bbfull(d):
     
-    header = f"🌳{str(d).replace('__','Youth')} Tree of Life🌳" if d != '__' else '🌳Tree of Life Full🌳'
+    header = f"🌳{str(d).replace('__','Youth')} Tree of Life🌳"
     conn = odbc.connect(conn_str)
     
     bb_group = f"""SELECT s.Grp, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Tot bbTot
@@ -2077,7 +2087,7 @@ WHERE s.Dept LIKE '{d}'"""
 
 
 
-def bbtdept():
+def bbtdeptold():
     conn = odbc.connect(conn_str)
     header = "🏛BBT Status Summary🏛"
     bb_dept = f"""SELECT * FROM (
@@ -2105,7 +2115,7 @@ SELECT 'Total', SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bb
             dept = f"{dept}{' '*(3-len(str(dd.loc[r,c])))}{dd.loc[r,c]}|"
         dept = f"{dept}]\n"
     
-    title = '[ D1| D2| D3| D4| D5| D6| D7| D8| D9| SV|Cul|HWP|SFT|Off|M&W|MCT|TOT]'
+    title = '[ D1| D2| D3| D4| D5| D6| D7| D8| D9|OTH|SFT|OFF|M&W|MCT|TOT]'
         
     result = f"<b><u>{header}</u></b>\n\n<pre>Dept {title}\n\n{dept}</pre>"
     result = re.sub(r'\|]',r']',result)  # Replaces '|]' with ']'
@@ -2113,6 +2123,55 @@ SELECT 'Total', SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bb
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     result = result.replace('\nTot','\n\nTot') # Shifts bottom Title row down one line
     return result
+
+
+
+
+
+
+
+def bbtdept():
+    conn = odbc.connect(conn_str)
+    header = "🏛BBT Status Summary🏛"
+    bb_dept = f"""SELECT * FROM (
+SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(Total)Total
+                  FROM ScottBBTStatusMembers
+                  GROUP BY Dept
+UNION ALL
+SELECT 'Total', SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(Total)Total
+                  FROM ScottBBTStatusMembers
+				  ) s WHERE Dept IS NOT NULL AND Dept NOT IN ('Church','SCM','OtherChurch')
+				  ORDER BY CASE Dept
+                  WHEN 'Serving' THEN 1 WHEN 'Culture' THEN 2 WHEN 'HWPL' THEN 3 WHEN 'SFT' THEN 4 WHEN 'Office' THEN 5
+				  WHEN 'M&W Dept' THEN 6 WHEN 'MCT' THEN 7 WHEN 'Total' THEN 8 END, Dept"""
+    dd = pd.read_sql(bb_dept, conn)
+    conn.cursor().close()
+
+    dd.columns = ['Dept','pNew','pOld','bbA','bbME','bbFA','pFA','cctA','cctI','Total']
+    
+    title = '[ NP| OP| AB| ME| FA| FP| CA| CI|Tot]'
+
+    dept = str()
+    for r in range(len(dd)):
+        dpt = str(dd.loc[r,'Dept'])[:6] + ' '*(6-len(str(dd.loc[r,'Dept'])[:6]))
+        pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
+        po  = ' '*(3-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
+        ba  = ' '*(3-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
+        bm  = ' '*(3-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
+        bf  = ' '*(3-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
+        pf  = ' '*(3-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
+        ca  = ' '*(3-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
+        ci  = ' '*(3-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
+        t   = ' '*(3-len(str(dd.loc[r,'Total'])))  + str(dd.loc[r,'Total'])
+        dept = f'{dept}{dpt}[{pn}|{po}|{ba}|{bm}|{bf}|{pf}|{ca}|{ci}|{t}]\n' 
+                
+    result = f"<b><u>{header}</u></b>\n\n<pre>Dept  {title}\n\n{dept}</pre>"
+    result = re.sub(r'\|]',r']',result)  # Replaces '|]' with ']'
+    result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
+    result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
+    result = result.replace('\nTot','\n\nTot') # Shifts bottom Title row down one line
+    return result
+
 
 
 def bbtbtmstatus():
@@ -2141,7 +2200,7 @@ def bbtbtmstatus():
             dept = f"{dept}{' '*(3-len(str(dd.loc[r,c])))}{dd.loc[r,c]}|"
         dept = f"{dept}]\n"
     
-    title = '[ 15| 16| 17|W12|BBT|Tot]'
+    title = '[ 14| 15|W12|BBT|Tot]'
         
     result = f"<b><u>{header}</u></b>\n\n<pre>BBT  {title}\n\n{dept}</pre>"
     result = re.sub(r'\|]',r']',result)  # Replaces '|]' with ']'

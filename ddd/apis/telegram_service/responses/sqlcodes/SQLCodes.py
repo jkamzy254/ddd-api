@@ -2115,7 +2115,7 @@ SELECT 'Total', SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bb
             dept = f"{dept}{' '*(3-len(str(dd.loc[r,c])))}{dd.loc[r,c]}|"
         dept = f"{dept}]\n"
     
-    title = '[ D1| D2| D3| D4| D5| D6| D7| D8| D9|OTH|SFT|OFF|M&W|MCT|TOT]'
+    title = '[ D1| D2| D3| D4| D5| D6| D7| D8| D9|OTH|SFT|M&W|MCT|TOT]'
         
     result = f"<b><u>{header}</u></b>\n\n<pre>Dept {title}\n\n{dept}</pre>"
     result = re.sub(r'\|]',r']',result)  # Replaces '|]' with ']'

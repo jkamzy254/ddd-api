@@ -2153,7 +2153,7 @@ SELECT 'Total', SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bb
 
     dept = str()
     for r in range(len(dd)):
-        dpt = str(dd.loc[r,'Dept'])[:6] + ' '*(6-len(str(dd.loc[r,'Dept'])[:6]))
+        dpt = str(dd.loc[r,'Dept'])[:3] + ' '*(3-len(str(dd.loc[r,'Dept'])[:3]))
         pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
         po  = ' '*(3-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
         ba  = ' '*(3-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
@@ -2165,7 +2165,7 @@ SELECT 'Total', SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bb
         t   = ' '*(3-len(str(dd.loc[r,'Total'])))  + str(dd.loc[r,'Total'])
         dept = f'{dept}{dpt}[{pn}|{po}|{ba}|{bm}|{bf}|{pf}|{ca}|{ci}|{t}]\n' 
                 
-    result = f"<b><u>{header}</u></b>\n\n<pre>Dept  {title}\n\n{dept}</pre>"
+    result = f"<b><u>{header}</u></b>\n\n<pre>Dpt{title}\n\n{dept}</pre>"
     result = re.sub(r'\|]',r']',result)  # Replaces '|]' with ']'
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'

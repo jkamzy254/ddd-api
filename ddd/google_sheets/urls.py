@@ -25,6 +25,7 @@ urlpatterns = [
   	path('getP/', nbd.GetPViewSet.as_view()),
   	path('getBTMFruits/', nbd.GetBTMFruitsViewSet.as_view()),
   	path('getBBTMasterList/', nbd.GetBBTMasterListViewSet.as_view()),
+  	path('updateBBTMasterList/', nbd.UpdateBBTMasterListViewSet.as_view()),
  
 	#CT Student EV
 	path('getCurrentJDSN/', cse.GetCurrentJDSNViewSet.as_view()),

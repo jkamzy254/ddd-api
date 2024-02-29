@@ -314,8 +314,8 @@ class GetBBTMasterListViewSet(APIView):
         
 class UpdateBBTMasterListViewSet(APIView):
     def post(self, request):
-        print(json.dumps(request.data))
-        data = json.dumps(request.data)
+        print(json.loads(request.body))
+        data = json.loads(request.body)
         newData = []
 
         try:

@@ -314,7 +314,7 @@ class GetBBTMasterListViewSet(APIView):
         
 class UpdateBBTMasterListViewSet(APIView):
     def post(self, request):
-        data = request.data['payload']
+        data = request.data
         newData = []
 
         try:

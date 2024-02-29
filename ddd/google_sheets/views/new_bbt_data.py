@@ -297,3 +297,25 @@ class GetBTMFruitsViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+        
+class GetBBTMasterListViewSet(APIView):
+    def get(self, request):
+        print(request)
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT M.Group_IMWY 'Dept', GI.Grp, M.Name, B.BtmNo, B.Status 
+                    FROM (Select * FROM BBTLog WHERE EndDate IS NULL) B 
+                    LEFT JOIN MemberData M ON M.UID = B.UID
+                    LEFT JOIN (Select * FROM GroupLog WHERE EndDate IS NULL) GL ON M.UID = GL.UID
+                    LEFT JOIN GroupInfo GI ON GI.GID = GL.GID
+                    WHERE M.Group_IMWY != 'MCT'
+                    ORDER BY GL.GID
+                """)
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

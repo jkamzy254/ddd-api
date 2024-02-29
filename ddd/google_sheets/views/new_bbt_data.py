@@ -306,7 +306,7 @@ class GetBBTMasterListViewSet(APIView):
         try:
             with connection.cursor() as cursor:
                 cursor.execute("""
-                    SELECT M.Group_IMWY 'Dept', GI.Grp, M.Name, B.BtmNo, B.Status 
+                    SELECT M.UID, M.Group_IMWY 'Dept', GI.Grp, M.Name, B.BtmNo, B.Status 
                     FROM (Select * FROM BBTLog WHERE EndDate IS NULL) B 
                     LEFT JOIN MemberData M ON M.UID = B.UID
                     LEFT JOIN (Select * FROM GroupLog WHERE EndDate IS NULL) GL ON M.UID = GL.UID

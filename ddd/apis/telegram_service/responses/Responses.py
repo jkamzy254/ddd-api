@@ -139,8 +139,12 @@ def bot_responses(id,input_text):
             return SQLCodes.bbfull(d)
         if command == 'bbactive':
             return SQLCodes.bbactive(d)
+        if command == 'deptbbactive':
+            return SQLCodes.deptbbactive(d)
         if command == 'bbinactive':
             return SQLCodes.bbinactive(d)
+        if command == 'deptbbinactive':
+            return SQLCodes.deptbbinactive(d)
         
         if command in ['youthmxpx','deptmxpx']:
             return SQLCodes.youthmxpx(d)

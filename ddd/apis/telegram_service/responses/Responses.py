@@ -97,6 +97,12 @@ def bot_responses(id,input_text):
             timerange = command[4:]
             return SQLCodes.tempfmp(timerange,sftg,access)
     
+    if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('list'):
+            if d == '__' and '/' in user_message:
+                i,d = user_message.split('/')
+            q,i = command.split('list')
+            return SQLCodes.bbtlist(q,d,g,access)
+    
     # Dept and above functions
     if access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','Dept','DecSFT','M&W Dept','All','IT']:
         
@@ -182,11 +188,11 @@ def bot_responses(id,input_text):
         if command == 'fmlist':
             return SQLCodes.fmlist(g)
 
-        if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('list'):
+        if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('listold'):
             if d == '__' and '/' in user_message:
                 i,d = user_message.split('/')
-            q,i = command.split('list')
-            return SQLCodes.bbtlist(q,d)
+            q,i = command.split('listold')
+            return SQLCodes.bbtlistold(q,d)
         
         if command == 'ev':
             i,id = user_message.split('/')

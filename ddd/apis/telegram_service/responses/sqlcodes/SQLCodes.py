@@ -1137,6 +1137,122 @@ def bbtlistold(q,d):
 
 
 
+def bblist(d,g,access):
+    d = d.capitalize()
+    g = '%' if access != 'Group' else g
+    gd = re.sub(r'^(\d)',r'G\1',g).capitalize() if access == 'Group' else str(d).replace('__','Youth')
+    
+    query = f"FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}') AND (L1D LIKE '{d}' OR L2D LIKE '{d}')"
+        
+    conn = odbc.connect(conn_str)   
+
+    dNP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {query} AND NewStatus = 'New P'    ORDER BY BBTN", conn)
+    dOP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {query} AND NewStatus = 'Old P'    ORDER BY BBTN", conn)
+    dAB = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {query} AND NewStatus = 'ABB'      ORDER BY BBTN", conn)
+    dIM = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {query} AND NewStatus = 'IBB ME'   ORDER BY BBTN", conn)
+    dIF = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {query} AND NewStatus = 'IBB FA'   ORDER BY BBTN", conn)
+    dFP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {query} AND NewStatus = 'Fallen P' ORDER BY BBTN", conn)
+    dAC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {query} AND NewStatus = 'ABB CCT'  ORDER BY BBTN", conn)
+    dIC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {query} AND NewStatus = 'IBB CCT'  ORDER BY BBTN", conn)
+    dNP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dOP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dAB.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dIM.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dIF.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dFP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dAC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dIC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    conn.cursor().close()
+        
+    if access == 'Group':
+        pts = [dNP['Points'].sum(), dOP['Points'].sum(), dAB['Points'].sum(), dIM['Points'].sum(), dIF['Points'].sum(), dFP['Points'].sum(), dAC['Points'].sum(), dIC['Points'].sum()]
+        pt = 'Points'
+    elif d != '__':
+        pts = [dNP['DPoints'].sum(), dOP['DPoints'].sum(), dAB['DPoints'].sum(), dIM['DPoints'].sum(), dIF['DPoints'].sum(), dFP['DPoints'].sum(), dAC['DPoints'].sum(), dIC['DPoints'].sum()]
+        pt = 'DPoints'
+    else:
+        pts = [len(dNP),len(dOP),len(dAB),len(dIM),len(dIF),len(dFP),len(dAC),len(dIC)]
+        
+    if len(dNP) == 0:
+        np = ''
+    else:
+        np = f"<i><b><u>New Picking ({pts[0]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dNP)):
+            np = f"{np}💛{r+1}. [{dNP.loc[r,'LastClass']}] [{dNP.loc[r,pt] if d != '__' else '1'}] {dNP.loc[r,'FruitName'][:8]} - {dNP.loc[r,'L1N']}{dNP.loc[r,'L2N']} - {(dNP.loc[r,'BBTN'])}\n"
+        np = np + '</pre>\n'
+        
+    if len(dOP) == 0:
+        op = ''
+    else:
+        op = f"<i><b><u>Old Picking ({pts[1]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dOP)):
+            op = f"{op}⛔️{r+1}. [{dOP.loc[r,'LastClass']}] [{dOP.loc[r,pt] if d != '__' else '1'}] {dOP.loc[r,'FruitName'][:8]} - {dOP.loc[r,'L1N']}{dOP.loc[r,'L2N']} - {(dOP.loc[r,'BBTN'])}\n"
+        op = op + '</pre>\n'
+    
+    if len(dAB) == 0:
+        ab = ''
+    else:
+        ab = f"<i><b><u>Active BB ({pts[2]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dAB)):
+            ab = f"{ab}🟢{r+1}. [{dAB.loc[r,'LastClass']}] [{dAB.loc[r,pt] if d != '__' else '1'}] {dAB.loc[r,'FruitName'][:8]} - {dAB.loc[r,'L1N']}{dAB.loc[r,'L2N']} - {(dAB.loc[r,'BBTN'])} - {(dAB.loc[r,'LastTopic'])} → [{(dAB.loc[r,'NextClassDate'])}]\n"
+        ab = ab + '</pre>\n'
+        
+    if len(dIM) == 0:
+        im = ''
+    else:
+        im = f"<i><b><u>IBB Missed Education ({pts[3]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dIM)):
+            im = f"{im}🔴{r+1}. [{dIM.loc[r,'LastClass']}] [{dIM.loc[r,pt] if d != '__' else '1'}] {dIM.loc[r,'FruitName'][:8]} - {dIM.loc[r,'L1N']}{dIM.loc[r,'L2N']} - {(dIM.loc[r,'BBTN'])} - {(dIM.loc[r,'LastTopic'])} → [{(dIM.loc[r,'NextClassDate'])}]\n"
+        im = im + '</pre>\n'
+        
+    if len(dIF) == 0:
+        fa = ''
+    else:
+        fa = f"<i><b><u>IBB Fallen ({pts[4]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dIF)):
+            fa = f"{fa}⚫️{r+1}. [{dIF.loc[r,'LastClass']}] [{dIF.loc[r,pt] if d != '__' else '1'}] {dIF.loc[r,'FruitName'][:8]} - {dIF.loc[r,'L1N']}{dIF.loc[r,'L2N']} - {(dIF.loc[r,'BBTN'])} - {(dIF.loc[r,'LastTopic'])} → [{(dIF.loc[r,'NextClassDate'])}]\n"
+        fa = fa + '</pre>\n'
+        
+    if len(dFP) == 0:
+        fp = ''
+    else:
+        fp = f"<i><b><u>Fallen Picking ({pts[5]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dFP)):
+            fp = f"{fp}❌{r+1}. [{dFP.loc[r,'LastClass']}] [{dFP.loc[r,pt] if d != '__' else '1'}] {dFP.loc[r,'FruitName'][:8]} - {dFP.loc[r,'L1N']}{dFP.loc[r,'L2N']} - {(dFP.loc[r,'BBTN'])}\n"
+        fp = fp + '</pre>\n'
+        
+    if len(dAC) == 0:
+        ac = ''
+    else:
+        ac = f"<i><b><u>CCT ABB ({pts[6]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dAC)):
+            ac = f"{ac}⭐️{r+1}. [{dAC.loc[r,'LastClass']}] [{dAC.loc[r,pt] if d != '__' else '1'}] {dAC.loc[r,'FruitName'][:8]} - {dAC.loc[r,'L1N']}{dAC.loc[r,'L2N']} - {(dAC.loc[r,'BBTN'])} - {(dAC.loc[r,'LastTopic'])} → [{(dAC.loc[r,'NextClassDate'])}]\n"
+        ac = ac + '</pre>\n'
+        
+    if len(dIC) == 0:
+        ic = ''
+    else:
+        ic = f"<i><b><u>CCT IBB ({pts[7]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dIC)):
+            ic = f"{ic}⭐️{r+1}. [{dIC.loc[r,'LastClass']}] [{dIC.loc[r,pt] if d != '__' else '1'}] {dIC.loc[r,'FruitName'][:8]} - {dIC.loc[r,'L1N']}{dIC.loc[r,'L2N']} - {(dIC.loc[r,'BBTN'])} - {(dIC.loc[r,'LastTopic'])} → [{(dIC.loc[r,'NextClassDate'])}]\n"
+        ic = ic + '</pre>\n'
+    
+    result = f"<b><u>📚{gd} BB Fruit List📚</u></b>\n\n<i>▫️Status▫️\n#. [LastClassDate] [Pts] - Fruit - L1 / L2 - BBT - LastTopic → [NextClassDate]</i>\n\n{np}{op}{ab}{im}{fa}{fp}{ac}{ic}<b><i><u>Total: {sum(pts)} Pts</u></i></b>"
+    result = re.sub(r'\.0',r'',result)
+    result = re.sub(r' \(\)',r'',result)
+    result = re.sub(r'\((\d+)\)', r'(G\1)', result)
+    result = re.sub(r'\[1\] ', r'', result)
+    return result
+
+
+
+
+
+
+
+
+
+
 def bbtlist(q,d,g,access):
     d = d.capitalize()
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
@@ -1149,29 +1265,30 @@ def bbtlist(q,d,g,access):
     
     conn = odbc.connect(conn_str)   
 
-    dNP = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','New P')    s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dOP = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','Old P')    s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dAB = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','ABB')      s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dIM = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','IBB ME')   s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dIF = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','IBB FA')   s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dFP = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','Fallen P') s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dAC = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','ABB CCT')  s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dIC = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','IBB CCT')  s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dNP.columns = ['BBTN','FruitName','L1N','L2N']
-    dOP.columns = ['BBTN','FruitName','L1N','L2N']
-    dAB.columns = ['BBTN','FruitName','L1N','L2N']
-    dIM.columns = ['BBTN','FruitName','L1N','L2N']
-    dIF.columns = ['BBTN','FruitName','L1N','L2N']
-    dFP.columns = ['BBTN','FruitName','L1N','L2N']
-    dAC.columns = ['BBTN','FruitName','L1N','L2N']
-    dIC.columns = ['BBTN','FruitName','L1N','L2N']
+    dNP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'New P'    AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dOP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'Old P'    AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dAB = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'ABB'      AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dIM = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'IBB ME'   AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dIF = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'IBB FA'   AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dFP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'Fallen P' AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dAC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'ABB CCT'  AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dIC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'IBB CCT'  AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dNP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
+    dOP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
+    dAB.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
+    dIM.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
+    dIF.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
+    dFP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
+    dAC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
+    dIC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
     conn.cursor().close()
+
     if len(dNP) == 0:
         np = ''
     else:
         np = f"<i><b><u>New Picking ({len(dNP)} Pt)</u></b></i>\n<pre>"
         for r in range(len(dNP)):
-            np = f"{np}💛{r+1}. {(dNP.loc[r,'BBTN'])[:8]} - {dNP.loc[r,'FruitName'][:8]} - {dNP.loc[r,'L1N'][:8]}{dNP.loc[r,'L2N'][:11]}\n"
+            np = f"{np}💛{r+1}. [{dNP.loc[r,'LastClass']}] {(dNP.loc[r,'BBTN'])[:8]} - {dNP.loc[r,'FruitName'][:8]} - {dNP.loc[r,'L1N'][:8]}{dNP.loc[r,'L2N'][:11]}\n"
         np = np + '</pre>\n'
         
     if len(dOP) == 0:
@@ -1179,7 +1296,7 @@ def bbtlist(q,d,g,access):
     else:
         op = f"<i><b><u>Old Picking ({len(dOP)} Pt)</u></b></i>\n<pre>"
         for r in range(len(dOP)):
-            op = f"{op}⛔️{r+1}. {(dOP.loc[r,'BBTN'])[:8]} - {dOP.loc[r,'FruitName'][:8]} - {dOP.loc[r,'L1N'][:8]}{dOP.loc[r,'L2N'][:11]}\n"
+            op = f"{op}⛔️{r+1}. [{dOP.loc[r,'LastClass']}] {(dOP.loc[r,'BBTN'])[:8]} - {dOP.loc[r,'FruitName'][:8]} - {dOP.loc[r,'L1N'][:8]}{dOP.loc[r,'L2N'][:11]}\n"
         op = op + '</pre>\n'
     
     if len(dAB) == 0:
@@ -1187,7 +1304,7 @@ def bbtlist(q,d,g,access):
     else:
         ab = f"<i><b><u>Active BB ({len(dAB)} Pt)</u></b></i>\n<pre>"
         for r in range(len(dAB)):
-            ab = f"{ab}🟢{r+1}. {(dAB.loc[r,'BBTN'])[:8]} - {dAB.loc[r,'FruitName'][:8]} - {dAB.loc[r,'L1N'][:8]}{dAB.loc[r,'L2N'][:11]}\n"
+            ab = f"{ab}🟢{r+1}. [{dAB.loc[r,'LastClass']}] {(dAB.loc[r,'BBTN'])[:8]} - {dAB.loc[r,'FruitName'][:8]} - {dAB.loc[r,'L1N'][:8]}{dAB.loc[r,'L2N'][:11]} - {(dAB.loc[r,'LastTopic'])} → [{(dAB.loc[r,'NextClassDate'])}]\n"
         ab = ab + '</pre>\n'
         
     if len(dIM) == 0:
@@ -1195,7 +1312,7 @@ def bbtlist(q,d,g,access):
     else:
         im = f"<i><b><u>IBB Missed Education ({len(dIM)} Pt)</u></b></i>\n<pre>"
         for r in range(len(dIM)):
-            im = f"{im}🔴{r+1}. {(dIM.loc[r,'BBTN'])[:8]} - {dIM.loc[r,'FruitName'][:8]} - {dIM.loc[r,'L1N'][:8]}{dIM.loc[r,'L2N'][:11]}\n"
+            im = f"{im}🔴{r+1}. [{dIM.loc[r,'LastClass']}] {(dIM.loc[r,'BBTN'])[:8]} - {dIM.loc[r,'FruitName'][:8]} - {dIM.loc[r,'L1N'][:8]}{dIM.loc[r,'L2N'][:11]} - {(dIM.loc[r,'LastTopic'])} → [{(dIM.loc[r,'NextClassDate'])}]\n"
         im = im + '</pre>\n'
         
     if len(dIF) == 0:
@@ -1203,7 +1320,7 @@ def bbtlist(q,d,g,access):
     else:
         fa = f"<i><b><u>IBB Fallen ({len(dIF)} Pt)</u></b></i>\n<pre>"
         for r in range(len(dIF)):
-            fa = f"{fa}⚫️{r+1}. {(dIF.loc[r,'BBTN'])[:8]} - {dIF.loc[r,'FruitName'][:8]} - {dIF.loc[r,'L1N'][:8]}{dIF.loc[r,'L2N'][:11]}\n"
+            fa = f"{fa}⚫️{r+1}. [{dIF.loc[r,'LastClass']}] {(dIF.loc[r,'BBTN'])[:8]} - {dIF.loc[r,'FruitName'][:8]} - {dIF.loc[r,'L1N'][:8]}{dIF.loc[r,'L2N'][:11]} - {(dIF.loc[r,'LastTopic'])} → [{(dIF.loc[r,'NextClassDate'])}]\n"
         fa = fa + '</pre>\n'
         
     if len(dFP) == 0:
@@ -1211,7 +1328,7 @@ def bbtlist(q,d,g,access):
     else:
         fp = f"<i><b><u>Fallen Picking ({len(dFP)} Pt)</u></b></i>\n<pre>"
         for r in range(len(dFP)):
-            fp = f"{fp}❌{r+1}. {(dFP.loc[r,'BBTN'])[:8]} - {dFP.loc[r,'FruitName'][:8]} - {dFP.loc[r,'L1N'][:8]}{dFP.loc[r,'L2N'][:11]}\n"
+            fp = f"{fp}❌{r+1}. [{dFP.loc[r,'LastClass']}] {(dFP.loc[r,'BBTN'])[:8]} - {dFP.loc[r,'FruitName'][:8]} - {dFP.loc[r,'L1N'][:8]}{dFP.loc[r,'L2N'][:11]}\n"
         fp = fp + '</pre>\n'
         
     if len(dAC) == 0:
@@ -1219,7 +1336,7 @@ def bbtlist(q,d,g,access):
     else:
         ac = f"<i><b><u>CCT ABB ({len(dAC)} Pt)</u></b></i>\n<pre>"
         for r in range(len(dAC)):
-            ac = f"{ac}⭐️{r+1}. {(dAC.loc[r,'BBTN'])[:8]} - {dAC.loc[r,'FruitName'][:8]} - {dAC.loc[r,'L1N'][:8]}{dAC.loc[r,'L2N'][:11]}\n"
+            ac = f"{ac}⭐️{r+1}. [{dAC.loc[r,'LastClass']}] {(dAC.loc[r,'BBTN'])[:8]} - {dAC.loc[r,'FruitName'][:8]} - {dAC.loc[r,'L1N'][:8]}{dAC.loc[r,'L2N'][:11]} - {(dAC.loc[r,'LastTopic'])} → [{(dAC.loc[r,'NextClassDate'])}]\n"
         ac = ac + '</pre>\n'
         
     if len(dIC) == 0:
@@ -1227,10 +1344,10 @@ def bbtlist(q,d,g,access):
     else:
         ic = f"<i><b><u>CCT IBB ({len(dIC)} Pt)</u></b></i>\n<pre>"
         for r in range(len(dIC)):
-            ic = f"{ic}⭐️{r+1}. {(dIC.loc[r,'BBTN'])[:8]} - {dIC.loc[r,'FruitName'][:8]} - {dIC.loc[r,'L1N'][:8]}{dIC.loc[r,'L2N'][:11]}\n"
+            ic = f"{ic}⭐️{r+1}. [{dIC.loc[r,'LastClass']}] {(dIC.loc[r,'BBTN'])[:8]} - {dIC.loc[r,'FruitName'][:8]} - {dIC.loc[r,'L1N'][:8]}{dIC.loc[r,'L2N'][:11]} - {(dIC.loc[r,'LastTopic'])} → [{(dIC.loc[r,'NextClassDate'])}]\n"
         ic = ic + '</pre>\n'
     
-    result = f"<b><u>📖{gd} {bbttype} Student List📖</u></b>\n\n<i>▫️Status▫️\n#. BBT - Fruit - Leaf1 / Leaf2</i>\n\n{np}{op}{ab}{im}{fa}{fp}{ac}{ic}"
+    result = f"<b><u>📖{gd} {bbttype} Student List📖</u></b>\n\n<i>▫️Status▫️\n#. [LastClassDate] BBT - Student - Leaf1 / Leaf2 - LastTopic → [NextClassDate]</i>\n\n{np}{op}{ab}{im}{fa}{fp}{ac}{ic}<b><i><u>Total: {sum([len(dNP),len(dOP),len(dAB),len(dIM),len(dIF),len(dFP),len(dAC),len(dIC)])} Pts</u></i></b>"
     result = re.sub(r'\.0',r'',result)
     result = re.sub(r' \(\)',r'',result)
     result = re.sub(r'\((\d+)\)', r'(G\1)', result)

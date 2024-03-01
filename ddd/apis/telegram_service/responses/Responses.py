@@ -29,9 +29,9 @@ def bot_responses(id,input_text):
                     command,g = user_message.split('/')
                 except ValueError:
                     return 'Format error: Too many "/"s'
-            if g.lower() not in ['gd','glg','hangul','serving']:
-                g = g.replace('g','').replace('G','')
-            d,r,sd = SQLCodes.groupinfo(g).split('/')
+                if g.lower() not in ['gd','glg','hangul','serving']:
+                    g = g.replace('g','').replace('G','')
+                d,r,sd = SQLCodes.groupinfo(g).split('/')
         else:
             command = user_message
     
@@ -96,6 +96,9 @@ def bot_responses(id,input_text):
         if command.startswith('temp'):
             timerange = command[4:]
             return SQLCodes.tempfmp(timerange,sftg,access)
+    
+    if command == 'bblist':
+        return SQLCodes.bblist(d,g,access)
     
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('list'):
             if d == '__' and '/' in user_message:

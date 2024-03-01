@@ -12,6 +12,7 @@ import debug_toolbar
 urlpatterns = [ 
     #For Group
 	path('getPeriodAttendance/', g.SVCGetPeriodAttendanceViewSet.as_view()),
+	path('getGroupWeeklylog/', g.SVCGetGroupWeeklylogViewSet.as_view()),
  
     #For Dept
 	path('getDeptBreakdown/', d.SVCGetDeptBreakdownViewSet.as_view()),

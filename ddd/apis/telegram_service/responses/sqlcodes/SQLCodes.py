@@ -1149,22 +1149,22 @@ def bbtlist(q,d,g,access):
     
     conn = odbc.connect(conn_str)   
 
-    dNP = pd.read_sql(f"SELECT s.* FROM CodeyBBList('%','New P')    s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dOP = pd.read_sql(f"SELECT s.* FROM CodeyBBList('%','Old P')    s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dAB = pd.read_sql(f"SELECT s.* FROM CodeyBBList('%','ABB')      s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dIM = pd.read_sql(f"SELECT s.* FROM CodeyBBList('%','IBB ME')   s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dIF = pd.read_sql(f"SELECT s.* FROM CodeyBBList('%','IBB FA')   s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dFP = pd.read_sql(f"SELECT s.* FROM CodeyBBList('%','Fallen P') s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dAC = pd.read_sql(f"SELECT s.* FROM CodeyBBList('%','ABB CCT')  s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dIC = pd.read_sql(f"SELECT s.* FROM CodeyBBList('%','IBB CCT')  s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dNP.columns = ['FruitName','L1N','L1G','L2N','L2G','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','UID','BBTID']
-    dOP.columns = ['FruitName','L1N','L1G','L2N','L2G','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','UID','BBTID']
-    dAB.columns = ['FruitName','L1N','L1G','L2N','L2G','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','UID','BBTID']
-    dIM.columns = ['FruitName','L1N','L1G','L2N','L2G','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','UID','BBTID']
-    dIF.columns = ['FruitName','L1N','L1G','L2N','L2G','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','UID','BBTID']
-    dFP.columns = ['FruitName','L1N','L1G','L2N','L2G','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','UID','BBTID']
-    dAC.columns = ['FruitName','L1N','L1G','L2N','L2G','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','UID','BBTID']
-    dIC.columns = ['FruitName','L1N','L1G','L2N','L2G','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','UID','BBTID']
+    dNP = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','New P')    s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dOP = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','Old P')    s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dAB = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','ABB')      s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dIM = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','IBB ME')   s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dIF = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','IBB FA')   s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dFP = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','Fallen P') s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dAC = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','ABB CCT')  s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dIC = pd.read_sql(f"SELECT BBTN, FruitName, L1N, L2N FROM CodeyBBTList('%','IBB CCT')  s LEFT JOIN TaskHigh t ON t.UID = s.BBTID WHERE BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dNP.columns = ['BBTN','FruitName','L1N','L2N']
+    dOP.columns = ['BBTN','FruitName','L1N','L2N']
+    dAB.columns = ['BBTN','FruitName','L1N','L2N']
+    dIM.columns = ['BBTN','FruitName','L1N','L2N']
+    dIF.columns = ['BBTN','FruitName','L1N','L2N']
+    dFP.columns = ['BBTN','FruitName','L1N','L2N']
+    dAC.columns = ['BBTN','FruitName','L1N','L2N']
+    dIC.columns = ['BBTN','FruitName','L1N','L2N']
     conn.cursor().close()
     if len(dNP) == 0:
         np = ''

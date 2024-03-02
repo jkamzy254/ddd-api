@@ -2052,8 +2052,8 @@ def bbinactive(d):
         po  = ' '*(4-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
         bm  = ' '*(4-len(str(dg.loc[r,'bbME']))) + str(dg.loc[r,'bbME'])
         ci  = ' '*(4-len(str(dg.loc[r,'cctI']))) + str(dg.loc[r,'cctI'])
-        pf  = ' '*(5-len(str(dg.loc[r,'pFA'])))  + str(dg.loc[r,'pFA'])
-        bf  = ' '*(5-len(str(dg.loc[r,'bbFA']))) + str(dg.loc[r,'bbFA'])
+        pf  = ' '*(4-len(str(dg.loc[r,'pFA'])))  + str(dg.loc[r,'pFA'])
+        bf  = ' '*(4-len(str(dg.loc[r,'bbFA']))) + str(dg.loc[r,'bbFA'])
         group = f'{group}{grp}[{po}|{bm}|{ci}{separator}{pf}|{bf}]\n'
     
     dept = str()    
@@ -2062,16 +2062,16 @@ def bbinactive(d):
         po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
         bm  = ' '*(4-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
         ci  = ' '*(4-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
-        pf  = ' '*(5-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
-        bf  = ' '*(5-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
+        pf  = ' '*(4-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
+        bf  = ' '*(4-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
         dept = f'{dept}{dpt}[{po}|{bm}|{ci}{separator}{pf}|{bf}]\n'
             
     if d == '__':
         bm = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         po = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ci = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
-        pf = ' '*(5-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
-        bf = ' '*(5-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA']) 
+        pf = ' '*(4-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
+        bf = ' '*(4-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA']) 
         youth = f'\nTot [{po}|{bm}|{ci}{separator}{pf}|{bf}]\n'
 
     else:
@@ -2114,16 +2114,16 @@ def deptbbinactive(d):
         po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
         bm  = ' '*(4-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
         ci  = ' '*(4-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
-        pf  = ' '*(5-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
-        bf  = ' '*(5-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
+        pf  = ' '*(4-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
+        bf  = ' '*(4-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
         dept = f'{dept}{dpt}[{po}|{bm}|{ci}{separator}{pf}|{bf}]\n'
             
     if d == '__':
         bm = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         po = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ci = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
-        pf = ' '*(5-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
-        bf = ' '*(5-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA']) 
+        pf = ' '*(4-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
+        bf = ' '*(4-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA']) 
         youth = f'\nTot [{po}|{bm}|{ci}{separator}{pf}|{bf}]\n'
 
     else:

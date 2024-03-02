@@ -1920,17 +1920,17 @@ def bbactive(d):
     
     conn = odbc.connect(conn_str)
     
-    bb_group = f"SELECT Grp, pNew, pOld, bbA, cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"
-    bb_dept = f"""SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
-    bb_youth = f"""SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
+    bb_group = f"SELECT Grp, pNew, bbA, cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"
+    bb_dept = f"""SELECT Dept, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
+    bb_youth = f"""SELECT SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
     
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
     dy = pd.read_sql(bb_youth, conn)
 
-    dg.columns = ['Grp','pNew','pOld','bbA','cctA']
-    dd.columns = ['Dept','pNew','pOld','bbA','cctA']
-    dy.columns = ['pNew','pOld','bbA','cctA']
+    dg.columns = ['Grp','pNew','bbA','cctA']
+    dd.columns = ['Dept','pNew','bbA','cctA']
+    dy.columns = ['pNew','bbA','cctA']
     
     dg['Grp'] = dg['Grp'].str.replace(r'^(\d)', r'G\1')
     dd.replace(r' Dept',r'', regex = True, inplace = True)
@@ -1942,32 +1942,29 @@ def bbactive(d):
     group = str()
     for r in range(len(dg)):
         grp =    str(dg.loc[r,'Grp']) + ' '*(4-len(str(dg.loc[r,'Grp'])))
-        pn  = ' '*(4-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
-        po  = ' '*(4-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
-        ba  = ' '*(4-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
+        pn  = ' '*(5-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
+        ba  = ' '*(5-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
         ca  = ' '*(4-len(str(dg.loc[r,'cctA']))) + str(dg.loc[r,'cctA'])
-        group = f'{group}{grp}[{pn}|{po}{separator}{ba}|{ca}]\n'
+        group = f'{group}{grp}[{pn}|{ba}|{ca}]\n'
     
     dept = str()    
     for r in range(len(dd)):
         dpt = str(dd.loc[r,'Dept'])   + ' '*(4-len(str(dd.loc[r,'Dept'])))
-        pn  = ' '*(4-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
-        po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
-        ba  = ' '*(4-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
+        pn  = ' '*(5-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
+        ba  = ' '*(5-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
         ca  = ' '*(4-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
-        dept = f'{dept}{dpt}[{pn}|{po}{separator}{ba}|{ca}]\n'
+        dept = f'{dept}{dpt}[{pn}|{ba}|{ca}]\n'
             
     if d == '__':
-        pn = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
-        po = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
-        ba = ' '*(4-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
+        pn = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
+        ba = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
         ca = ' '*(4-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
-        youth = f'\nTot [{pn}|{po}{separator}{ba}|{ca}]\n'
+        youth = f'\nTot [{pn}|{ba}|{ca}]\n'
 
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('__','Youth')} BB Status </u></b>\n\n<pre>Grp [ NP | OP {separator} AB | CA ]\n\n{group}\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('__','Youth')} Active BB Status </u></b>\n\n<pre>Grp [  NP |  AB | CA ]\n\n{group}\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -1980,45 +1977,41 @@ def deptbbactive(d):
     
     conn = odbc.connect(conn_str)
     
-    bb_group = f"SELECT Grp, pNew, pOld, bbA, cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"
-    bb_dept = f"""SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
-    bb_youth = f"""SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
+    bb_group = f"SELECT Grp, pNew, bbA, cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"
+    bb_dept = f"""SELECT Dept, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
+    bb_youth = f"""SELECT SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
     
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
     dy = pd.read_sql(bb_youth, conn)
 
-    dg.columns = ['Grp','pNew','pOld','bbA','cctA']
-    dd.columns = ['Dept','pNew','pOld','bbA','cctA']
-    dy.columns = ['pNew','pOld','bbA','cctA']
+    dg.columns = ['Grp','pNew','bbA','cctA']
+    dd.columns = ['Dept','pNew','bbA','cctA']
+    dy.columns = ['pNew','bbA','cctA']
     
     dg['Grp'] = dg['Grp'].str.replace(r'^(\d)', r'G\1')
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
     conn.cursor().close()
-
-    separator = '] ['
     
     dept = str()    
     for r in range(len(dd)):
         dpt = str(dd.loc[r,'Dept'])   + ' '*(4-len(str(dd.loc[r,'Dept'])))
-        pn  = ' '*(4-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
-        po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
-        ba  = ' '*(4-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
+        pn  = ' '*(5-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
+        ba  = ' '*(5-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
         ca  = ' '*(4-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
-        dept = f'{dept}{dpt}[{pn}|{po}{separator}{ba}|{ca}]\n'
+        dept = f'{dept}{dpt}[{pn}|{ba}|{ca}]\n'
             
     if d == '__':
-        pn = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
-        po = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
-        ba = ' '*(4-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
+        pn = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
+        ba = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
         ca = ' '*(4-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
-        youth = f'\nTot [{pn}|{po}{separator}{ba}|{ca}]\n'
+        youth = f'\nTot [{pn}|{ba}|{ca}]\n'
 
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('__','Youth')} BB Status </u></b>\n\n<pre>Grp [ NP | OP {separator} AB | CA ]\n\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('__','Youth')} Active BB Status </u></b>\n\n<pre>Grp [  NP |  AB | CA ]\n\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -2034,54 +2027,57 @@ def bbinactive(d):
     
     conn = odbc.connect(conn_str)
     
-    bb_group = f"""SELECT Grp, bbME, cctI, pFA, bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
-    bb_dept = f"""SELECT Dept, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
-    bb_youth = f"""SELECT SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
+    bb_group = f"""SELECT Grp, pOld, bbME, cctI, pFA, bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
+    bb_dept = f"""SELECT Dept, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
+    bb_youth = f"""SELECT SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
     
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
     dy = pd.read_sql(bb_youth, conn)
 
-    dg.columns = ['Grp','bbME','cctI','pFA','bbFA']
-    dd.columns = ['Dept','bbME','cctI','pFA','bbFA']
-    dy.columns = ['bbME','cctI','pFA','bbFA']
+    dg.columns = ['Grp','pOld','bbME','cctI','pFA','bbFA']
+    dd.columns = ['Dept','pOld','bbME','cctI','pFA','bbFA']
+    dy.columns = ['bbME','pOld','cctI','pFA','bbFA']
     
     dg['Grp'] = dg['Grp'].str.replace(r'^(\d)', r'G\1')
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
     conn.cursor().close()
-
-    separator = '] ['
+    
+    separator = '|'
     
     group = str()
     for r in range(len(dg)):
         grp =    str(dg.loc[r,'Grp']) + ' '*(4-len(str(dg.loc[r,'Grp'])))
+        po  = ' '*(4-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
         bm  = ' '*(4-len(str(dg.loc[r,'bbME']))) + str(dg.loc[r,'bbME'])
         ci  = ' '*(4-len(str(dg.loc[r,'cctI']))) + str(dg.loc[r,'cctI'])
         pf  = ' '*(5-len(str(dg.loc[r,'pFA'])))  + str(dg.loc[r,'pFA'])
         bf  = ' '*(5-len(str(dg.loc[r,'bbFA']))) + str(dg.loc[r,'bbFA'])
-        group = f'{group}{grp}[{bm}|{ci}{separator}{pf}|{bf}]\n'
+        group = f'{group}{grp}[{po}|{bm}|{ci}{separator}{pf}|{bf}]\n'
     
     dept = str()    
     for r in range(len(dd)):
         dpt = str(dd.loc[r,'Dept'])   + ' '*(4-len(str(dd.loc[r,'Dept'])))
+        po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
         bm  = ' '*(4-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
         ci  = ' '*(4-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
         pf  = ' '*(5-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
         bf  = ' '*(5-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
-        dept = f'{dept}{dpt}[{bm}|{ci}{separator}{pf}|{bf}]\n'
+        dept = f'{dept}{dpt}[{po}|{bm}|{ci}{separator}{pf}|{bf}]\n'
             
     if d == '__':
         bm = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
+        po = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ci = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
         pf = ' '*(5-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
         bf = ' '*(5-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA']) 
-        youth = f'\nTot [{bm}|{ci}{separator}{pf}|{bf}]\n'
+        youth = f'\nTot [{po}|{bm}|{ci}{separator}{pf}|{bf}]\n'
 
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('__','Youth')} BB Status </u></b>\n\n<pre>Grp [ ME | CI {separator}  FP |  FA ]\n\n{group}\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('__','Youth')} Inactive BB Status </u></b>\n\n<pre>Grp [ OP | ME | CI {separator}  FP |  FA ]\n\n{group}\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -2093,45 +2089,47 @@ def deptbbinactive(d):
     
     conn = odbc.connect(conn_str)
     
-    bb_group = f"""SELECT Grp, bbME, cctI, pFA, bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
-    bb_dept = f"""SELECT Dept, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
-    bb_youth = f"""SELECT SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
+    bb_group = f"""SELECT Grp, pOld, bbME, cctI, pFA, bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
+    bb_dept = f"""SELECT Dept, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
+    bb_youth = f"""SELECT SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
     
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
     dy = pd.read_sql(bb_youth, conn)
 
-    dg.columns = ['Grp','bbME','cctI','pFA','bbFA']
-    dd.columns = ['Dept','bbME','cctI','pFA','bbFA']
-    dy.columns = ['bbME','cctI','pFA','bbFA']
+    dg.columns = ['Grp','pOld','bbME','cctI','pFA','bbFA']
+    dd.columns = ['Dept','pOld','bbME','cctI','pFA','bbFA']
+    dy.columns = ['bbME','pOld','cctI','pFA','bbFA']
     
     dg['Grp'] = dg['Grp'].str.replace(r'^(\d)', r'G\1')
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
     conn.cursor().close()
-
-    separator = '] ['
+    
+    separator = '|'
     
     dept = str()    
     for r in range(len(dd)):
         dpt = str(dd.loc[r,'Dept'])   + ' '*(4-len(str(dd.loc[r,'Dept'])))
+        po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
         bm  = ' '*(4-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
         ci  = ' '*(4-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
         pf  = ' '*(5-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
         bf  = ' '*(5-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
-        dept = f'{dept}{dpt}[{bm}|{ci}{separator}{pf}|{bf}]\n'
+        dept = f'{dept}{dpt}[{po}|{bm}|{ci}{separator}{pf}|{bf}]\n'
             
     if d == '__':
         bm = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
+        po = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ci = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
         pf = ' '*(5-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
         bf = ' '*(5-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA']) 
-        youth = f'\nTot [{bm}|{ci}{separator}{pf}|{bf}]\n'
+        youth = f'\nTot [{po}|{bm}|{ci}{separator}{pf}|{bf}]\n'
 
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('__','Youth')} BB Status </u></b>\n\n<pre>Grp [ ME | CI {separator}  FP |  FA ]\n\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('__','Youth')} Inactive BB Status </u></b>\n\n<pre>Grp [ OP | ME | CI {separator}  FP |  FA ]\n\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result

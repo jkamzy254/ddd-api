@@ -2077,7 +2077,7 @@ def bbinactive(d):
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('__','Youth')} Inactive BB Status </u></b>\n\n<pre>Grp [ OP | ME | CI {separator}  FP |  FA ]\n\n{group}\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('__','Youth')} Inactive BB Status </u></b>\n\n<pre>Grp [ OP | ME | CI {separator} FP | FA ]\n\n{group}\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -2129,7 +2129,7 @@ def deptbbinactive(d):
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('__','Youth')} Inactive BB Status </u></b>\n\n<pre>Grp [ OP | ME | CI {separator}  FP |  FA ]\n\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('__','Youth')} Inactive BB Status </u></b>\n\n<pre>Grp [ OP | ME | CI {separator} FP | FA ]\n\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result

@@ -2044,7 +2044,7 @@ def bbinactive(d):
     
     conn.cursor().close()
     
-    separator = '|'
+    separator = '||'
     
     group = str()
     for r in range(len(dg)):
@@ -2106,7 +2106,7 @@ def deptbbinactive(d):
     
     conn.cursor().close()
     
-    separator = '|'
+    separator = '||'
     
     dept = str()    
     for r in range(len(dd)):

@@ -1031,7 +1031,63 @@ def bbtstatus(q, d, access):
 
 
 
+def deptbbtstatus(q, d, access):
+    
+    name = 'BBT' if access == 'IT' else 'BBTCode'
+    d = d.capitalize()
+    
+    i = q if q in ['bbt','gyjnbbt'] else 'btm'
+    bbtvalues = {'bbt'     : ['BBT',   ""],
+                 'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
+                 'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+    bbttype,query = bbtvalues[i]
+    
+    conn = odbc.connect(conn_str)
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query}"
+    
+    dd = pd.read_sql(bb_dept, conn)
+    dy = pd.read_sql(bb_youth, conn)
 
+    dd.columns = ['Dept','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
+    dy.columns = ['pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
+    dd.replace(r' Dept',r'', regex = True, inplace = True)
+    
+    conn.cursor().close()
+
+    dept = str()    
+    for r in range(len(dd)):
+        dpt =   str(dd.loc[r,'Dept'])[:3] + ' '*(3-len(str(dd.loc[r,'Dept'])[:3]))
+        pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
+        po  = ' '*(3-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
+        ba  = ' '*(3-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
+        ca  = ' '*(3-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
+        bm  = ' '*(3-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
+        ci  = ' '*(3-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
+        pf  = ' '*(3-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
+        bf  = ' '*(3-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
+        t   = ' '*(3-len(str(dd.loc[r,'Tot'])))  + str(dd.loc[r,'Tot'])
+        dept = f'{dept}{dpt}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
+            
+    if d == '__':
+        pn  = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
+        po  = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
+        ba  = ' '*(3-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
+        ca  = ' '*(3-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
+        bm  = ' '*(3-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
+        ci  = ' '*(3-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
+        pf  = ' '*(3-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
+        bf  = ' '*(3-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA'])
+        t   = ' '*(3-len(str(dy.loc[0,'Tot'])))  + str(dy.loc[0,'Tot'])
+        youth = f'\nTot[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]'
+
+    else:
+        youth = str()
+    
+    summary = f"<b><u>{str(d).replace('__','Youth')} {bbttype} Status Summary</u></b>\n\n<pre>   [ NP| OP| AB| CA| ME| CI| FP| FA|TOT]\n\n{dept}{youth}</pre>"
+    summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
+    summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
+    return summary
 
 
 
@@ -1125,6 +1181,7 @@ def deptbbtactive(q, d, access):
     d = d.capitalize()
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
+    
     bbtvalues = {'bbt'     : ['BBT',   ""],
                  'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}

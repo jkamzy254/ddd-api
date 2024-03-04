@@ -72,7 +72,7 @@ class GetBBTDataViewSet(APIView):
         print(request)
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT UID,ID,Dept,Grp,BBT,BBTCode,P,ACT,INACT,CCT,Total,FE FROM BBTPerformanceSummarizedView ORDER BY GID, BBT")
+                cursor.execute("SELECT UID,ID,Dept,Grp,BBT,P,ACT,INACT,CCT,Total,FE FROM BBTPerformanceSummarizedView ORDER BY GID, BBT")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

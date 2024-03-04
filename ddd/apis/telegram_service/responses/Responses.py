@@ -27,11 +27,12 @@ def bot_responses(id,input_text):
             else:
                 try:
                     command,g = user_message.split('/')
+                    access = 'Group' # If specific group is specified, their access for the current function reduced to Group-level
                 except ValueError:
                     return 'Format error: Too many "/"s'
-            if g.lower() not in ['gd','glg','hangul','serving']:
-                g = g.replace('g','').replace('G','')
-            d,r,sd = SQLCodes.groupinfo(g).split('/')
+                if g.lower() not in ['gd','glg','hangul','serving']:
+                    g = g.replace('g','').replace('G','')
+                d,r,sd = SQLCodes.groupinfo(g).split('/')
         else:
             command = user_message
     
@@ -50,6 +51,7 @@ def bot_responses(id,input_text):
             if g.lower() not in ['gd','glg','hangul','serving']:
                 g = g.replace('g','').replace('G','')
             d,r,sd = SQLCodes.groupinfo(g).split('/')
+            access = 'Group' # If specific group is specified, their access for the current function reduced to Group-level
             if g not in allowed_groups and user_message.lower()[:3] != 'ev/':
                 return 'Sorry, this group is outside your department!'
         else:
@@ -96,6 +98,9 @@ def bot_responses(id,input_text):
         if command.startswith('temp'):
             timerange = command[4:]
             return SQLCodes.tempfmp(timerange,sftg,access)
+        
+    if command == 'bblist':
+        return SQLCodes.bblist(d,g,access)
     
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('list'):
             if d == '__' and '/' in user_message:
@@ -130,14 +135,43 @@ def bot_responses(id,input_text):
                 i,d = user_message.split('/')
             q,i = command.split('status')
             return SQLCodes.bbtstatus(q,d,access)
+        
+        if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
+            if d == '__' and '/' in user_message:
+                i,d = user_message.split('/')
+            q,i = command.split('active')
+            return SQLCodes.bbtactive(q,d,access)
+        if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('inactive'):
+            if d == '__' and '/' in user_message:
+                i,d = user_message.split('/')
+            q,i = command.split('inactive')
+            return SQLCodes.bbtinactive(q,d,access)
+        
+        if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
+            if d == '__' and '/' in user_message:
+                i,d = user_message.split('/')
+            q,i = command.split('active') # removing 'inactive', leaving 'deptbbt'
+            i,q = q.split(q) # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
+            return SQLCodes.deptbbtactive(q,d,access)
+        if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('inactive'):
+            if d == '__' and '/' in user_message:
+                i,d = user_message.split('/')
+            q,i = command.split('inactive') # removing 'inactive', leaving 'deptbbt'
+            i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
+            return SQLCodes.deptbbtinactive(q,d,access)
+        
         if command == 'tolfull':
             return SQLCodes.tolfull(d)
         if command == 'bbfull':
             return SQLCodes.bbfull(d)
         if command == 'bbactive':
             return SQLCodes.bbactive(d)
+        if command == 'deptbbactive':
+            return SQLCodes.deptbbactive(d)
         if command == 'bbinactive':
             return SQLCodes.bbinactive(d)
+        if command == 'deptbbinactive':
+            return SQLCodes.deptbbinactive(d)
         
         if command in ['youthmxpx','deptmxpx']:
             return SQLCodes.youthmxpx(d)

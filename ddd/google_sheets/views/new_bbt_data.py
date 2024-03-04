@@ -72,23 +72,7 @@ class GetBBTDataViewSet(APIView):
         print(request)
         try:
             with connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT UID, ID,
-                    CASE 
-                            WHEN Grp = 'Department' THEN 'Office'
-                            ELSE Dept
-                    END AS Dept,
-                    CASE 
-                            WHEN Grp = 'Department' THEN 'OFFC'
-                            WHEN Grp = 'Serving' THEN 'SV'
-                            WHEN Grp = 'Culture' THEN 'CULT'
-                            ELSE Grp
-                    END AS Grp,
-                    BBT, P, Act, CCT, INACT, Total
-                    FROM ScottBBTData((SELECT dbo.seasonid()), 'Active','%')
-                    WHERE LEN(Grp) < 3 OR Grp IN ('HWPL','Culture','Serving','Department')
-                    ORDER BY LEN(Grp), Grp
-                """)
+                cursor.execute("SELECT UID,ID,Dept,Grp,BBT,BBTCode,P,ACT,INACT,CCT,Total,FE FROM BBTPerformanceSummarizedView ORDER BY GID, BBT")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

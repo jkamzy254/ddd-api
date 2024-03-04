@@ -16,7 +16,7 @@ class SVCGetDeptBreakdownViewSet(APIView):
         try:
             payload = decode_jwt(request)   
             with connection.cursor() as cursor:
-                cursor.execute('SELECT * FROM Service_DeptBreakdown(%s)', (payload['UID'],))
+                cursor.execute("SELECT * FROM Service_DeptBreakdown('{0}') WHERE Dept NOT IN ('OtherChurch','Inert') ORDER BY Dept".format(payload['UID'],))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(recs, status=status.HTTP_200_OK)

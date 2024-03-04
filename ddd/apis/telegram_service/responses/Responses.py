@@ -147,11 +147,17 @@ def bot_responses(id,input_text):
             q,i = command.split('inactive')
             return SQLCodes.bbtinactive(q,d,access)
         
+        if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('status'):
+            if d == '__' and '/' in user_message:
+                i,d = user_message.split('/')
+            q,i = command.split('status') # removing 'inactive', leaving 'deptbbt'
+            i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
+            return SQLCodes.deptbbtstatus(q,d,access)
         if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
             if d == '__' and '/' in user_message:
                 i,d = user_message.split('/')
             q,i = command.split('active') # removing 'inactive', leaving 'deptbbt'
-            i,q = q.split(q) # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
+            i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
             return SQLCodes.deptbbtactive(q,d,access)
         if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('inactive'):
             if d == '__' and '/' in user_message:

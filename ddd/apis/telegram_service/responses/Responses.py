@@ -22,6 +22,7 @@ def bot_responses(id,input_text):
             if '/d' in user_message:
                 try:
                     command,d = user_message.split('/')
+                    access = d
                 except ValueError:
                     return 'Format error: Too many "/"s' 
             else:
@@ -59,7 +60,7 @@ def bot_responses(id,input_text):
 
     elif access in ['Group','Israel']:
         command = user_message
-        if command in ['youthtoday','youthyesterday','youthweek','youthlastweek','youthseason','depttoday','deptyesterday','deptweek','deptlastweek','deptseason','gyjntoday','gyjnyesterday','gyjnweek','gyjnlastweek','gyjnseason','oevtoday','oevyesterday','oevweek','oevlastweek','oevseason','tgwtoday','tgwyesterday','tgwweek','tgwlastweek','tgwseason','bbfull','tolfull','bbactive','bbinactive','bbsummary','bblastseason','youthmxpx','bbtstatus','btmstatus','bbdept']:
+        if command in ['youthtoday','youthyesterday','youthweek','youthlastweek','youthseason','depttoday','deptyesterday','deptweek','deptlastweek','deptseason','gyjntoday','gyjnyesterday','gyjnweek','gyjnlastweek','gyjnseason','oevtoday','oevyesterday','oevweek','oevlastweek','oevseason','tgwtoday','tgwyesterday','tgwweek','tgwlastweek','tgwseason','bbfull','tolfull','bblastseason','youthmxpx','bbdept']:
             return 'You are not allowed to use this function'
 
     SQLCodes.functionlog(uid, name, input_text, command)
@@ -103,10 +104,49 @@ def bot_responses(id,input_text):
         return SQLCodes.bblist(d,g,access)
     
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('list'):
-            if d == '__' and '/' in user_message:
-                i,d = user_message.split('/')
-            q,i = command.split('list')
-            return SQLCodes.bbtlist(q,d,g,access)
+        if d == '__' and '/' in user_message:
+            i,d = user_message.split('/')
+        q,i = command.split('list')
+        return SQLCodes.bbtlist(q,d,g,access)
+        
+    if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('status'):
+        if d == '__' and '/' in user_message:
+            i,d = user_message.split('/')
+        q,i = command.split('status')
+        return SQLCodes.bbtstatus(q,g,d,access)
+        
+    if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
+        if d == '__' and '/' in user_message:
+            i,d = user_message.split('/')
+        q,i = command.split('active')
+        return SQLCodes.bbtactive(q,g,d,access)
+    
+    if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('inactive'):
+        if d == '__' and '/' in user_message:
+            i,d = user_message.split('/')
+        q,i = command.split('inactive')
+        return SQLCodes.bbtinactive(q,g,d,access)
+    
+    if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('status'):
+        if d == '__' and '/' in user_message:
+            i,d = user_message.split('/')
+        q,i = command.split('status') # removing 'inactive', leaving 'deptbbt'
+        i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
+        return SQLCodes.deptbbtstatus(q,d,access)
+    
+    if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
+        if d == '__' and '/' in user_message:
+            i,d = user_message.split('/')
+        q,i = command.split('active') # removing 'inactive', leaving 'deptbbt'
+        i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
+        return SQLCodes.deptbbtactive(q,d,access)
+    
+    if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('inactive'):
+        if d == '__' and '/' in user_message:
+            i,d = user_message.split('/')
+        q,i = command.split('inactive') # removing 'inactive', leaving 'deptbbt'
+        i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
+        return SQLCodes.deptbbtinactive(q,d,access)
     
     # Dept and above functions
     if access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','Dept','DecSFT','M&W Dept','All','IT']:
@@ -135,36 +175,6 @@ def bot_responses(id,input_text):
                 i,d = user_message.split('/')
             q,i = command.split('status')
             return SQLCodes.bbtstatus(q,d,access)
-        
-        if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
-            if d == '__' and '/' in user_message:
-                i,d = user_message.split('/')
-            q,i = command.split('active')
-            return SQLCodes.bbtactive(q,d,access)
-        if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('inactive'):
-            if d == '__' and '/' in user_message:
-                i,d = user_message.split('/')
-            q,i = command.split('inactive')
-            return SQLCodes.bbtinactive(q,d,access)
-        
-        if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('status'):
-            if d == '__' and '/' in user_message:
-                i,d = user_message.split('/')
-            q,i = command.split('status') # removing 'inactive', leaving 'deptbbt'
-            i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
-            return SQLCodes.deptbbtstatus(q,d,access)
-        if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
-            if d == '__' and '/' in user_message:
-                i,d = user_message.split('/')
-            q,i = command.split('active') # removing 'inactive', leaving 'deptbbt'
-            i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
-            return SQLCodes.deptbbtactive(q,d,access)
-        if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('inactive'):
-            if d == '__' and '/' in user_message:
-                i,d = user_message.split('/')
-            q,i = command.split('inactive') # removing 'inactive', leaving 'deptbbt'
-            i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
-            return SQLCodes.deptbbtinactive(q,d,access)
         
         if command == 'tolfull':
             return SQLCodes.tolfull(d)

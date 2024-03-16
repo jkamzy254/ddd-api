@@ -30,6 +30,7 @@ class SVCGetGroupWeeklylogViewSet(APIView):
         
         try:
             payload = decode_jwt(request)   
+            print(payload)
             with connection.cursor() as cursor:
                 cursor.execute('EXEC spSVCGetGroupWeeklyLog %s', (payload['UID'],))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
@@ -37,5 +38,35 @@ class SVCGetGroupWeeklylogViewSet(APIView):
             return Response(recs, status=status.HTTP_200_OK)
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class SVCUpdateAttendanceViewSet(APIView):
+    def post(self, request):
+        payload = request.data
+        reason_value = f"'{payload['reason'].replace("'", "''")}'" if payload['reason'] is not None else 'NULL'
+
+        try:   
+            with connection.cursor() as cursor:
+                if payload['ea'] == 'E':
+                    cursor.execute(f"""EXEC sp_Service_UpdateExpectedAttendance 
+                        @uid = {payload['uid']}, 
+                        @sid = {payload['sid']}, 
+                        @ssid = {payload['ssid']}, 
+                        @reason = {reason_value}
+                    """)
+                    # res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                elif payload['ea'] == 'A':
+                    cursor.execute(f"""EXEC sp_Service_UpdateActualAttendance 
+                        @uid = {payload['uid']}, 
+                        @sid = {payload['sid']}, 
+                        @ssid = {payload['ssid']}, 
+                        @late = {payload['late']},
+                        @reason = {reason_value}
+                    """)
+            return Response("Success", status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         

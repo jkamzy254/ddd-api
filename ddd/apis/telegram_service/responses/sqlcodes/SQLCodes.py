@@ -930,10 +930,12 @@ def pxlist(g):
 
 
 
-def bbtstatus(q, d, access):
-    
-    name = 'BBT' if access == 'IT' else 'BBTCode'
+def bbtstatus(q, g, d, access):
+        
+    name = 'BBT' if access == 'IT' else 'BBTCode2'
+    g = g if access == 'Group' else '%'
     d = d.capitalize()
+    grpdept = re.sub(r'^(\d)',r'G\1',g).capitalize() if access == 'Group' else str(d).replace('__','Youth')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
@@ -942,10 +944,10 @@ def bbtstatus(q, d, access):
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} ORDER BY LEN(Grp), Grp, {name}"
-    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} Group BY Grp ORDER BY LEN(Grp), Grp"
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} Group BY Dept"
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query}"
+    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} ORDER BY LEN(Grp), Grp, {name}"
+    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Grp ORDER BY LEN(Grp), Grp"
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query}"
     
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
@@ -966,7 +968,7 @@ def bbtstatus(q, d, access):
     if d != '__':
         member = '\n'
         for r in range(len(dm)):
-            bbt =   str(dm.loc[r,'BBT'][:7]) + ' '*(7-len(str(dm.loc[r,'BBT'][:7])))
+            bbt =   str(dm.loc[r,'BBT'][:5]) + ' '*(5-len(str(dm.loc[r,'BBT'][:5])))
             pn  = ' '*(3-len(str(dm.loc[r,'pNew']))) + str(dm.loc[r,'pNew'])
             po  = ' '*(3-len(str(dm.loc[r,'pOld']))) + str(dm.loc[r,'pOld'])
             ba  = ' '*(3-len(str(dm.loc[r,'bbA'])))  + str(dm.loc[r,'bbA'])
@@ -981,7 +983,7 @@ def bbtstatus(q, d, access):
             
     group = str()    
     for r in range(len(dg)):
-        grp =   str(dg.loc[r,'Grp']) + ' '*(7-len(str(dg.loc[r,'Grp'])))
+        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
         pn  = ' '*(3-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
         po  = ' '*(3-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
         ba  = ' '*(3-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
@@ -993,19 +995,20 @@ def bbtstatus(q, d, access):
         t   = ' '*(3-len(str(dg.loc[r,'Tot'])))  + str(dg.loc[r,'Tot'])
         group = f'{group}{grp}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
             
-    dept = str()    
-    for r in range(len(dd)):
-        dpt =   str(dd.loc[r,'Dept']) + ' '*(7-len(str(dd.loc[r,'Dept'])))
-        pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
-        po  = ' '*(3-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
-        ba  = ' '*(3-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
-        ca  = ' '*(3-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
-        bm  = ' '*(3-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
-        ci  = ' '*(3-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
-        pf  = ' '*(3-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
-        bf  = ' '*(3-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
-        t   = ' '*(3-len(str(dd.loc[r,'Tot'])))  + str(dd.loc[r,'Tot'])
-        dept = f'{dept}{dpt}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
+    dept = str()  
+    if access != 'Group':  
+        for r in range(len(dd)):
+            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
+            po  = ' '*(3-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
+            ba  = ' '*(3-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
+            ca  = ' '*(3-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
+            bm  = ' '*(3-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
+            ci  = ' '*(3-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
+            pf  = ' '*(3-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
+            bf  = ' '*(3-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
+            t   = ' '*(3-len(str(dd.loc[r,'Tot'])))  + str(dd.loc[r,'Tot'])
+            dept = f'{dept}{dpt}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
             
     if d == '__':
         pn  = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
@@ -1017,12 +1020,12 @@ def bbtstatus(q, d, access):
         pf  = ' '*(3-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
         bf  = ' '*(3-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA'])
         t   = ' '*(3-len(str(dy.loc[0,'Tot'])))  + str(dy.loc[0,'Tot'])
-        youth = f'\nTotal  [{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]'
+        youth = f'\nTotal[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]'
 
     else:
         youth = str()
     
-    summary = f"<b><u>{str(d).replace('__','Youth')} {bbttype} Status Summary</u></b>\n\n<pre>       [ NP| OP| AB| CA| ME| CI| FP| FA|TOT]\n{member}\n{group}\n{dept}{youth}</pre>"
+    summary = f"<b><u>{grpdept} {bbttype} Status Summary</u></b>\n\n<pre>     [ NP| OP| AB| CA| ME| CI| FP| FA|TOT]\n{member}\n{group}\n{dept}{youth}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -1093,10 +1096,12 @@ def deptbbtstatus(q, d, access):
 
 
 
-def bbtactive(q, d, access):
+def bbtactive(q, g, d, access):
     
-    name = 'BBT' if access == 'IT' else 'BBTCode'
+    name = 'BBT' if access == 'IT' else 'BBTCode2'
+    g = g if access == 'Group' else '%'
     d = d.capitalize()
+    grpdept = re.sub(r'^(\d)',r'G\1',g).capitalize() if access == 'Group' else str(d).replace('__','Youth')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
@@ -1105,10 +1110,10 @@ def bbtactive(q, d, access):
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} ORDER BY LEN(Grp), Grp, {name}"
-    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} Group BY Grp ORDER BY LEN(Grp), Grp"
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} Group BY Dept"
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query}"
+    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} ORDER BY LEN(Grp), Grp, {name}"
+    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Grp ORDER BY LEN(Grp), Grp"
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query}"
     
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
@@ -1129,40 +1134,41 @@ def bbtactive(q, d, access):
     if d != '__':
         member = '\n'
         for r in range(len(dm)):
-            bbt =   str(dm.loc[r,'BBT'][:7]) + ' '*(7-len(str(dm.loc[r,'BBT'][:7])))
+            bbt =   str(dm.loc[r,'BBT'][:5]) + ' '*(5-len(str(dm.loc[r,'BBT'][:5])))
             pn  = ' '*(3-len(str(dm.loc[r,'pNew']))) + str(dm.loc[r,'pNew'])
             ba  = ' '*(3-len(str(dm.loc[r,'bbA'])))  + str(dm.loc[r,'bbA'])
             ca  = ' '*(3-len(str(dm.loc[r,'cctA']))) + str(dm.loc[r,'cctA'])
             t   = ' '*(3-len(str(dm.loc[r,'Tot'])))  + str(dm.loc[r,'Tot'])
-            member = f'{member}{bbt}[{pn}|{ba}|{ca}|{t}]\n'
+            member = f'{member}{bbt}[{pn}|{ba}|{ca}]\n'
             
             
     group = str()
     for r in range(len(dg)):
-        grp =    str(dg.loc[r,'Grp']) + ' '*(4-len(str(dg.loc[r,'Grp'])))
+        grp =    str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
         pn  = ' '*(3-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
         ba  = ' '*(3-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
         ca  = ' '*(3-len(str(dg.loc[r,'cctA']))) + str(dg.loc[r,'cctA'])
         group = f'{group}{grp}[{pn}|{ba}|{ca}]\n'
     
-    dept = str()    
-    for r in range(len(dd)):
-        dpt = str(dd.loc[r,'Dept'])   + ' '*(4-len(str(dd.loc[r,'Dept'])))
-        pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
-        ba  = ' '*(3-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
-        ca  = ' '*(3-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
-        dept = f'{dept}{dpt}[{pn}|{ba}|{ca}]\n'
+    dept = str()  
+    if access != 'Group':  
+        for r in range(len(dd)):
+            dpt = str(dd.loc[r,'Dept'])   + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
+            ba  = ' '*(3-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
+            ca  = ' '*(3-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
+            dept = f'{dept}{dpt}[{pn}|{ba}|{ca}]\n'
             
     if d == '__':
         pn = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba = ' '*(3-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
         ca = ' '*(3-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
-        youth = f'\nTot [{pn}|{ba}|{ca}]\n'
+        youth = f'\nTot  [{pn}|{ba}|{ca}]\n'
 
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('__','Youth')} {bbttype} Active BB Status </u></b>\n\n<pre>Grp [ NP| AB| CA]\n{member}\n{group}\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{grpdept} {bbttype} Active BB Status </u></b>\n\n<pre>Grp  [ NP| AB| CA]\n{member}\n{group}\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -1230,10 +1236,12 @@ def deptbbtactive(q, d, access):
 
 
 
-def bbtinactive(q, d, access):
+def bbtinactive(q, g, d, access):
     
-    name = 'BBT' if access == 'IT' else 'BBTCode'
+    name = 'BBT' if access == 'IT' else 'BBTCode2'
+    g = g if access == 'Group' else '%'
     d = d.capitalize()
+    grpdept = re.sub(r'^(\d)',r'G\1',g).capitalize() if access == 'Group' else str(d).replace('__','Youth')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
@@ -1242,10 +1250,10 @@ def bbtinactive(q, d, access):
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} ORDER BY LEN(Grp), Grp, {name}"
-    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} Group BY Grp ORDER BY LEN(Grp), Grp"
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} Group BY Dept"
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query}"
+    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} ORDER BY LEN(Grp), Grp, {name}"
+    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Grp ORDER BY LEN(Grp), Grp"
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query}"
     
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
@@ -1266,19 +1274,19 @@ def bbtinactive(q, d, access):
     if d != '__':
         member = '\n'
         for r in range(len(dm)):
-            bbt =   str(dm.loc[r,'BBT'][:7]) + ' '*(7-len(str(dm.loc[r,'BBT'][:7])))
+            bbt =   str(dm.loc[r,'BBT'][:5]) + ' '*(5-len(str(dm.loc[r,'BBT'][:5])))
             po  = ' '*(3-len(str(dm.loc[r,'pOld']))) + str(dm.loc[r,'pOld'])
             bm  = ' '*(3-len(str(dm.loc[r,'bbME']))) + str(dm.loc[r,'bbME'])
             ci  = ' '*(3-len(str(dm.loc[r,'cctI']))) + str(dm.loc[r,'cctI'])
             pf  = ' '*(3-len(str(dm.loc[r,'pFA'])))  + str(dm.loc[r,'pFA'])
             bf  = ' '*(3-len(str(dm.loc[r,'bbFA']))) + str(dm.loc[r,'bbFA'])
             t   = ' '*(3-len(str(dm.loc[r,'Tot'])))  + str(dm.loc[r,'Tot'])
-            member = f'{member}{bbt}[{po}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
+            member = f'{member}{bbt}[{po}|{bm}|{ci}|{pf}|{bf}]\n'
             
             
     group = str()
     for r in range(len(dg)):
-        grp =    str(dg.loc[r,'Grp']) + ' '*(4-len(str(dg.loc[r,'Grp'])))
+        grp =    str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
         po  = ' '*(3-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
         bm  = ' '*(3-len(str(dg.loc[r,'bbME']))) + str(dg.loc[r,'bbME'])
         ci  = ' '*(3-len(str(dg.loc[r,'cctI']))) + str(dg.loc[r,'cctI'])
@@ -1286,15 +1294,16 @@ def bbtinactive(q, d, access):
         bf  = ' '*(3-len(str(dg.loc[r,'bbFA']))) + str(dg.loc[r,'bbFA'])
         group = f'{group}{grp}[{po}|{bm}|{ci}|{pf}|{bf}]\n'
     
-    dept = str()    
-    for r in range(len(dd)):
-        dpt = str(dd.loc[r,'Dept'])   + ' '*(4-len(str(dd.loc[r,'Dept'])))
-        po  = ' '*(3-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
-        bm  = ' '*(3-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
-        ci  = ' '*(3-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
-        pf  = ' '*(3-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
-        bf  = ' '*(3-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
-        dept = f'{dept}{dpt}[{po}|{bm}|{ci}|{pf}|{bf}]\n'
+    dept = str()  
+    if access != 'Group':    
+        for r in range(len(dd)):
+            dpt = str(dd.loc[r,'Dept'])   + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            po  = ' '*(3-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
+            bm  = ' '*(3-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
+            ci  = ' '*(3-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
+            pf  = ' '*(3-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
+            bf  = ' '*(3-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
+            dept = f'{dept}{dpt}[{po}|{bm}|{ci}|{pf}|{bf}]\n'
             
     if d == '__':
         bm = ' '*(3-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
@@ -1302,12 +1311,12 @@ def bbtinactive(q, d, access):
         ci = ' '*(3-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
         pf = ' '*(3-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
         bf = ' '*(3-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA']) 
-        youth = f'\nTot [{po}|{bm}|{ci}|{pf}|{bf}]\n'
+        youth = f'\nTot  [{po}|{bm}|{ci}|{pf}|{bf}]\n'
 
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('__','Youth')} {bbttype} Inactive BB Status </u></b>\n\n<pre>Grp [ OP| ME| CI| FP| FA]\n{member}\n{group}\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{grpdept} {bbttype} Inactive BB Status </u></b>\n\n<pre>Grp  [ OP| ME| CI| FP| FA]\n{member}\n{group}\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result

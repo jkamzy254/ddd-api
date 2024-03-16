@@ -44,7 +44,11 @@ class SVCGetGroupWeeklylogViewSet(APIView):
 class SVCUpdateAttendanceViewSet(APIView):
     def post(self, request):
         payload = request.data
-        reason_value = f"'{payload['reason'].replace("'", "''")}'" if payload['reason'] is not None else "NULL"
+        reason_value = (
+            f"'{payload['reason'].replace("'", "''")}'" 
+            if payload['reason'] is not None 
+            else 'NULL'
+        )
 
         try:   
             with connection.cursor() as cursor:

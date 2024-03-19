@@ -31,27 +31,79 @@ from .mfa.mfa import send_otp
 
 
 # Create your views here.
+# class LoginView(APIView):
+#     def post(self, request):
+#         warnings.filterwarnings('ignore')
+#         print(request.data)
+#         get_default_algorithms()
+#         username = request.data['username']
+#         password = request.data['password']
+#         print(username)
+#         print(password)
+#         user = Member.objects.filter(username=username).first()
+#         print(user)
+#         if user is None:
+#             raise AuthenticationFailed('User not found!')
+#         if user.password != password:
+#             raise AuthenticationFailed('Incorrect password')
+
+#         uid = pd.read_sql(f"SELECT UID FROM LoginData WHERE Username = '{username}'",connection).iloc[0,0]
+#         otp_response = send_otp(uid)
+#         if otp_response.status_code == status.HTTP_200_OK:
+#             return Response({'uid':uid}, status=status.HTTP_200_OK)
+#         else:
+#             return Response("Failed to send OTP.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class LoginView(APIView):
     def post(self, request):
-        warnings.filterwarnings('ignore')
         print(request.data)
         get_default_algorithms()
         username = request.data['username']
         password = request.data['password']
         print(username)
         print(password)
+        wlid = []
+
         user = Member.objects.filter(username=username).first()
+        wl = WL.objects.filter(wid__in=WLR.objects.filter(memberid=user.id))
+        print(wl)
+        for i in wl:
+            wlid.append(i.title)
+        member = Member.objects.filter(id = user.id).first()
+        print(member.internal_position)
+        if member.internal_position == 1 or (member.membergroup == 'Department' and member.tgw and member.condition == 'Active') or 'All' in wlid:
+            wlid.append('Leader')
+        if int(member.internal_position) < 3 or 'All' in wlid:
+            wlid.append('EVLeader')
+        if member.bbt or 'All' in wlid:
+            wlid.append('BBT')
+        serializer = MemberSerializer(member)
+
         if user is None:
             raise AuthenticationFailed('User not found!')
+
         if user.password != password:
             raise AuthenticationFailed('Incorrect password')
 
-        uid = pd.read_sql(f"SELECT UID FROM LoginData WHERE Username = '{username}'",connection).iloc[0,0]
-        otp_response = send_otp(uid)
-        if otp_response.status_code == status.HTTP_200_OK:
-            return Response({'uid':uid}, status=status.HTTP_200_OK)
-        else:
-            return Response("Failed to send OTP.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # refresh = token.for_user(user)
+
+        # Generate an access token
+        # token = str(refresh.access_token)
+
+        payload = {
+            "ID":user.id,
+            "UID":user.uid,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=(60*24)),
+            'iat': datetime.datetime.utcnow(),
+            'user': serializer.data,
+            'roles': wlid
+        }
+        token = encode_jwt(payload)
+        response = Response()
+        otp_response = send_otp(user.uid)
+        response.set_cookie(key='token',value=token, httponly=True)
+        response.data = {'token': token}
+        return response
 
 class OTP(APIView):
     def post(self, request):

@@ -28,32 +28,10 @@ from django.db import connection
 import jwt, datetime, json, pandas as pd
 import warnings
 from .mfa.mfa import send_otp
+from api.redis import Redis
 
 
 # Create your views here.
-# class LoginView(APIView):
-#     def post(self, request):
-#         warnings.filterwarnings('ignore')
-#         print(request.data)
-#         get_default_algorithms()
-#         username = request.data['username']
-#         password = request.data['password']
-#         print(username)
-#         print(password)
-#         user = Member.objects.filter(username=username).first()
-#         print(user)
-#         if user is None:
-#             raise AuthenticationFailed('User not found!')
-#         if user.password != password:
-#             raise AuthenticationFailed('Incorrect password')
-
-#         uid = pd.read_sql(f"SELECT UID FROM LoginData WHERE Username = '{username}'",connection).iloc[0,0]
-#         otp_response = send_otp(uid)
-#         if otp_response.status_code == status.HTTP_200_OK:
-#             return Response({'uid':uid}, status=status.HTTP_200_OK)
-#         else:
-#             return Response("Failed to send OTP.", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 class LoginView(APIView):
     def post(self, request):
         print(request.data)
@@ -98,7 +76,8 @@ class LoginView(APIView):
             'user': serializer.data,
             'roles': wlid
         }
-        token = encode_jwt(payload)
+
+        token = ('Bearer '+encode_jwt(payload).decode()).encode()
         response = Response()
         otp_response = send_otp(user.uid)
         response.set_cookie(key='token',value=token, httponly=True)
@@ -115,79 +94,31 @@ class OTP(APIView):
 class VerifyOTP(APIView):
     def post(self, request):
         warnings.filterwarnings('ignore')
-        print(request.data)
-        get_default_algorithms()
-        uid = request.data['uid']
-        otp = request.data['otp']
-        print(f'uid = {uid}')
-        print(f'otp = {otp}')
-        wlid = []
 
         try:
-            otp_dataframe = pd.read_sql(f"""SELECT TOP 1 OTP FROM OtpLog WHERE UID = '{uid}'
-        AND ValidUntil > CONVERT(DateTime, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') ORDER BY ValidUntil DESC""",connection)
+            payload = decode_jwt(request)
+            userID = payload['UID']
+            otp = request.data['otp']
+
+            otp_dataframe = pd.read_sql(f"""SELECT TOP 1 OTP FROM OtpLog WHERE UID = '{userID}'
+        AND ValidUntil > CONVERT(DateTime, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') ORDER BY ValidUntil DESC""",conn)
             if len(otp_dataframe) == 0:
                 print("OTP Expired")
                 return Response('OTP Expired!', status=status.HTTP_400_BAD_REQUEST)
 
-            otp_db = int(otp_dataframe.iloc[0,0])
-            print(f'otp_db = {otp_db}, type = {type(otp_db)}')
-            print(f'otp = {otp}, type = {type(otp)}')
+            otp_db = otp_dataframe.iloc[0,0]
 
-            if int(otp) != otp_db:
+            if otp != otp_db:
                 print("Invalid OTP")
                 return Response('Invalid OTP!', status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print(f"An Error occurred: {e}")
+            print(f"An error occurred: {e}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         finally:
-            wl = WL.objects.filter(wid__in=WLR.objects.filter(memberid=uid))
-            with connection.cursor() as cursor:
-                cursor.execute("""SELECT MemberID, WLID FROM WhiteListRecData WHERE WLID IN (SELECT WID FROM WhiteListData WHERE Title IN ('All','CSAM'))
-                                    UNION
-                                    SELECT UID MemberID, PID WLID FROM TGWPositionLog WHERE EndDate IS NULL AND PID IN (6,8,9,20,22,24)
-                                """)
-                pid = pd.DataFrame(cursor.fetchall())
-                pid.columns = [i[0] for i in cursor.description]
-                pid = pid[pid['MemberID']==uid]
-                print( pid['WLID'].values[0])
-            for i in wl:
-                wlid.append(i.title)
-            member = Member.objects.filter(uid = uid).first()
-            evid = member.id
-            print(member.internal_position)
-            if member.internal_position == 1 or (member.membergroup == 'Department' and member.tgw and member.condition == 'Active') or 'All' in wlid:
-                wlid.append('Leader')
-            if int(member.internal_position) < 2 or 'All' in wlid:
-                wlid.append('EVLeader')
-            if pid['WLID'].values[0] >= 6:
-                wlid.append('IDept')
-            if pid['WLID'].values[0] >= 8:
-                wlid.append('Dept')
-            if pid['WLID'].values[0] >= 20:
-                wlid.append('Church')
-            if member.bbt or 'All' in wlid:
-                wlid.append('BBT')
-            serializer = MemberSerializer(member)
-
-            # refresh = token.for_user(user)
-
-            # Generate an access token
-            # token = str(refresh.access_token)
-
-            payload = {
-                "ID": evid,
-                "UID": uid,
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=(60*24)),
-                'iat': datetime.datetime.utcnow(),
-                'user': serializer.data,
-                'roles': wlid
-            }
-            token = ('Bearer '+encode_jwt(payload).decode()).encode()
-            response = Response()
-            response.set_cookie(key='token',value=token, httponly=True)
-            response.data = {'token': token}
-            return response
+            print("Authentication successful")
+            authenticated_hash = hash(userID + str(request.data['otp']))
+            Redis.hset('getAuthenticatedUser', userID, authenticated_hash)
+            return Response(authenticated_hash, status=status.HTTP_200_OK)
 
 
 class UserMembersViewSet(APIView):

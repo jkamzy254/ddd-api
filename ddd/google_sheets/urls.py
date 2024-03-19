@@ -3,6 +3,8 @@ from django.urls import path, include, re_path
 # from . import views
 from .views import new_bbt_data as nbd
 from .views import ct_student_ev as cse
+from .views import cct_edu as ce
+from .views import fruit_basket as fb
 from django.views.generic.base import TemplateView
 
 from django.urls import path
@@ -27,11 +29,18 @@ urlpatterns = [
   	path('getBBTMasterList/', nbd.GetBBTMasterListViewSet.as_view()),
   	path('updateBBTMasterList/', nbd.UpdateBBTMasterListViewSet.as_view()),
  
+
 	#CT Student EV
 	path('getCurrentJDSN/', cse.GetCurrentJDSNViewSet.as_view()),
 	path('getRegisteredJDSN/', cse.GetRegisteredJDSNViewSet.as_view()),
 	path('getCTTGW/', cse.GetCTTGWViewSet.as_view()),
-	# path('perleaves/', views.BBStatusGrpPerLeafViewSet.as_view()),
+ 
+	#Current CT - Edu
+	path('getCurrentCCTEdu/', ce.GetCurrentCCTEduViewSet.as_view()),
+ 
+	#Fruit Basket
+	path('getBBStats/', fb.GetBBStatsViewSet.as_view()),
+ 
  
  
 ]

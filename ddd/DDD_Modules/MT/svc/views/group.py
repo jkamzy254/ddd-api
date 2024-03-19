@@ -44,7 +44,7 @@ class SVCGetGroupWeeklylogViewSet(APIView):
 class SVCUpdateAttendanceViewSet(APIView):
     def post(self, request):
         payload = request.data
-        rsn = payload['reason'].replace("'", "''")
+        rsn = payload['reason'].replace("'", "''") if payload['reason'] is not None else None
         reason_value = f"'{rsn}'" if payload['reason'] is not None else "NULL"
 
         try:   

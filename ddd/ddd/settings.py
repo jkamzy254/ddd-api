@@ -89,6 +89,7 @@ CORS_ORIGIN_WHITELIST = (
     'http://localhost:62376',
     'https://ang-dj.herokuapp.com',
     'https://ddd-trial1-27b98437c571.herokuapp.com',
+    'https://ddd-ticket-trial-6cb8f882f1d8.herokuapp.com',
     'https://cadillac-dpi-vr-bd6205ea960b.herokuapp.com'
 )
 CORS_ALLOW_CREDENTIALS = True

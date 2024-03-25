@@ -150,7 +150,7 @@ class GetPotentialBTMViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute("""
                     WITH BBwithFE AS (
-                        SELECT * FROM BBDataView WHERE Season = 57 AND UID IN (Select UID From Report)
+                        SELECT * FROM BBDataView WHERE Season = 57 AND Status IN ('CA','CI')
                     ), MembersBB AS (
                         SELECT Group_IMWY 'Dept', GI.Grp, M.Name, Internal_Position Pos, (Select COUNT(*) FROM BBwithFE WHERE L1_ID = M.UID OR L2_ID = M.UID) 'CT', GL.GID 
                         FROM MemberData M 

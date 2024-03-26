@@ -14,10 +14,9 @@ class FMPGetFruitsViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
-            # user = Memberdata.objects.filter(id = payload['ID']).first()
+            token = decode_jwt(request)   
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spFMPIndViewGetRecords {0}".format(payload['UID']))
+                cursor.execute("EXEC spFMPIndViewGetRecords {0}".format(token['UID']))
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -29,9 +28,9 @@ class FMPGetPrevCTFruitsViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
+            token = decode_jwt(request)   
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spFMPIndViewGetPrevCTRecords %s', (payload['UID'],))
+                cursor.execute('EXEC spFMPIndViewGetPrevCTRecords %s', (token['UID'],))
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

@@ -16,10 +16,9 @@ class FMPStatusGrpViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
-            # user = Memberdata.objects.filter(id = payload['ID']).first()
+            token = decode_jwt(request)   
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spFMPGroupViewGetRecords {0}".format(payload['UID']))
+                cursor.execute("EXEC spFMPGroupViewGetRecords {0}".format(token['UID']))
                 fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -31,17 +30,16 @@ class FMPStatusGrpPrevCTViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
-            # user = Memberdata.objects.filter(id = payload['ID']).first()
+            token = decode_jwt(request)   
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spFMPGroupViewGetPrevCTRecords {0}".format(payload['UID']))
+                cursor.execute("EXEC spFMPGroupViewGetPrevCTRecords {0}".format(token['UID']))
                 fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             
             with connection.cursor() as seasonCursor:
                 seasonCursor.execute("""SELECT TOP 1 * FROM EVSeason 
                 WHERE EndDate < GETDATE() 
                 AND Region = (Select Region From MemberData Where UID = {0})
-                AND Dept = 'All' ORDER BY ID DESC""".format(payload['UID'])) 
+                AND Dept = 'All' ORDER BY ID DESC""".format(token['UID'])) 
                 season = [dict(zip([column[0] for column in seasonCursor.description], record)) for record in seasonCursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -56,24 +54,22 @@ class FMPGetFruitsViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
-            user = Memberdata.objects.filter(id = payload['ID']).first()
-            
+            token = decode_jwt(request)   
             with connection.cursor() as cursor:
-                if payload['Dept'] == 'MCT':
-                    if 'EVLeader' in payload['roles']:
+                if token['Dept'] == 'MCT':
+                    if 'EVLeader' in token['roles']:
                         # Use Django ORM for queries
-                        cursor.execute("EXEC spAutoComp_CT {0}, '{1}', {2}".format(payload['UID'], payload['Dept'], payload['Region']))
+                        cursor.execute("EXEC spAutoComp_CT {0}, '{1}', {2}".format(token['UID'], token['Dept'], token['Region']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                     else:
-                        cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
+                        cursor.execute("EXEC spAutoComp_CM {0}".format(token['UID']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 else:
-                    if 'EVLeader' in payload['roles']:
-                        cursor.execute("EXEC spAutoComp_EV {0}, {1}".format(payload['UID'], payload['Group']))
+                    if 'EVLeader' in token['roles']:
+                        cursor.execute("EXEC spAutoComp_EV {0}, {1}".format(token['UID'], token['Group']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                     else:
-                        cursor.execute("EXEC spAutoComp_CM {0}".format(payload['UID']))
+                        cursor.execute("EXEC spAutoComp_CM {0}".format(token['UID']))
                         result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

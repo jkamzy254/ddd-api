@@ -101,10 +101,10 @@ class UserMembersViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
+            token = decode_jwt(request)   
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spUserGroupViewGetMembers {0}".format(payload['UID']))
+                cursor.execute("EXEC spUserGroupViewGetMembers {0}".format(token['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -117,10 +117,10 @@ class GetGroupViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
+            token = decode_jwt(request)   
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spUserGroupViewGetGroups {0}".format(payload['UID']))
+                cursor.execute("EXEC spUserGroupViewGetGroups {0}".format(token['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -133,10 +133,10 @@ class GetDeptViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
+            token = decode_jwt(request)   
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spUserGroupViewGetDepts {0}".format(payload['UID']))
+                cursor.execute("EXEC spUserGroupViewGetDepts {0}".format(token['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -149,10 +149,10 @@ class GetSDivisionViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
+            token = decode_jwt(request)   
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spUserGroupViewGetSDivisions {0}".format(payload['UID']))
+                cursor.execute("EXEC spUserGroupViewGetSDivisions {0}".format(token['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -164,10 +164,10 @@ class UserBBGoalsViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
+            token = decode_jwt(request)   
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spUserGroupViewGetGoals {0}".format(payload['UID']))
+                cursor.execute("EXEC spUserGroupViewGetGoals {0}".format(token['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -179,10 +179,10 @@ class UserFMPGoalsViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
+            token = decode_jwt(request)   
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spUserGroupViewGetFMPGoals {0}".format(payload['UID']))
+                cursor.execute("EXEC spUserGroupViewGetFMPGoals {0}".format(token['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -194,10 +194,10 @@ class UserPostViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
+            token = decode_jwt(request)   
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spUserGroupViewGetPost {0}".format(payload['UID']))
+                cursor.execute("EXEC spUserGroupViewGetPost {0}".format(token['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -210,10 +210,10 @@ class UserGetFishersViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
+            token = decode_jwt(request)   
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spAutoCompM {0}".format(payload['Region']))
+                cursor.execute("EXEC spAutoCompM {0}".format(token['Region']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

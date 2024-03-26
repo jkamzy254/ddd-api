@@ -32,7 +32,7 @@ class SVCGetDeptBreakdownViewSet(APIView):
             token = decode_jwt(request)
             payload = request.data
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT * FROM Service_DeptBreakdown('{token['UID']}', {payload['sid']})")
+                cursor.execute(f"SELECT * FROM Service_DeptBreakdown('{token['UID']}', {request.GET.get('sid')})")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:
@@ -48,7 +48,7 @@ class SVCGetAbsenteeByDept(APIView):
             token = decode_jwt(request)
             payload = request.data
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT * FROM Service_AbsenteeByDept({payload['sid']})")
+                cursor.execute(f"SELECT * FROM Service_AbsenteeByDept({request.GET.get('sid')})")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:
@@ -64,7 +64,7 @@ class SVCGetAbsenteeByGroup(APIView):
             token = decode_jwt(request)
             payload = request.data
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT * FROM Service_AbsenteeByGroup('{payload['dept']}')")
+                cursor.execute(f"SELECT * FROM Service_AbsenteeByGroup('{request.GET.get('dept')}')")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:
@@ -80,7 +80,7 @@ class SVCGetDeptWedSunBreakdown(APIView):
             token = decode_jwt(request)
             payload = request.data
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT * FROM Service_DeptWedSunBreakdown('{payload['dept']}')")
+                cursor.execute(f"SELECT * FROM Service_DeptWedSunBreakdown('{request.GET.get('dept')}')")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:

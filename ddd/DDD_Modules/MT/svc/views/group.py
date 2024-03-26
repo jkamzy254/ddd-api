@@ -14,9 +14,9 @@ class SVCGetPeriodAttendanceViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
+            token = decode_jwt(request)   
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spSVCGetGrpPeriodAttendance %s', (payload['UID'],))
+                cursor.execute('EXEC spSVCGetGrpPeriodAttendance %s', (token['UID'],))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(recs, status=status.HTTP_200_OK)
@@ -29,10 +29,9 @@ class SVCGetGroupWeeklylogViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
-            print(payload)
+            token = decode_jwt(request)   
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spSVCGetGroupWeeklyLog %s', (payload['UID'],))
+                cursor.execute('EXEC spSVCGetGroupWeeklyLog %s', (token['UID'],))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(recs, status=status.HTTP_200_OK)
@@ -43,11 +42,12 @@ class SVCGetGroupWeeklylogViewSet(APIView):
         
 class SVCUpdateAttendanceViewSet(APIView):
     def post(self, request):
-        payload = request.data
-        rsn = payload['reason'].replace("'", "''") if payload['reason'] is not None else None
-        reason_value = f"'{rsn}'" if payload['reason'] is not None else "NULL"
 
         try:   
+            token = decode_jwt(request)  
+            payload = request.data
+            rsn = payload['reason'].replace("'", "''") if payload['reason'] is not None else None
+            reason_value = f"'{rsn}'" if payload['reason'] is not None else "NULL"
             with connection.cursor() as cursor:
                 if payload['ea'] == 'E':
                     cursor.execute(f"""EXEC sp_Service_UpdateExpectedAttendance 

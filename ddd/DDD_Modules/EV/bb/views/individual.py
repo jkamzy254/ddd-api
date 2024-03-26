@@ -14,11 +14,9 @@ class BBGetStudentsViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
-            print(payload)
-            # user = Memberdata.objects.filter(id = payload['ID']).first()
+            token = decode_jwt(request)   
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spBBIndViewGetPerBBT %s', (payload['UID'],))
+                cursor.execute('EXEC spBBIndViewGetPerBBT %s', (token['UID'],))
                 studs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(studs, status=status.HTTP_200_OK)
@@ -31,10 +29,9 @@ class BBGetBBFruitsViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
-            # user = Memberdata.objects.filter(id = payload['ID']).first()
+            token = decode_jwt(request)   
             with connection.cursor() as cursor:
-                cursor.execute('EXEC spBBIndViewGetPerLeaves %s', (payload['UID'],))
+                cursor.execute('EXEC spBBIndViewGetPerLeaves %s', (token['UID'],))
                 studs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(studs, status=status.HTTP_200_OK)
@@ -46,8 +43,7 @@ class BBGetAllSeasonsViewSet(APIView):
     def get(self, request):
         
         try:
-            payload = decode_jwt(request)   
-            # user = Memberdata.objects.filter(id = payload['ID']).first()
+            token = decode_jwt(request)   
             with connection.cursor() as cursor:
                 cursor.execute("""
                     SELECT * FROM EVSeason 

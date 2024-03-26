@@ -14,6 +14,7 @@ class SVCGetWeeklyServicesViewSet(APIView):
     def get(self, request):
         
         try:
+            token = decode_jwt(request)  
             with connection.cursor() as cursor:
                 cursor.execute("SELECT * FROM ThisWeekServicesView")
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]

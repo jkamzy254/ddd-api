@@ -10,17 +10,32 @@ from django.db import connection
 
 
 # Create your views here.
-class SVCGetDeptBreakdownViewSet(APIView):
-    def get(self, request):
+# class SVCGetDeptBreakdownViewSet(APIView):
+#     def get(self, request):
         
-        try:
-            payload = decode_jwt(request)   
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM Service_DeptBreakdown('{0}') WHERE Dept NOT IN ('OtherChurch','Inert') ORDER BY Dept".format(payload['UID'],))
-                recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+#         try:
+#             payload = decode_jwt(request)   
+#             with connection.cursor() as cursor:
+#                 cursor.execute("SELECT * FROM Service_DeptBreakdown('{0}') WHERE Dept NOT IN ('OtherChurch','Inert') ORDER BY Dept".format(payload['UID'],))
+#                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
-            return Response(recs, status=status.HTTP_200_OK)
+#             return Response(recs, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             # Handle exceptions here, e.g., logging or returning an error response
+#             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+
+class SVCGetDeptBreakdownViewSet(APIView):
+    def post(self, request):
+        try:
+            token = decode_jwt(request)
+            payload = request.data
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT * FROM Service_DeptBreakdown('{token['UID']}', {payload['sid']})")
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(res, status=status.HTTP_200_OK)
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        

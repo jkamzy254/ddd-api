@@ -23,4 +23,6 @@ urlpatterns = [
 	path('getDeptBreakdown/', d.SVCGetDeptBreakdownViewSet.as_view()),
     
 	#For MT Dept
+	path('getAbsenteeByDivision/', mt.SVCGetAbsenteeByDivision.as_view()),
+ 	path('getAbsentList/', mt.SVCGetAbsentList.as_view()),
 ]

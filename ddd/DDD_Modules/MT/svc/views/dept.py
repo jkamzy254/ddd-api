@@ -27,12 +27,91 @@ from django.db import connection
         
 
 class SVCGetDeptBreakdownViewSet(APIView):
-    def post(self, request):
+    def get(self, request):
         try:
             token = decode_jwt(request)
             payload = request.data
             with connection.cursor() as cursor:
                 cursor.execute(f"SELECT * FROM Service_DeptBreakdown('{token['UID']}', {payload['sid']})")
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class SVCGetAbsenteeByDept(APIView):
+    def get(self, request):
+        try:
+            token = decode_jwt(request)
+            payload = request.data
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT * FROM Service_AbsenteeByDept({payload['sid']})")
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+class SVCGetAbsenteeByGroup(APIView):
+    def get(self, request):
+        try:
+            token = decode_jwt(request)
+            payload = request.data
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT * FROM Service_AbsenteeByGroup('{payload['dept']}')")
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+class SVCGetDeptWedSunBreakdown(APIView):
+    def get(self, request):
+        try:
+            token = decode_jwt(request)
+            payload = request.data
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT * FROM Service_DeptWedSunBreakdown('{payload['dept']}')")
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+        
+class SVCGetActiveServices(APIView):
+    def get(self, request):
+        try:
+            token = decode_jwt(request)
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT * FROM Service_GetServices")
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+class SVCGetWeekServices(APIView):
+    def get(self, request):
+        try:
+            token = decode_jwt(request)
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT * FROM Service_GetWeekServices")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:

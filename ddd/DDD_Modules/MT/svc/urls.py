@@ -17,10 +17,16 @@ urlpatterns = [
     #For Group
 	path('getPeriodAttendance/', g.SVCGetPeriodAttendanceViewSet.as_view()),
 	path('getGroupWeeklylog/', g.SVCGetGroupWeeklylogViewSet.as_view()),
+	path('getWeekBreakdown/', g.SVCGetWeekBreakdown.as_view()),
 	path('updateAttendance/', g.SVCUpdateAttendanceViewSet.as_view()),
  
     #For Dept
+    path('getActiveServices/', d.SVCGetActiveServices.as_view()),
+    path('getWeekServices/', d.SVCGetWeekServices.as_view()),
 	path('getDeptBreakdown/', d.SVCGetDeptBreakdownViewSet.as_view()),
+	path('getAbsenteeByDept/', d.SVCGetAbsenteeByDept.as_view()),
+	path('getAbsenteeByGroup/', d.SVCGetAbsenteeByGroup.as_view()),
+	path('getDeptWedSunBreakdown/', d.SVCGetDeptWedSunBreakdown.as_view()),
     
 	#For MT Dept
 	path('getAbsenteeByDivision/', mt.SVCGetAbsenteeByDivision.as_view()),

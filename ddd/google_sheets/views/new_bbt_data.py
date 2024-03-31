@@ -150,16 +150,19 @@ class GetPotentialBTMViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute("""
                     WITH BBwithFE AS (
-                        SELECT * FROM BBDataView WHERE Season = 57 AND Status IN ('CA','CI')
+                        SELECT * FROM BBDataView WHERE Season = 57 AND Status NOT IN ('NP','OP', 'FA')
                     ), MembersBB AS (
-                        SELECT Group_IMWY 'Dept', GI.Grp, M.Name, Internal_Position Pos, (Select COUNT(*) FROM BBwithFE WHERE L1_ID = M.UID OR L2_ID = M.UID) 'CT', GL.GID 
+                        SELECT Group_IMWY 'Dept', GI.Grp, M.Name, Internal_Position Pos, 
+							(Select COUNT(*) FROM BBwithFE WHERE L1_ID = M.UID OR L2_ID = M.UID) 'BB', 
+							(Select COUNT(*) FROM BBwithFE WHERE (L1_ID = M.UID OR L2_ID = M.UID) AND Status IN ('AB')) 'ABB', 
+							(Select COUNT(*) FROM BBwithFE WHERE (L1_ID = M.UID OR L2_ID = M.UID) AND Status IN ('CA','CI')) 'CCT', GL.GID 
                         FROM MemberData M 
                         LEFT JOIN (Select * FROM GroupLog WHERE EndDate IS NULL) GL ON GL.UID = M.UID
                         LEFT JOIN GroupInfo GI ON GI.GID = GL.GID
                         WHERE (M.Group_IMWY IN ('D1','D2','D3','D4','D5','D6','D7') OR (M.Group_IMWY IN ('D9','D8') AND Internal_Position < 7))
                         AND M.UID NOT IN (Select UID From BBTLog WHERE EndDate IS NULL) AND M.UID NOT IN (Select UID From CTData Where CTNum IN ('SMC153','SMC153-1'))
                     )
-                    SELECT Dept, Grp, Name, CT FROM MembersBB WHERE CT > 1  ORDER BY GID
+                    SELECT Dept, Grp, Name, BB, ABB, CCT FROM MembersBB WHERE BB > 1  ORDER BY GID
                 """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 

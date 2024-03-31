@@ -10,6 +10,7 @@ from django.db import connection
 
 
 # Create your views here.
+
 class SVCGetPeriodAttendanceViewSet(APIView):
     def get(self, request):
         
@@ -72,3 +73,35 @@ class SVCUpdateAttendanceViewSet(APIView):
             print(e)
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+
+
+
+class SVCGetWeekBreakdown(APIView):
+    def get(self, request):
+        try:
+            token = decode_jwt(request)
+            payload = request.data
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT * FROM Service_WeekBreakdown('{token['UID']}')")
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+        
+class SVCGetActiveServices(APIView):
+    def get(self, request):
+        try:
+            token = decode_jwt(request)
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT * FROM Service_GetServices")
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

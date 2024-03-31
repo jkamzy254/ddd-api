@@ -2063,7 +2063,7 @@ FROM ScottStatusNumbers WHERE Dept LIKE 'D_'
 
 def tolfull(d):
     
-    header = f"🌳{str(d).replace('__','Youth')} Tree of Life🌳" if d != '__' else '🌳Tree of Life Full🌳'
+    header = f"🌳{str(d).replace('__','Youth')} Tree of Life🌳" if d != '__' else '🌳TOL Full🌳'
     conn = odbc.connect(conn_str)
     
     bb_group = f"""SELECT s.Grp, NewM mNew, OldM mOld, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Tot bbTot
@@ -2096,15 +2096,15 @@ WHERE s.Dept LIKE '{d}'"""
     
     group = str()
     for r in range(len(dg)):
-        grp =    str(dg.loc[r,'Grp']) + ' '*(6-len(str(dg.loc[r,'Grp'])))
+        grp =    str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
         mn  = ' '*(5-len(str(dg.loc[r,'mNew']))) + str(dg.loc[r,'mNew'])
-        mo  = ' '*(5-len(str(dg.loc[r,'mOld']))) + str(dg.loc[r,'mOld'])
+        mo  = ' '*(6-len(str(dg.loc[r,'mOld']))) + str(dg.loc[r,'mOld'])
         pn  = ' '*(4-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
         po  = ' '*(4-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
         ba  = ' '*(5-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
         ca  = ' '*(5-len(str(dg.loc[r,'cctA']))) + str(dg.loc[r,'cctA'])
-        bm  = ' '*(4-len(str(dg.loc[r,'bbME']))) + str(dg.loc[r,'bbME'])
-        ci  = ' '*(4-len(str(dg.loc[r,'cctI']))) + str(dg.loc[r,'cctI'])
+        bm  = ' '*(5-len(str(dg.loc[r,'bbME']))) + str(dg.loc[r,'bbME'])
+        ci  = ' '*(3-len(str(dg.loc[r,'cctI']))) + str(dg.loc[r,'cctI'])
         pf  = ' '*(4-len(str(dg.loc[r,'pFA'])))  + str(dg.loc[r,'pFA'])
         bf  = ' '*(4-len(str(dg.loc[r,'bbFA']))) + str(dg.loc[r,'bbFA'])
         t   = ' '*(5-len(str(dg.loc[r,'Tot'])))  + str(dg.loc[r,'Tot'])
@@ -2113,15 +2113,15 @@ WHERE s.Dept LIKE '{d}'"""
     
     dept = str()    
     for r in range(len(dd)):
-        dpt = str(dd.loc[r,'Dept'])   + ' '*(6-len(str(dd.loc[r,'Dept'])))
+        dpt = str(dd.loc[r,'Dept'])   + ' '*(5-len(str(dd.loc[r,'Dept'])))
         mn  = ' '*(5-len(str(dd.loc[r,'mNew']))) + str(dd.loc[r,'mNew'])
-        mo  = ' '*(5-len(str(dd.loc[r,'mOld']))) + str(dd.loc[r,'mOld'])
+        mo  = ' '*(6-len(str(dd.loc[r,'mOld']))) + str(dd.loc[r,'mOld'])
         pn  = ' '*(4-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
         po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
         ba  = ' '*(5-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
         ca  = ' '*(5-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
-        bm  = ' '*(4-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
-        ci  = ' '*(4-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
+        bm  = ' '*(5-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
+        ci  = ' '*(3-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
         pf  = ' '*(4-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
         bf  = ' '*(4-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
         t   = ' '*(5-len(str(dd.loc[r,'Tot'])))  + str(dd.loc[r,'Tot'])
@@ -2130,23 +2130,23 @@ WHERE s.Dept LIKE '{d}'"""
             
     if d == '__':
         mn = ' '*(5-len(str(dy.loc[0,'mNew']))) + str(dy.loc[0,'mNew'])
-        mo = ' '*(5-len(str(dy.loc[0,'mOld']))) + str(dy.loc[0,'mOld'])
+        mo = ' '*(6-len(str(dy.loc[0,'mOld']))) + str(dy.loc[0,'mOld'])
         pn = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
         ca = ' '*(5-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
-        bm = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
-        ci = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
+        bm = ' '*(5-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
+        ci = ' '*(3-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
         pf = ' '*(4-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
         bf = ' '*(4-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA'])
         t  = ' '*(5-len(str(dy.loc[0,'Tot'])))  + str(dy.loc[0,'Tot'])
         
-        youth = f'\nTotal [{mn}|{mo}]   [{pn}|{po}{separator}{ba}|{ca}]   [{bm}|{ci}{separator}{pf}|{bf}]   [{t}]\n'
+        youth = f'\nTotal[{mn}|{mo}]   [{pn}|{po}{separator}{ba}|{ca}]   [{bm}|{ci}{separator}{pf}|{bf}]   [{t}]\n'
 
     else:
         youth = str()
     
-    result = f"""<b><u>{header}</u></b>\n\n<pre>Type  [  MEETING  ]   [        ACTIVE       ]   [      INACTIVE     ]   [TOTAL]\n\nGrp   [  NM |  OM ]   [ NP | OP {separator}  AB |  CA ]   [ ME | CI {separator} FP | FA ]   [TotBB]\n\n{group}\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{header}</u></b>\n\n<pre>Type [   MEETING  ]   [        ACTIVE       ]   [      INACTIVE     ]   [TOTAL]\n\nGrp  [  NM |  OM  ]   [ NP | OP {separator}  AB |  CA ]   [  ME | CI{separator} FP | FA ]   [TotBB]\n\n{group}\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -2280,7 +2280,7 @@ def bbinactive(d):
 
     dg.columns = ['Grp','pOld','bbME','cctI','pFA','bbFA']
     dd.columns = ['Dept','pOld','bbME','cctI','pFA','bbFA']
-    dy.columns = ['bbME','pOld','cctI','pFA','bbFA']
+    dy.columns = ['pOld','bbME','cctI','pFA','bbFA']
     
     dg['Grp'] = dg['Grp'].str.replace(r'^(\d)', r'G\1')
     dd.replace(r' Dept',r'', regex = True, inplace = True)

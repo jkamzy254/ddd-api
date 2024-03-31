@@ -14,12 +14,12 @@ from django.db import connection
 
 
 class SVCGetAbsenteeByDivision(APIView):
-    def post(self, request):
+    def get(self, request):
         try:
             token = decode_jwt(request)
             payload = request.data
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT * FROM Service_AbsenteeByDivision({payload['sid']})")
+                cursor.execute(f"SELECT * FROM Service_AbsenteeByDivision({request.GET.get('sid')})")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:
@@ -33,12 +33,12 @@ class SVCGetAbsenteeByDivision(APIView):
         
         
 class SVCGetAbsentList(APIView):
-    def post(self, request):
+    def get(self, request):
         try:
             token = decode_jwt(request)
             payload = request.data
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT * FROM AbsentList('{payload['subdiv']}', {payload['sid']})")
+                cursor.execute(f"SELECT * FROM AbsentList({request.GET.get('sid')})")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:

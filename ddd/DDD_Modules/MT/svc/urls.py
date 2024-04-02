@@ -19,8 +19,9 @@ urlpatterns = [
 	path('getPeriodAttendance/', g.SVCGetPeriodAttendanceViewSet.as_view()),
 	path('getGroupWeeklylog/', g.SVCGetGroupWeeklylogViewSet.as_view()),
 	path('getWeekBreakdown/', g.SVCGetWeekBreakdown.as_view()),
-	path('updateAttendance/', g.SVCUpdateAttendanceViewSet.as_view()),
-	path('groupAttendance/', g.SVCGetGroupAttendance.as_view()),
+	path('getGroupAttendance/', g.SVCGetGroupAttendance.as_view()),
+ 	path('updateAttendance/', g.SVCUpdateAttendanceViewSet.as_view()),
+	
  
     #For Dept
     path('getWeekServices/', d.SVCGetWeekServices.as_view()),

@@ -46,7 +46,6 @@ class SVCGetAbsenteeByDept(APIView):
     def get(self, request):
         try:
             token = decode_jwt(request)
-            payload = request.data
             with connection.cursor() as cursor:
                 cursor.execute(f"SELECT * FROM Service_AbsenteeByDept({request.GET.get('sid')})")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
@@ -62,9 +61,8 @@ class SVCGetAbsenteeByGroup(APIView):
     def get(self, request):
         try:
             token = decode_jwt(request)
-            payload = request.data
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT * FROM Service_AbsenteeByGroup('{request.GET.get('dept')}')")
+                cursor.execute(f"SELECT * FROM Service_AbsenteeByGroup('{token['UID']}')")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:
@@ -78,9 +76,8 @@ class SVCGetDeptWedSunBreakdown(APIView):
     def get(self, request):
         try:
             token = decode_jwt(request)
-            payload = request.data
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT * FROM Service_DeptWedSunBreakdown('{request.GET.get('dept')}')")
+                cursor.execute(f"SELECT * FROM Service_DeptWedSunBreakdown('{token['UID']}')")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:

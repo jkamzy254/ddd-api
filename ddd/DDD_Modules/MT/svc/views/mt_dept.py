@@ -45,3 +45,21 @@ class SVCGetAbsentList(APIView):
             # Handle exceptions here, e.g., logging or returning an error response
             print(e)
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+        
+        
+        
+class SVCGetFavouritesAttendance(APIView):
+    def get(self, request):
+        try:
+            token = decode_jwt(request)
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT * FROM Service_FavouritesAttendance('{token['UID']}',{request.GET.get('sid')})")
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

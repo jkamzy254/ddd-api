@@ -160,7 +160,7 @@ class GetPotentialBTMViewSet(APIView):
                         LEFT JOIN (Select * FROM GroupLog WHERE EndDate IS NULL) GL ON GL.UID = M.UID
                         LEFT JOIN GroupInfo GI ON GI.GID = GL.GID
                         WHERE (M.Group_IMWY IN ('D1','D2','D3','D4','D5','D6','D7') OR (M.Group_IMWY IN ('D9','D8') AND Internal_Position < 7))
-                        AND M.UID NOT IN (Select UID From BBTLog WHERE EndDate IS NULL) AND M.UID NOT IN (Select UID From CTData Where CTNum IN ('SMC153','SMC153-1'))
+                        AND M.UID NOT IN (Select UID From BBTLog WHERE EndDate IS NULL) 
                     )
                     SELECT Dept, Grp, Name, BB, ABB, CCT FROM MembersBB WHERE BB > 1  ORDER BY GID
                 """)
@@ -234,8 +234,6 @@ class GetFebCTDataViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 
 class GetCurrentCTDataViewSet(APIView):
     def post(self, request):

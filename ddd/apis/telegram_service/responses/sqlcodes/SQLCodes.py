@@ -2163,17 +2163,17 @@ def bbactive(d):
     
     conn = odbc.connect(conn_str)
     
-    bb_group = f"SELECT Grp, pNew, bbA, cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"
-    bb_dept = f"""SELECT Dept, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
-    bb_youth = f"""SELECT SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
+    bb_group = f"SELECT Grp, Tot SP, pNew, bbA, cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"
+    bb_dept = f"""SELECT Dept, SUM(Tot)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
+    bb_youth = f"""SELECT SUM(Tot)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
     
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
     dy = pd.read_sql(bb_youth, conn)
 
-    dg.columns = ['Grp','pNew','bbA','cctA']
-    dd.columns = ['Dept','pNew','bbA','cctA']
-    dy.columns = ['pNew','bbA','cctA']
+    dg.columns = ['Grp','SP','pNew','bbA','cctA']
+    dd.columns = ['Dept','SP','pNew','bbA','cctA']
+    dy.columns = ['SP','pNew','bbA','cctA']
     
     dg['Grp'] = dg['Grp'].str.replace(r'^(\d)', r'G\1')
     dd.replace(r' Dept',r'', regex = True, inplace = True)
@@ -2185,29 +2185,32 @@ def bbactive(d):
     group = str()
     for r in range(len(dg)):
         grp =    str(dg.loc[r,'Grp']) + ' '*(4-len(str(dg.loc[r,'Grp'])))
+        sp  = ' '*(5-len(str(dg.loc[r,'SP'])))   + str(dg.loc[r,'SP'])
         pn  = ' '*(5-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
         ba  = ' '*(5-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
         ca  = ' '*(4-len(str(dg.loc[r,'cctA']))) + str(dg.loc[r,'cctA'])
-        group = f'{group}{grp}[{pn}|{ba}|{ca}]\n'
+        group = f'{group}{grp}[{sp}][{pn}|{ba}|{ca}]\n'
     
     dept = str()    
     for r in range(len(dd)):
         dpt = str(dd.loc[r,'Dept'])   + ' '*(4-len(str(dd.loc[r,'Dept'])))
+        sp  = ' '*(5-len(str(dd.loc[r,'SP'])))   + str(dd.loc[r,'SP'])
         pn  = ' '*(5-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
         ba  = ' '*(5-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
         ca  = ' '*(4-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
-        dept = f'{dept}{dpt}[{pn}|{ba}|{ca}]\n'
+        dept = f'{dept}{dpt}[{sp}][{pn}|{ba}|{ca}]\n'
             
     if d == '__':
+        sp = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
         ca = ' '*(4-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
-        youth = f'\nTot [{pn}|{ba}|{ca}]\n'
+        youth = f'\nTot [{sp}][{pn}|{ba}|{ca}]\n'
 
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('__','Youth')} Active BB Status </u></b>\n\n<pre>Grp [  NP |  AB | CA ]\n\n{group}\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('__','Youth')} Active BB Status </u></b>\n\n<pre>Grp [  SP ][  NP |  AB | CA ]\n\n{group}\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -2220,17 +2223,17 @@ def deptbbactive(d):
     
     conn = odbc.connect(conn_str)
     
-    bb_group = f"SELECT Grp, pNew, bbA, cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"
-    bb_dept = f"""SELECT Dept, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
-    bb_youth = f"""SELECT SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
+    bb_group = f"SELECT Grp, Tot SP, pNew, bbA, cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"
+    bb_dept = f"""SELECT Dept, SUM(Tot)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
+    bb_youth = f"""SELECT SUM(Tot)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
     
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
     dy = pd.read_sql(bb_youth, conn)
 
-    dg.columns = ['Grp','pNew','bbA','cctA']
-    dd.columns = ['Dept','pNew','bbA','cctA']
-    dy.columns = ['pNew','bbA','cctA']
+    dg.columns = ['Grp','SP','pNew','bbA','cctA']
+    dd.columns = ['Dept','SP','pNew','bbA','cctA']
+    dy.columns = ['SP','pNew','bbA','cctA']
     
     dg['Grp'] = dg['Grp'].str.replace(r'^(\d)', r'G\1')
     dd.replace(r' Dept',r'', regex = True, inplace = True)
@@ -2240,21 +2243,23 @@ def deptbbactive(d):
     dept = str()    
     for r in range(len(dd)):
         dpt = str(dd.loc[r,'Dept'])   + ' '*(4-len(str(dd.loc[r,'Dept'])))
+        sp  = ' '*(5-len(str(dd.loc[r,'SP'])))   + str(dd.loc[r,'SP'])
         pn  = ' '*(5-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
         ba  = ' '*(5-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
         ca  = ' '*(4-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
-        dept = f'{dept}{dpt}[{pn}|{ba}|{ca}]\n'
+        dept = f'{dept}{dpt}[{sp}][{pn}|{ba}|{ca}]\n'
             
     if d == '__':
+        sp = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
         ca = ' '*(4-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
-        youth = f'\nTot [{pn}|{ba}|{ca}]\n'
+        youth = f'\nTot [{sp}][{pn}|{ba}|{ca}]\n'
 
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('__','Youth')} Active BB Status </u></b>\n\n<pre>Grp [  NP |  AB | CA ]\n\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('__','Youth')} Active BB Status </u></b>\n\n<pre>Grp [  SP ][  NP |  AB | CA ]\n\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result

@@ -1,5 +1,6 @@
 from contextlib import nullcontext
 import redis
+from redis.commands.json.path import Path
 import os
 
 REDIS_HOST = os.environ.get('REDIS_URL')
@@ -30,3 +31,7 @@ class Redis():
         print("Set Expiration")
 
         return Redis.r.expire(key, duration)
+
+    def jsonSet(key, field):
+        print("Json Set")
+        Redis.r.json().set(key, Path.rootPath(), field)

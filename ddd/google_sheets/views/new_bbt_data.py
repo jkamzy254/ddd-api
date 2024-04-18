@@ -150,7 +150,9 @@ class GetPotentialBTMViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute("""
                     WITH BBwithFE AS (
-                        SELECT * FROM BBDataView WHERE Season = 57 AND Status NOT IN ('NP','OP', 'FA')
+                        SELECT * FROM BBDataView 
+                        WHERE Season = (Select Top 1 ID From EVSeason Where ClosingDate > (SELECT SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') AND Region = 'Melbourne')
+                        AND Status NOT IN ('NP','OP', 'FA')
                     ), MembersBB AS (
                         SELECT Group_IMWY 'Dept', GI.Grp, M.Name, Internal_Position Pos, 
 							(Select COUNT(*) FROM BBwithFE WHERE L1_ID = M.UID OR L2_ID = M.UID) 'BB', 

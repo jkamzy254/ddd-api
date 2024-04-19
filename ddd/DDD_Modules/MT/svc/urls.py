@@ -32,6 +32,7 @@ urlpatterns = [
 	#For MT Dept
  	path('getDeptWedSunBreakdown/', mt.SVCGetDeptWedSunBreakdown.as_view()),
 	path('getAbsenteeByDivision/', mt.SVCGetAbsenteeByDivision.as_view()),
+	path('getWedSunAbsenteeByDivision/', mt.SVCGetWedSunAbsenteeByDivision.as_view()),
  	path('getAbsentList/', mt.SVCGetAbsentList.as_view()),
   	path('getFavouritesAttendance/', mt.SVCGetFavouritesAttendance.as_view()),
 ]

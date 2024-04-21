@@ -3,7 +3,7 @@ from .sqlcodes import SQLCodes
 
 def bot_responses(id,input_text):
     
-    r,access,g,d,name,uid,sd,sftg = SQLCodes.teledata(id).split('/')
+    r,access,g,gg,d,name,uid,sd,sftg = SQLCodes.teledata(id).split('/')
     
     user_message = str(input_text).lower().replace(' ','')
     
@@ -33,7 +33,7 @@ def bot_responses(id,input_text):
                     return 'Format error: Too many "/"s'
                 if g.lower() not in ['gd','glg','hangul','serving']:
                     g = g.replace('g','').replace('G','')
-                d,r,sd = SQLCodes.groupinfo(g).split('/')
+                gg,d,r,sd = SQLCodes.groupinfo(g).split('/')
         else:
             command = user_message
     
@@ -101,52 +101,52 @@ def bot_responses(id,input_text):
             return SQLCodes.tempfmp(timerange,sftg,access)
         
     if command == 'bblist':
-        return SQLCodes.bblist(d,g,access)
+        return SQLCodes.bblist(d,g,r,access)
     
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('list'):
         if d == '__' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('list')
-        return SQLCodes.bbtlist(q,d,g,access)
+        return SQLCodes.bbtlist(q,d,g,r,access)
         
     if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('status'):
         if d == '__' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('status')
-        return SQLCodes.bbtstatus(q,g,d,access)
+        return SQLCodes.bbtstatus(q,g,d,r,access)
         
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
         if d == '__' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('active')
-        return SQLCodes.bbtactive(q,g,d,access)
+        return SQLCodes.bbtactive(q,g,d,r,access)
     
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('inactive'):
         if d == '__' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('inactive')
-        return SQLCodes.bbtinactive(q,g,d,access)
+        return SQLCodes.bbtinactive(q,g,d,r,access)
     
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('status'):
         if d == '__' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('status') # removing 'inactive', leaving 'deptbbt'
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
-        return SQLCodes.deptbbtstatus(q,d,access)
+        return SQLCodes.deptbbtstatus(q,d,r,access)
     
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
         if d == '__' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('active') # removing 'inactive', leaving 'deptbbt'
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
-        return SQLCodes.deptbbtactive(q,d,access)
+        return SQLCodes.deptbbtactive(q,d,r,access)
     
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('inactive'):
         if d == '__' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('inactive') # removing 'inactive', leaving 'deptbbt'
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
-        return SQLCodes.deptbbtinactive(q,d,access)
+        return SQLCodes.deptbbtinactive(q,d,r,access)
     
     # Dept and above functions
     if access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','Dept','DecSFT','M&W Dept','All','IT']:

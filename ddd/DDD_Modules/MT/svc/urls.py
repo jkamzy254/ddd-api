@@ -28,10 +28,11 @@ urlpatterns = [
 	path('getDeptBreakdown/', d.SVCGetDeptBreakdownViewSet.as_view()),
 	path('getAbsenteeByDept/', d.SVCGetAbsenteeByDept.as_view()),
 	path('getAbsenteeByGroup/', d.SVCGetAbsenteeByGroup.as_view()),
-	path('getDeptWedSunBreakdown/', d.SVCGetDeptWedSunBreakdown.as_view()),
     
 	#For MT Dept
+ 	path('getDeptWedSunBreakdown/', mt.SVCGetDeptWedSunBreakdown.as_view()),
 	path('getAbsenteeByDivision/', mt.SVCGetAbsenteeByDivision.as_view()),
+	path('getWedSunAbsenteeByDivision/', mt.SVCGetWedSunAbsenteeByDivision.as_view()),
  	path('getAbsentList/', mt.SVCGetAbsentList.as_view()),
   	path('getFavouritesAttendance/', mt.SVCGetFavouritesAttendance.as_view()),
 ]

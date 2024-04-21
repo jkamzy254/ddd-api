@@ -106,7 +106,7 @@ def functionlog(uid, name, input_text, command):
 
 def teledata(id):
     conn = odbc.connect(conn_str)
-    access = f"""SELECT m.Region, t.Access, m.MemberGroup, m.Group_IMWY, m.Name, m.UID,
+    access = f"""SELECT m.Region, t.Access, m.MemberGroup, m.GrpName, m.Group_IMWY, m.Name, m.UID,
     CASE WHEN m.Group_IMWY = 'M&W Dept' THEN 'All' ELSE 'All' END AS SeasonDept, s.MemberGroup sftMemberGroup
     FROM TelegramBotData t
 	LEFT JOIN MemberData m ON m.UID = t.UID
@@ -114,23 +114,23 @@ def teledata(id):
 	WHERE TelID = {id}""" # Replace the first 'All' to m.Group_IMWY (or even just 'M&W Dept') to change M&W season back to M&W CT (change also on groupinfo function!)
     da = pd.read_sql(access, conn)
     conn.cursor().close()
-
+    
     if len(da) == 0:
-        return "None/None/None/None/None/None/None/None"
+        return "None/None/None/None/None/None/None/None/None"
     else:
-        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}"
+        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}/{da.iloc[0,8]}"
 
 def groupinfo(g):
     conn = odbc.connect(conn_str)
-    seasondata = f"""SELECT TOP 1 Group_IMWY, Region, CASE WHEN Group_IMWY = 'M&W Dept' THEN 'All' ELSE 'All' END AS SeasonDept
-    FROM MemberData WHERE MemberGroup = '{g}'""" # Replace the first 'All' with GROUP_IMWY to change M&W season back to M&W CT (Change also on teledata function!)
+    seasondata = f"""SELECT TOP 1 GrpName, Group_IMWY, Region, CASE WHEN Group_IMWY = 'M&W Dept' THEN 'All' ELSE 'All' END AS SeasonDept
+    FROM MemberData m WHERE MemberGroup = '{g}'""" # Replace the first 'All' with GROUP_IMWY to change M&W season back to M&W CT (Change also on teledata function!)
     dr = pd.read_sql(seasondata, conn)
     conn.cursor().close()
 
     if len(dr) == 0:
-        return "None/None/None"
+        return "None/None/None/None"
     else:
-        return f"{dr.iloc[0,0]}/{dr.iloc[0,1]}/{dr.iloc[0,2]}"
+        return f"{dr.iloc[0,0]}/{dr.iloc[0,1]}/{dr.iloc[0,2]}/{dr.iloc[0,3]}"
     
 
 def duplicate_check(ph):
@@ -930,7 +930,7 @@ def pxlist(g):
 
 
 
-def bbtstatus(q, g, d, access):
+def bbtstatus(q, g, d, r, access):
         
     name = 'BBT' if access == 'IT' else 'BBTCode2'
     g = g if access == 'Group' else '%'
@@ -944,10 +944,10 @@ def bbtstatus(q, g, d, access):
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} ORDER BY LEN(Grp), Grp, {name}"
-    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Grp ORDER BY LEN(Grp), Grp"
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Dept"
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query}"
+    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} ORDER BY LEN(Grp), Grp, {name}"
+    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Grp ORDER BY LEN(Grp), Grp"
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query}"
     
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
@@ -1034,7 +1034,7 @@ def bbtstatus(q, g, d, access):
 
 
 
-def deptbbtstatus(q, d, access):
+def deptbbtstatus(q, d, r, access):
     
     name = 'BBT' if access == 'IT' else 'BBTCode'
     d = d.capitalize()
@@ -1046,8 +1046,8 @@ def deptbbtstatus(q, d, access):
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} Group BY Dept"
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query}"
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}'{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}'{query}"
     
     dd = pd.read_sql(bb_dept, conn)
     dy = pd.read_sql(bb_youth, conn)
@@ -1096,7 +1096,7 @@ def deptbbtstatus(q, d, access):
 
 
 
-def bbtactive(q, g, d, access):
+def bbtactive(q, g, d, r, access):
     
     name = 'BBT' if access == 'IT' else 'BBTCode2'
     g = g if access == 'Group' else '%'
@@ -1110,10 +1110,10 @@ def bbtactive(q, g, d, access):
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} ORDER BY LEN(Grp), Grp, {name}"
-    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Grp ORDER BY LEN(Grp), Grp"
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Dept"
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query}"
+    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} ORDER BY LEN(Grp), Grp, {name}"
+    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Grp ORDER BY LEN(Grp), Grp"
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query}"
     
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
@@ -1181,7 +1181,7 @@ def bbtactive(q, g, d, access):
 
 
 
-def deptbbtactive(q, d, access):
+def deptbbtactive(q, d, r, access):
         
     name = 'BBT' if access == 'IT' else 'BBTCode'
     d = d.capitalize()
@@ -1194,8 +1194,8 @@ def deptbbtactive(q, d, access):
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} Group BY Dept"
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query}"
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}'{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}'{query}"
     
     dd = pd.read_sql(bb_dept, conn)
     dy = pd.read_sql(bb_youth, conn)
@@ -1236,7 +1236,7 @@ def deptbbtactive(q, d, access):
 
 
 
-def bbtinactive(q, g, d, access):
+def bbtinactive(q, g, d, r, access):
     
     name = 'BBT' if access == 'IT' else 'BBTCode2'
     g = g if access == 'Group' else '%'
@@ -1250,10 +1250,10 @@ def bbtinactive(q, g, d, access):
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} ORDER BY LEN(Grp), Grp, {name}"
-    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Grp ORDER BY LEN(Grp), Grp"
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Dept"
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query}"
+    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} ORDER BY LEN(Grp), Grp, {name}"
+    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Grp ORDER BY LEN(Grp), Grp"
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query}"
     
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
@@ -1328,7 +1328,7 @@ def bbtinactive(q, g, d, access):
 
 
 
-def deptbbtinactive(q, d, access):
+def deptbbtinactive(q, d, r, access):
     
     name = 'BBT' if access == 'IT' else 'BBTCode'
     d = d.capitalize()
@@ -1340,8 +1340,8 @@ def deptbbtinactive(q, d, access):
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query} Group BY Dept"
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM ScottBBTStatusMembers WHERE Dept LIKE '{d}'{query}"
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}'{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept LIKE '{d}'{query}"
     
     dd = pd.read_sql(bb_dept, conn)
     dy = pd.read_sql(bb_youth, conn)
@@ -1382,13 +1382,12 @@ def deptbbtinactive(q, d, access):
 
 
 
-def bblist(d,g,access):
+def bblist(d,g,r,access):
     d = d.capitalize()
     g = '%' if access != 'Group' else g
     gd = re.sub(r'^(\d)',r'G\1',g).capitalize() if access == 'Group' else str(d).replace('__','Youth')
     
-    query = f"FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}') AND (L1D LIKE '{d}' OR L2D LIKE '{d}')"
-        
+    query = f"FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}') AND (L1D LIKE '{d}' OR L2D LIKE '{d}')"
     conn = odbc.connect(conn_str)   
 
     dNP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {query} AND NewStatus = 'New P'    ORDER BY BBTN", conn)
@@ -1498,7 +1497,7 @@ def bblist(d,g,access):
 
 
 
-def bbtlist(q,d,g,access):
+def bbtlist(q,d,g,r,access):
     d = d.capitalize()
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
@@ -1510,14 +1509,14 @@ def bbtlist(q,d,g,access):
     
     conn = odbc.connect(conn_str)   
 
-    dNP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'New P'    AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dOP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'Old P'    AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dAB = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'ABB'      AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dIM = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'IBB ME'   AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dIF = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'IBB FA'   AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dFP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'Fallen P' AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dAC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'ABB CCT'  AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dIC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'IBB CCT'  AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dNP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'New P'    AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dOP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'Old P'    AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dAB = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'ABB'      AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dIM = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'IBB ME'   AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dIF = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'IBB FA'   AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dFP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'Fallen P' AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dAC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'ABB CCT'  AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dIC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'IBB CCT'  AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
     dNP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
     dOP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
     dAB.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
@@ -2666,16 +2665,16 @@ SELECT 'Total', SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bb
 
 
 
-def bbtdept():
+def bbtdept(r):
     conn = odbc.connect(conn_str)
     header = "🏛BBT Status Summary🏛"
     bb_dept = f"""SELECT * FROM (
 SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(Total)Total
-                  FROM ScottBBTStatusMembers
+                  FROM CodeyBBTStatusMembers('{r}')
                   GROUP BY Dept
 UNION ALL
 SELECT 'Total', SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(Total)Total
-                  FROM ScottBBTStatusMembers
+                  FROM CodeyBBTStatusMembers('{r}')
 				  ) s WHERE Dept IS NOT NULL AND Dept NOT IN ('Church','SCM','OtherChurch')
 				  ORDER BY CASE Dept
                   WHEN 'Serving' THEN 1 WHEN 'Culture' THEN 2 WHEN 'HWPL' THEN 3 WHEN 'SFT' THEN 4 WHEN 'Office' THEN 5
@@ -2710,7 +2709,7 @@ SELECT 'Total', SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bb
 
 
 
-def bbtbtmstatus():
+def bbtbtmstatus(r):
     conn = odbc.connect(conn_str)
     header = "🏛BBT Status Summary🏛"
     bb_dept = f"""SELECT BBTStatus,NP,OP,AB,IB,FA,FP,CA,CI,Total FROM (

@@ -391,7 +391,7 @@ def weekmpfe(g):
 
 # UNIVERSAL MEMBER FMP FUNCTION
 
-def memberfmp(timerange,g,region,seasondept,access):
+def memberfmp(timerange,g,d,region,seasondept,access):
     
 #     print(f"""
 # {{
@@ -408,14 +408,14 @@ def memberfmp(timerange,g,region,seasondept,access):
                   'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
                   'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
                   'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"SELECT dbo.ssnstart('{region}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
+                  'season':    [f"SELECT dbo.ssnstartdept('{d}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
    
     s,e,title = timevalues[timerange]
     
     conn = odbc.connect(conn_str)
     
-    memberQ = f"SELECT {name}, F, M, P, FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Grp LIKE '{g}'"
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Grp LIKE '{g}'"
+    memberQ = f"SELECT {name}, F, M, P, FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Grp LIKE '{g}'"
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Grp LIKE '{g}'"
     dm = pd.read_sql(memberQ, conn)
     dt = pd.read_sql(totalQ, conn)
 
@@ -477,14 +477,15 @@ def deptfmp(task,timerange,d,region,seasondept,access):
                   'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
                   'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
                   'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"SELECT dbo.ssnstart('{region}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
+                  'season':    [f"SELECT dbo.ssnstartdept('{d}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
     
     s,e,timetitle = timevalues[timerange]
        
     conn = odbc.connect(conn_str)
-    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Grp ORDER BY LEN(Grp), Grp"
-    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept ORDER BY Dept"  
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ}"
+    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Grp ORDER BY LEN(Grp), Grp"
+    print(memberQ)
+    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept ORDER BY Dept"  
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Dept LIKE '{d}'{taskQ}"
     dm = pd.read_sql(memberQ, conn)
     dd = pd.read_sql(deptQ, conn)
     dt = pd.read_sql(totalQ, conn)
@@ -566,7 +567,7 @@ def taskfmp(task,timerange,d,region,seasondept,access):
                   'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
                   'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
                   'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"SELECT dbo.ssnstart('{region}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
+                  'season':    [f"SELECT dbo.ssnstartdept('{d}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
     
     s,e,timetitle = timevalues[timerange]
        
@@ -577,7 +578,7 @@ def taskfmp(task,timerange,d,region,seasondept,access):
     	WHEN Title = 'GYJN' THEN Title
     	ELSE Task
     END AS Position
-    FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) s
+    FROM CodeyMemberFMP('{region}',({s}),({e})) s
     LEFT JOIN TaskHigh t ON s.UID = t.UID
     WHERE Dept LIKE '{d}') p
 WHERE Position LIKE '{task}'
@@ -587,7 +588,7 @@ CASE
 	WHEN Title = 'GYJN' THEN Title
 	ELSE Task
 	END AS Position
-FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) s
+FROM CodeyMemberFMP('{region}',({s}),({e})) s
 LEFT JOIN TaskHigh t ON s.UID = t.UID
 WHERE Dept LIKE '{d}') p
 WHERE Position LIKE '{task}'
@@ -598,7 +599,7 @@ CASE
 	WHEN Title = 'GYJN' THEN Title
 	ELSE Task
 	END AS Position
-FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) s
+FROM CodeyMemberFMP('{region}',({s}),({e})) s
 LEFT JOIN TaskHigh t ON s.UID = t.UID
 WHERE Dept LIKE '{d}') p
 WHERE Position LIKE '{task}'"""

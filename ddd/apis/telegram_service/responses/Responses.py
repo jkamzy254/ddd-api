@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from .sqlcodes import SQLCodes
 
-bot_responses(id,input_text):
+def bot_responses(id,input_text):
     
     r,access,g,gg,d,name,uid,sd,sftg = SQLCodes.teledata(id).split('/')
     

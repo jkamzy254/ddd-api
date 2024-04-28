@@ -51,7 +51,7 @@ def bot_responses(id,input_text):
                 return 'Format error: Too many "/"s'
             if g.lower() not in ['gd','glg','hangul','serving']:
                 g = g.replace('g','').replace('G','')
-            d,r,sd = SQLCodes.groupinfo(g).split('/')
+            gg,d,r,sd = SQLCodes.groupinfo(g).split('/')
             access = 'Group' # If specific group is specified, their access for the current function reduced to Group-level
             if g not in allowed_groups and user_message.lower()[:3] != 'ev/':
                 return 'Sorry, this group is outside your department!'

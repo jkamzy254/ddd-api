@@ -51,7 +51,7 @@ def bot_responses(id,input_text):
                 return 'Format error: Too many "/"s'
             if g.lower() not in ['gd','glg','hangul','serving']:
                 g = g.replace('g','').replace('G','')
-            d,r,sd = SQLCodes.groupinfo(g).split('/')
+            gg,d,r,sd = SQLCodes.groupinfo(g).split('/')
             access = 'Group' # If specific group is specified, their access for the current function reduced to Group-level
             if g not in allowed_groups and user_message.lower()[:3] != 'ev/':
                 return 'Sorry, this group is outside your department!'
@@ -67,6 +67,11 @@ def bot_responses(id,input_text):
     
     if r in ('Geelong','Darwin'):
         r = 'Online'
+        
+    if command.startswith('all'):
+        r = '%'
+        print(r)
+        command = command[3:]
     
     if 'phonenumber' in str(user_message):
         return "Sorry, 'phonenumber' is not a recognised command. However, to check if someone has been fished before, you may enter their phone number starting with '04' e.g. <pre>0412345678</pre> :)"
@@ -90,7 +95,7 @@ def bot_responses(id,input_text):
     
     if command in ['todayfmp','yesterdayfmp','weekfmp','lastweekfmp','seasonfmp']:
         timerange = command[:-3]
-        return SQLCodes.memberfmp(timerange,g,r,sd,access)
+        return SQLCodes.memberfmp(timerange,g,d,r,sd,access)
         
     if command == 'fmstatus':
         return SQLCodes.fmstatus(g,access)

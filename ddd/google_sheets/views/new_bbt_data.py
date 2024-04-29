@@ -321,3 +321,21 @@ class UpdateBBTMasterListViewSet(APIView):
                     return Response("Check the data", status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class GetDenomEthnicViewSet(APIView):
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"""
+                    SELECT MB.Group_IMWY, MB.Name, B.FruitName, F.Denomination, F.Nationality FROM BBData B
+                    LEFT JOIN Memberdata MB ON MB.UID = B.BBT_ID
+                    LEFT JOIN FruitData F ON F.UID = B.UID
+                    LEFT JOIN (Select * From GroupLog WHERE EndDate IS NULL) GL ON GL.UID = MB.UID
+                    WHERE Season = (Select MIN(ID) From EVSeason WHERE ClosingDate > dbo.today() AND Region = 'Melbourne')
+                    ORDER BY GL.GID, MB.Internal_Position
+                """)
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

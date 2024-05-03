@@ -209,7 +209,7 @@ def bot_responses(id,input_text):
             if command == 'bbtdeptold':
                 return SQLCodes.bbtdeptold()
             if command == 'bbtdept':
-                return SQLCodes.bbtdept()
+                return SQLCodes.bbtdept(r)
             if command == 'bbtbtmstatus':
                 return SQLCodes.bbtbtmstatus()
             

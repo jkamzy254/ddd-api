@@ -102,7 +102,7 @@ class SVCUpdateWatchList(APIView):
             token = decode_jwt(request)  
             payload = request.data
             with connection.cursor() as cursor:
-                cursor.execute(f"sp_Service_UpdateWatchList '{payload['uid']}', '{payload['luuid']}', {payload['active']}")
+                cursor.execute(f"sp_Service_UpdateWatchList {payload['uid']}, {payload['luuid']}, {payload['active']}")
             return Response(list(dict()), status=status.HTTP_200_OK)
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

@@ -68,7 +68,7 @@ class SVCGetAbsentList(APIView):
             token = decode_jwt(request)
             payload = request.data
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT * FROM AbsentList({request.GET.get('sid')})")
+                cursor.execute(f"SELECT * FROM AbsentList('{token['UID']}',{request.GET.get('sid')})")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:

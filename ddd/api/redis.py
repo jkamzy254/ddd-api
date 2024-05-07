@@ -34,4 +34,8 @@ class Redis():
 
     def jsonSet(key, field):
         print("Json Set")
-        Redis.r.json().set(key, Path.rootPath(), field)
+        return Redis.r.json().set(key, Path.root_path(), field)
+
+    def jsonGet(key):
+        print("Json Get")
+        return Redis.r.json().get(key)

@@ -68,7 +68,7 @@ class SVCGetAbsentList(APIView):
             token = decode_jwt(request)
             payload = request.data
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT * FROM AbsentList({request.GET.get('sid')})")
+                cursor.execute(f"SELECT * FROM AbsentList('{token['UID']}',{request.GET.get('sid')})")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:
@@ -89,6 +89,21 @@ class SVCGetFavouritesAttendance(APIView):
                 cursor.execute(f"SELECT * FROM Service_FavouritesAttendance('{token['UID']}',{request.GET.get('sid')})")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+class SVCUpdateWatchList(APIView):
+    def post(self, request):
+        try:   
+            token = decode_jwt(request)  
+            payload = request.data
+            with connection.cursor() as cursor:
+                cursor.execute(f"sp_Service_UpdateWatchList {payload['uid']}, {payload['luuid']}, {payload['active']}")
+            return Response(list(dict()), status=status.HTTP_200_OK)
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             print(e)

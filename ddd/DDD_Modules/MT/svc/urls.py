@@ -35,4 +35,5 @@ urlpatterns = [
 	path('getWedSunAbsenteeByDivision/', mt.SVCGetWedSunAbsenteeByDivision.as_view()),
  	path('getAbsentList/', mt.SVCGetAbsentList.as_view()),
   	path('getFavouritesAttendance/', mt.SVCGetFavouritesAttendance.as_view()),
+    path('updateWatchList/', mt.SVCUpdateWatchList.as_view()),
 ]

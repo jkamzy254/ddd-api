@@ -3231,7 +3231,7 @@ def classtoday(g, d, access):
     
     g = g if access == 'Group' else '%'
     d = d.capitalize()
-    grpdept = g if access == 'Group' else str(d).replace('__','Youth')
+    grpdept = g if access == 'Group' else str(d).replace('__','').replace('%','')
     bbtgrp = 'BBT' if access == 'Group' else 'Grp'
     
     conn = odbc.connect(conn_str)
@@ -3261,24 +3261,23 @@ def classtoday(g, d, access):
             cl  = ' '*(3-len(str(dm.loc[r,'Classes']))) + str(dm.loc[r,'Classes'])
             member = f'{member}{bbt}[{cl}]\n'
             
-    group = str()
-    if access != 'Group':
-        for r in range(len(dg)):
-            grp =   str(dm.loc[r,'Grp'][:5]) + ' '*(5-len(str(dm.loc[r,'Grp'][:5])))
-            cl  = ' '*(3-len(str(dm.loc[r,'Classes']))) + str(dm.loc[r,'Classes'])
-            group = f'{group}{grp}[{cl}]\n'
+    group = '\n'
+    for r in range(len(dg)):
+        grp =   str(dg.loc[r,'Grp'][:5]) + ' '*(5-len(str(dg.loc[r,'Grp'][:5])))
+        cl  = ' '*(3-len(str(dg.loc[r,'Classes']))) + str(dg.loc[r,'Classes'])
+        group = f'{group}{grp}[{cl}]\n'
     
-    
-    dept = str()  
-    if access != 'Group':  
+    dept = str()
+    if g == '%':
+        dept = '\n'
         for r in range(len(dd)):
             dpt = str(dd.loc[r,'Dept'])   + ' '*(5-len(str(dd.loc[r,'Dept'])))
-            cl  = ' '*(3-len(str(dm.loc[r,'Classes']))) + str(dm.loc[r,'Classes'])
+            cl  = ' '*(3-len(str(dd.loc[r,'Classes']))) + str(dd.loc[r,'Classes'])
             dept = f'{dept}{dpt}[{cl}]\n'
             
-    youth = f"\nTot  [{dy.loc[0,'Classes']}]\n"
+    youth = f"\nTot  [{' '*(3-len(str(dy.loc[0,'Classes'])))}{dy.loc[0,'Classes']}]\n" if g == '%' and d in ('__','%') else str()
     
-    result = f"""<b><u>{grpdept} BB Classes Today </u></b>\n\n<pre>{bbtgrp}  [#Cl]\n{member}\n{group}\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{grpdept} BB Classes Today </u></b>\n\n<pre>{bbtgrp}  [#Cl]\n{member}{group}{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result

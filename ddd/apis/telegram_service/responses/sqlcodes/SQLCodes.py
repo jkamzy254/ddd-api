@@ -3175,7 +3175,7 @@ def tempdept(timerange,d):
     dm = pd.read_sql(memberQ, conn)
     dd = pd.read_sql(deptQ, conn)
     dt = pd.read_sql(totalQ, conn)
-
+    # hello
     dm.columns = ['Grp','F','M','P','FE']
     dd.columns = ['Dept','F','M','P','FE']
     dt.columns = ['F','M','P','FE']
@@ -3218,10 +3218,6 @@ def tempdept(timerange,d):
     fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
     fmp = re.sub(r'(\D)0([^.])',r'\1-\2',fmp)   # Replaces lone '0' with '-'
     return fmp
-
-
-
-
 
 
 

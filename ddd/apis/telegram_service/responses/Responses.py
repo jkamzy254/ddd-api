@@ -153,6 +153,14 @@ def bot_responses(id,input_text):
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
         return SQLCodes.deptbbtinactive(q,d,r,access)
     
+    
+    
+    if command == 'classtoday':
+        return SQLCodes.classtoday(gg,d,access)
+    
+    
+    
+    
     # Dept and above functions
     if access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','Dept','DecSFT','M&W Dept','All','IT']:
         

@@ -391,7 +391,7 @@ def weekmpfe(g):
 
 # UNIVERSAL MEMBER FMP FUNCTION
 
-def memberfmp(timerange,g,d,region,seasondept,access):
+def memberfmp(timerange,g,region,seasondept,access):
     
 #     print(f"""
 # {{
@@ -408,14 +408,14 @@ def memberfmp(timerange,g,d,region,seasondept,access):
                   'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
                   'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
                   'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"SELECT dbo.ssnstartdept('{d}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
+                  'season':    [f"SELECT dbo.ssnstart('{region}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
    
     s,e,title = timevalues[timerange]
     
     conn = odbc.connect(conn_str)
     
-    memberQ = f"SELECT {name}, F, M, P, FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Grp LIKE '{g}'"
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Grp LIKE '{g}'"
+    memberQ = f"SELECT {name}, F, M, P, FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Grp LIKE '{g}'"
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Grp LIKE '{g}'"
     dm = pd.read_sql(memberQ, conn)
     dt = pd.read_sql(totalQ, conn)
 
@@ -477,15 +477,14 @@ def deptfmp(task,timerange,d,region,seasondept,access):
                   'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
                   'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
                   'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"SELECT dbo.ssnstartdept('{d}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
+                  'season':    [f"SELECT dbo.ssnstart('{region}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
     
     s,e,timetitle = timevalues[timerange]
        
     conn = odbc.connect(conn_str)
-    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Grp ORDER BY LEN(Grp), Grp"
-    print(memberQ)
-    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept ORDER BY Dept"  
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Dept LIKE '{d}'{taskQ}"
+    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Grp ORDER BY LEN(Grp), Grp"
+    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept ORDER BY Dept"  
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ}"
     dm = pd.read_sql(memberQ, conn)
     dd = pd.read_sql(deptQ, conn)
     dt = pd.read_sql(totalQ, conn)
@@ -567,7 +566,7 @@ def taskfmp(task,timerange,d,region,seasondept,access):
                   'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
                   'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
                   'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"SELECT dbo.ssnstartdept('{d}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
+                  'season':    [f"SELECT dbo.ssnstart('{region}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
     
     s,e,timetitle = timevalues[timerange]
        
@@ -578,7 +577,7 @@ def taskfmp(task,timerange,d,region,seasondept,access):
     	WHEN Title = 'GYJN' THEN Title
     	ELSE Task
     END AS Position
-    FROM CodeyMemberFMP('{region}',({s}),({e})) s
+    FROM CodeyMemberFMP('{region}',({s}),({e})) s)
     LEFT JOIN TaskHigh t ON s.UID = t.UID
     WHERE Dept LIKE '{d}') p
 WHERE Position LIKE '{task}'
@@ -588,7 +587,7 @@ CASE
 	WHEN Title = 'GYJN' THEN Title
 	ELSE Task
 	END AS Position
-FROM CodeyMemberFMP('{region}',({s}),({e})) s
+FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) s
 LEFT JOIN TaskHigh t ON s.UID = t.UID
 WHERE Dept LIKE '{d}') p
 WHERE Position LIKE '{task}'
@@ -599,7 +598,7 @@ CASE
 	WHEN Title = 'GYJN' THEN Title
 	ELSE Task
 	END AS Position
-FROM CodeyMemberFMP('{region}',({s}),({e})) s
+FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) s
 LEFT JOIN TaskHigh t ON s.UID = t.UID
 WHERE Dept LIKE '{d}') p
 WHERE Position LIKE '{task}'"""
@@ -3223,4 +3222,63 @@ def tempdept(timerange,d):
 
 
 
-# LAST SEASON FUNCTIONS
+
+
+
+
+
+def classtoday(g, d, access):
+    
+    g = g if access == 'Group' else '%'
+    d = d.capitalize()
+    grpdept = g if access == 'Group' else str(d).replace('__','Youth')
+    bbtgrp = 'BBT' if access == 'Group' else 'Grp'
+    
+    conn = odbc.connect(conn_str)
+    bb_mem = f"SELECT DisplayName, Classes FROM ClassesToday('{d}','{g}') WHERE DisplayName IS NOT NULL"
+    bb_group = f"SELECT Grp, Classes FROM ClassesToday('{d}','{g}') WHERE Grp IS NOT NULL"
+    bb_dept = f"SELECT Dept, Classes FROM ClassesToday('{d}','{g}') WHERE Dept IS NOT NULL"
+    bb_youth = f"SELECT 'Total', Classes FROM ClassesToday('{d}','{g}') WHERE DisplayName IS NULL AND Grp IS NULL AND Dept IS NULL"
+    
+    dm = pd.read_sql(bb_mem, conn)
+    dg = pd.read_sql(bb_group, conn)
+    dd = pd.read_sql(bb_dept, conn)
+    dy = pd.read_sql(bb_youth, conn)
+
+    dm.columns = ['Name','Classes']
+    dg.columns = ['Grp','Classes']
+    dd.columns = ['Dept','Classes']
+    dy.columns = ['Total','Classes']
+    dd.replace(r' Dept',r'', regex = True, inplace = True)
+    
+    conn.cursor().close()
+
+    member = str()
+    if access == 'Group':
+        member = '\n'
+        for r in range(len(dm)):
+            bbt =   str(dm.loc[r,'Name'][:5]) + ' '*(5-len(str(dm.loc[r,'Name'][:5])))
+            cl  = ' '*(3-len(str(dm.loc[r,'Classes']))) + str(dm.loc[r,'Classes'])
+            member = f'{member}{bbt}[{cl}]\n'
+            
+    group = str()
+    if access != 'Group':
+        for r in range(len(dg)):
+            grp =   str(dm.loc[r,'Grp'][:5]) + ' '*(5-len(str(dm.loc[r,'Grp'][:5])))
+            cl  = ' '*(3-len(str(dm.loc[r,'Classes']))) + str(dm.loc[r,'Classes'])
+            group = f'{group}{grp}[{cl}]\n'
+    
+    
+    dept = str()  
+    if access != 'Group':  
+        for r in range(len(dd)):
+            dpt = str(dd.loc[r,'Dept'])   + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            cl  = ' '*(3-len(str(dm.loc[r,'Classes']))) + str(dm.loc[r,'Classes'])
+            dept = f'{dept}{dpt}[{cl}]\n'
+            
+    youth = f"\nTot  [{dy.loc[0,'Classes']}]\n"
+    
+    result = f"""<b><u>{grpdept} BB Classes Today </u></b>\n\n<pre>{bbtgrp}  [#Cl]\n{member}\n{group}\n{dept}{youth}</pre>"""
+    result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
+    result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
+    return result

@@ -3280,4 +3280,4 @@ def classtoday(g, d, access):
     result = f"""<b><u>{grpdept} BB Classes Today </u></b>\n\n<pre>{bbtgrp}  [#Cl]\n{member}{group}{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
-    return result
+    return result 

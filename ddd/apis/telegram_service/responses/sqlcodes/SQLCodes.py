@@ -3223,18 +3223,22 @@ def tempdept(timerange,d):
 
 
 
-def classtoday(g, d, access):
+def classes(g, d, access, time):
     
     g = g if access == 'Group' else '%'
     d = d.capitalize()
     grpdept = g if access == 'Group' else str(d).replace('__','').replace('%','')
     bbtgrp = 'BBT' if access == 'Group' else 'Grp'
+    if time == 'today':
+        timetitle = 'Today'
+    if time == 'week':
+        timetitle = 'This Week'
     
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT DisplayName, Classes FROM ClassesToday('{d}','{g}') WHERE DisplayName IS NOT NULL"
-    bb_group = f"SELECT Grp, Classes FROM ClassesToday('{d}','{g}') WHERE Grp IS NOT NULL"
-    bb_dept = f"SELECT Dept, Classes FROM ClassesToday('{d}','{g}') WHERE Dept IS NOT NULL"
-    bb_youth = f"SELECT 'Total', Classes FROM ClassesToday('{d}','{g}') WHERE DisplayName IS NULL AND Grp IS NULL AND Dept IS NULL"
+    bb_mem = f"SELECT DisplayName, Classes FROM Classes{time}('{d}','{g}') WHERE DisplayName IS NOT NULL"
+    bb_group = f"SELECT Grp, Classes FROM Classes{time}('{d}','{g}') WHERE Grp IS NOT NULL"
+    bb_dept = f"SELECT Dept, Classes FROM Classes{time}('{d}','{g}') WHERE Dept IS NOT NULL"
+    bb_youth = f"SELECT 'Total', Classes FROM Classes{time}('{d}','{g}') WHERE DisplayName IS NULL AND Grp IS NULL AND Dept IS NULL"
     
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
@@ -3273,7 +3277,7 @@ def classtoday(g, d, access):
             
     youth = f"\nTot  [{' '*(3-len(str(dy.loc[0,'Classes'])))}{dy.loc[0,'Classes']}]\n" if g == '%' and d in ('__','%') else str()
     
-    result = f"""<b><u>{grpdept} BB Classes Today </u></b>\n\n<pre>{bbtgrp}  [#Cl]\n{member}{group}{dept}{youth}</pre>"""
+    result = f"""<b><u>{grpdept} BB Classes {timetitle} </u></b>\n\n<pre>{bbtgrp}  [#Cl]\n{member}{group}{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
-    return result 
+    return result

@@ -156,7 +156,9 @@ def bot_responses(id,input_text):
     
     
     if command == 'classtoday':
-        return SQLCodes.classtoday(gg,d,access)
+        return SQLCodes.classes(gg,d,access,'today')
+    if command == 'classweek':
+        return SQLCodes.classes(gg,d,access,'week')
     
     
     

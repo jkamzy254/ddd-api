@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from django.db import connection
-from redis import Redis
+from DDD_Modules.redis import redis
 
 # Create your views here.
 class FMPStatusGrpViewSet(APIView):
@@ -23,7 +23,7 @@ class FMPStatusGrpViewSet(APIView):
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        redis.jsonSet('getFruits', fmprecs)
         return Response(fmprecs, status=status.HTTP_200_OK)
 
 class FMPStatusGrpPrevCTViewSet(APIView):

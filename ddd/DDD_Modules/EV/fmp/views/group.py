@@ -9,14 +9,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from django.db import connection
-
+from redis import Redis
 
 # Create your views here.
 class FMPStatusGrpViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            token = decode_jwt(request)   
+            token = decode_jwt(request)
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spFMPGroupViewGetRecords {0}".format(token['UID']))
                 fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
@@ -28,18 +28,18 @@ class FMPStatusGrpViewSet(APIView):
 
 class FMPStatusGrpPrevCTViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            token = decode_jwt(request)   
+            token = decode_jwt(request)
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spFMPGroupViewGetPrevCTRecords {0}".format(token['UID']))
                 fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-            
+
             with connection.cursor() as seasonCursor:
-                seasonCursor.execute("""SELECT TOP 1 * FROM EVSeason 
-                WHERE EndDate < GETDATE() 
+                seasonCursor.execute("""SELECT TOP 1 * FROM EVSeason
+                WHERE EndDate < GETDATE()
                 AND Region = (Select Region From MemberData Where UID = {0})
-                AND Dept = 'All' ORDER BY ID DESC""".format(token['UID'])) 
+                AND Dept = 'All' ORDER BY ID DESC""".format(token['UID']))
                 season = [dict(zip([column[0] for column in seasonCursor.description], record)) for record in seasonCursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -52,9 +52,9 @@ class FMPStatusGrpPrevCTViewSet(APIView):
 
 class FMPGetFruitsViewSet(APIView):
     def get(self, request):
-        
+
         try:
-            token = decode_jwt(request)   
+            token = decode_jwt(request)
             with connection.cursor() as cursor:
                 if token['Dept'] == 'MCT':
                     if 'EVLeader' in token['roles']:
@@ -74,5 +74,5 @@ class FMPGetFruitsViewSet(APIView):
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-     
+
         return Response(result, status=status.HTTP_200_OK)

@@ -3,7 +3,7 @@ from .sqlcodes import SQLCodes
 
 def bot_responses(id,input_text):
     
-    r,access,g,gg,d,name,uid,sd,sftg = SQLCodes.teledata(id).split('/')
+    r,access,g,gg,d,name,uid,sd = SQLCodes.teledata(id).split('/')
     
     user_message = str(input_text).lower().replace(' ','')
     
@@ -99,11 +99,6 @@ def bot_responses(id,input_text):
         
     if command == 'fmstatus':
         return SQLCodes.fmstatus(g,access)
-    
-    if access == 'Group':
-        if command.startswith('temp'):
-            timerange = command[4:]
-            return SQLCodes.tempfmp(timerange,sftg,access)
         
     if command == 'bblist':
         return SQLCodes.bblist(d,g,r,access)
@@ -165,14 +160,6 @@ def bot_responses(id,input_text):
     
     # Dept and above functions
     if access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','Dept','DecSFT','M&W Dept','All','IT']:
-        
-        if command.startswith('temp'):
-            timerange = command[4:]
-            if '/' in user_message:
-                return SQLCodes.tempfmp(timerange,g,access)
-            else:
-                d = 'DecSFT' if access == 'DecSFT' else d
-                return SQLCodes.tempdept(timerange,d)
         
         for task in ['youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(task):

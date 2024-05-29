@@ -62,7 +62,7 @@ def reg_new_user_request(id,tname,user,pw):
     
     reply_message = f"Codey registration request has been received and is awaiting approval. Please follow up with your department leader."
     bjn_message = f"Telegram user [{tname}](tg://user?id={id}) has requested Codey access as:\n\nName: {name}\nGroup: {grp}\nAccess Level: {access}\n\nIf this is the correct telegram account, please reply with the following text: ```\nApprove: #{uid}#{id}#```"
-    bjn_id = db.iloc[0,0]
+    bjn_id = int(db.iloc[0,0])
 
     return [reply_message,bjn_message,bjn_id]
 

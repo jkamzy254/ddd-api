@@ -63,7 +63,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if isinstance(response, list):
         response,new_message,recipient_id = response
         pm = 'Markdown' if new_message.startswith('Telegram user') else 'HTML'
-        await Bot.sendMessage(chat_id=recipient_id, text=new_message, parse_mode=pm)
+        await bot.sendMessage(chat_id=recipient_id, text=new_message, parse_mode=pm)
     if len(response) <= 4096:
         await update.message.reply_text(response, parse_mode='HTML') 
     elif len(response) <= 49152:

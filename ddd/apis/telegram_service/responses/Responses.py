@@ -204,8 +204,9 @@ def bot_responses(id,tname,input_text):
         if command == 'deptfm':
             return SQLCodes.deptfm(d)
         
-        # if 'approve' in command:
-        #     return SQLCodes.approve_new_user_request('','','','')
+        if command.startswith('approve'):
+            a,userUID,telID,i = command.split('#')
+            return SQLCodes.approve_new_user_request(userUID,telID)
         
         if access in ['All','IT']:
             if command == 'deptphone':
@@ -216,9 +217,6 @@ def bot_responses(id,tname,input_text):
                 return SQLCodes.bbtdept(r)
             if command == 'bbtbtmstatus':
                 return SQLCodes.bbtbtmstatus()
-            if command.startswith('approve'):
-                a,userUID,telID,i = command.split('#')
-                return SQLCodes.approve_new_user_request(userUID,telID)
             
     if access == 'IT':
         

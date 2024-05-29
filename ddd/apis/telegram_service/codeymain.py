@@ -61,12 +61,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     print(f'[{tname}/{id}] {text}')
     response = R.bot_responses(id,tname,text)
     if isinstance(response, list):
-        print(response)
         response,new_message,recipient_id = response
-        print(response)
         pm = 'Markdown' if new_message.startswith('Telegram user') else 'HTML'
-        print(pm)
-        Bot.sendMessage(chat_id=recipient_id, text=new_message, parse_mode=pm)
+        await Bot.sendMessage(chat_id=recipient_id, text=new_message, parse_mode=pm)
     if len(response) <= 4096:
         await update.message.reply_text(response, parse_mode='HTML') 
     elif len(response) <= 49152:

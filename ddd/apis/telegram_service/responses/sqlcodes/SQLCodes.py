@@ -84,7 +84,7 @@ def approve_new_user_request(userUID,telID):
     conn.cursor().close()
     
     reply_message = "<i>Approved</i>"
-    member_message = "<i>You may now use Codey</i>"
+    member_message = "<i>Welcome to Codey. You are now eligible to use this bot. For a command list, please type 'commands'.</i>"
     member_id = telID
     
     return [reply_message,member_message,member_id]

@@ -63,7 +63,7 @@ def reg_new_user_request(id,tname,user,pw):
     reply_message = f"Codey registration request has been received and is awaiting approval. Please follow up with your department leader."
     bjn_message = f"Telegram user [{tname}](tg://user?id={id}) has requested Codey access as:\n\nName: {name}\nGroup: {grp}\nAccess Level: {access}\n\nIf this is the correct telegram account, please reply with the following text: ```\nApprove: #{uid}#{id}#```"
     bjn_id = db.iloc[0,0]
-    bjn_id = 659275499 # DELETE THIS LINE
+
     return [reply_message,bjn_message,bjn_id]
 
 
@@ -72,7 +72,7 @@ def approve_new_user_request(userUID,telID):
     
     conn = odbc.connect(conn_str)
 
-    checkvalid = f"SELECT 1 FROM TelegramID WHERE UID = '{userUID}' AND TelID = {telID} AND Active = 1" # CHANGE 1 TO 0 AFTER TESTING
+    checkvalid = f"SELECT 1 FROM TelegramID WHERE UID = '{userUID}' AND TelID = {telID} AND Active = 0"
     dv = pd.read_sql(checkvalid, conn)
     if len(dv) == 0:
         return 'Could not find registration request'

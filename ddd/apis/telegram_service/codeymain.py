@@ -22,8 +22,10 @@ from .responses import Responses as R
 import warnings
 import logging
 
-from telegram import ForceReply, Update, ReplyKeyboardMarkup
+from telegram import ForceReply, Update, Bot, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+
+bot = Bot(token=os.environ.get('TELEGRAM_TOKEN'))
 
 # Enable logging
 logging.basicConfig(
@@ -54,10 +56,17 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     warnings.filterwarnings('ignore')
     id = update.message.chat.id
-    user = str(update.effective_chat.first_name)
+    tname = str(update.effective_chat.first_name)
     text = str(update.message.text)
-    print(f'[{user}/{id}] {text}')
-    response = R.bot_responses(id,text)
+    print(f'[{tname}/{id}] {text}')
+    response = R.bot_responses(id,tname,text)
+    if isinstance(response, list):
+        print(response)
+        response,new_message,recipient_id = response
+        print(response)
+        pm = 'Markdown' if new_message.startswith('Telegram user') else 'HTML'
+        print(pm)
+        Bot.sendMessage(chat_id=recipient_id, text=new_message, parse_mode=pm)
     if len(response) <= 4096:
         await update.message.reply_text(response, parse_mode='HTML') 
     elif len(response) <= 49152:

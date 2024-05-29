@@ -22,6 +22,75 @@ conn_str = """
     Pwd={5};
 """.format(DRIVER,HOST,DBPORT,DB,DB_USER,PASS)
 
+def reg_new_user_request(id,tname,user,pw):
+    
+    conn = odbc.connect(conn_str)
+
+    selectquery = f"""SELECT b.Access, m.GrpName, m.Name, m.UID
+    FROM BotAccess b
+	LEFT JOIN MemberData m ON m.UID = b.UID
+	WHERE b.UID = (SELECT UID FROM LoginData WHERE Username = '{user}' AND Password = '{pw}')"""
+ 
+ 
+    ds = pd.read_sql(selectquery, conn)
+    if len(ds) == 0:
+        return 'Invalid username or password'
+    
+    ds.columns = ['Access','Grp','Name','UID']
+    
+    uid = ds.loc[0,'UID']
+    name = ds.loc[0,'Name']
+    grp = ds.loc[0,'Grp']
+    access = ds.loc[0,'Access']
+    
+    insertvalidity = f"SELECT 1 FROM TelegramID WHERE UID = '{uid}' OR TelID = {id}"
+
+    dv = pd.read_sql(insertvalidity, conn)
+    if len(dv) > 0:
+        return 'Request has already been made under these credentials or this telegram account. Please follow up with your department leader.'
+    
+    insertquery = f"""IF NOT EXISTS (SELECT 1 FROM TelegramID WHERE UID = '{uid}' OR TelID = {id})
+                      INSERT INTO TelegramID (UID, TelID, Active) VALUES ('{uid}', {id}, 0)"""
+    bjnquery = f"SELECT ApproverID FROM CodeyUserRequest WHERE CodeyUser = '{uid}'"
+    
+    
+    db = pd.read_sql(bjnquery, conn)
+ 
+    conn.cursor().execute(insertquery)
+    conn.commit()
+    conn.cursor().close()
+    
+    reply_message = f"Codey registration request has been received and is awaiting approval. Please follow up with your department leader."
+    bjn_message = f"Telegram user [{tname}](tg://user?id={id}) has requested Codey access as:\n\nName: {name}\nGroup: {grp}\nAccess Level: {access}\n\nIf this is the correct telegram account, please reply with the following text: ```\nApprove: #{uid}#{id}#```"
+    bjn_id = db.iloc[0,0]
+    bjn_id = 659275499 # DELETE THIS LINE
+    return [reply_message,bjn_message,bjn_id]
+
+
+
+def approve_new_user_request(userUID,telID):
+    
+    conn = odbc.connect(conn_str)
+
+    checkvalid = f"SELECT 1 FROM TelegramID WHERE UID = '{userUID}' AND TelID = {telID} AND Active = 1" # CHANGE 1 TO 0 AFTER TESTING
+    dv = pd.read_sql(checkvalid, conn)
+    if len(dv) == 0:
+        return 'Could not find registration request'
+    
+    updatequery = f"""UPDATE TelegramID SET Active = 1 WHERE UID = '{userUID}' AND TelID = {telID}"""
+ 
+    conn.cursor().execute(updatequery)
+    conn.commit()
+    conn.cursor().close()
+    
+    reply_message = "<i>Approved</i>"
+    member_message = "<i>You may now use Codey</i>"
+    member_id = telID
+    
+    return [reply_message,member_message,member_id]
+
+
+
 def deptgroup(d):
     conn = odbc.connect(conn_str)
     group_query = f"SELECT DISTINCT MemberGroup, LEN(MemberGroup)Ignore FROM MemberData WHERE GROUP_IMWY LIKE '{d}' ORDER BY LEN(MemberGroup), MemberGroup"
@@ -110,7 +179,7 @@ def teledata(id):
     CASE WHEN m.Group_IMWY = 'M&W Dept' THEN 'All' ELSE 'All' END AS SeasonDept
     FROM BotAccess b
 	LEFT JOIN MemberData m ON m.UID = b.UID
-	WHERE TelID = {id}""" # Replace the first 'All' to m.Group_IMWY (or even just 'M&W Dept') to change M&W season back to M&W CT (change also on groupinfo function!)
+	WHERE TelID = {id} AND Active = 1""" # Replace the first 'All' to m.Group_IMWY (or even just 'M&W Dept') to change M&W season back to M&W CT (change also on groupinfo function!)
     da = pd.read_sql(access, conn)
     conn.cursor().close()
     
@@ -390,7 +459,7 @@ def weekmpfe(g):
 
 # UNIVERSAL MEMBER FMP FUNCTION
 
-def memberfmp(timerange,g,d,region,seasondept,access):
+def memberfmp(timerange,g,region,seasondept,access):
     
 #     print(f"""
 # {{
@@ -407,14 +476,14 @@ def memberfmp(timerange,g,d,region,seasondept,access):
                   'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
                   'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
                   'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"SELECT dbo.ssnstartdept('{d}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
+                  'season':    [f"SELECT dbo.ssnstart('{region}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
    
     s,e,title = timevalues[timerange]
     
     conn = odbc.connect(conn_str)
     
-    memberQ = f"SELECT {name}, F, M, P, FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Grp LIKE '{g}'"
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Grp LIKE '{g}'"
+    memberQ = f"SELECT {name}, F, M, P, FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Grp LIKE '{g}'"
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Grp LIKE '{g}'"
     dm = pd.read_sql(memberQ, conn)
     dt = pd.read_sql(totalQ, conn)
 

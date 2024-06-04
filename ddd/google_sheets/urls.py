@@ -39,6 +39,7 @@ urlpatterns = [
  
 	#Current CT - Edu
 	path('getCurrentCCTEdu/', ce.GetCurrentCCTEduViewSet.as_view()),
+	path('getCurrentCCTOnline/', ce.GetCurrentCCTOnlineViewSet.as_view()),
  
 	#Fruit Basket
 	path('getBBStats/', fb.GetBBStatsViewSet.as_view()),

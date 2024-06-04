@@ -148,24 +148,7 @@ class GetPotentialBTMViewSet(APIView):
     def get(self, request):
         try:
             with connection.cursor() as cursor:
-                cursor.execute("""
-                    WITH BBwithFE AS (
-                        SELECT * FROM BBDataView 
-                        WHERE Season = (Select Top 1 ID From EVSeason Where ClosingDate > (SELECT SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') AND Region = 'Melbourne')
-                        AND Status NOT IN ('NP','OP', 'FA')
-                    ), MembersBB AS (
-                        SELECT Group_IMWY 'Dept', GI.Grp, M.Name, Internal_Position Pos, 
-							(Select COUNT(*) FROM BBwithFE WHERE L1_ID = M.UID OR L2_ID = M.UID) 'BB', 
-							(Select COUNT(*) FROM BBwithFE WHERE (L1_ID = M.UID OR L2_ID = M.UID) AND Status IN ('AB')) 'ABB', 
-							(Select COUNT(*) FROM BBwithFE WHERE (L1_ID = M.UID OR L2_ID = M.UID) AND Status IN ('CA','CI')) 'CCT', GL.GID 
-                        FROM MemberData M 
-                        LEFT JOIN (Select * FROM GroupLog WHERE EndDate IS NULL) GL ON GL.UID = M.UID
-                        LEFT JOIN GroupInfo GI ON GI.GID = GL.GID
-                        WHERE (M.Group_IMWY IN ('D1','D2','D3','D4','D5','D6','D7') OR (M.Group_IMWY IN ('D9','D8') AND Internal_Position < 7))
-                        AND M.UID NOT IN (Select UID From BBTLog WHERE EndDate IS NULL) 
-                    )
-                    SELECT Dept, Grp, Name, BB, ABB, CCT FROM MembersBB WHERE BB > 1  ORDER BY GID
-                """)
+                cursor.execute("spBBGetPotentialBTM")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

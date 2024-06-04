@@ -1,12 +1,16 @@
 from datetime import datetime, timedelta
 from .sqlcodes import SQLCodes
 
-def bot_responses(id,input_text):
+def bot_responses(id,tname,input_text):
     
-    r,access,g,gg,d,name,uid,sd,sftg = SQLCodes.teledata(id).split('/')
+    if input_text.lower().startswith('register'):
+            i,user,pw = input_text.split('.')
+            return SQLCodes.reg_new_user_request(id,tname,user,pw)
+    
+    r,access,g,gg,d,name,uid,sd = SQLCodes.teledata(id).split('/')
     
     user_message = str(input_text).lower().replace(' ','')
-    
+        
     if access == 'IT':
         if '|' in input_text:
             user_message,access = input_text.split('|')
@@ -95,15 +99,10 @@ def bot_responses(id,input_text):
     
     if command in ['todayfmp','yesterdayfmp','weekfmp','lastweekfmp','seasonfmp']:
         timerange = command[:-3]
-        return SQLCodes.memberfmp(timerange,g,d,r,sd,access)
+        return SQLCodes.memberfmp(timerange,g,r,sd,access)
         
     if command == 'fmstatus':
         return SQLCodes.fmstatus(g,access)
-    
-    if access == 'Group':
-        if command.startswith('temp'):
-            timerange = command[4:]
-            return SQLCodes.tempfmp(timerange,sftg,access)
         
     if command == 'bblist':
         return SQLCodes.bblist(d,g,r,access)
@@ -164,15 +163,7 @@ def bot_responses(id,input_text):
     
     
     # Dept and above functions
-    if access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','Dept','DecSFT','M&W Dept','All','IT']:
-        
-        if command.startswith('temp'):
-            timerange = command[4:]
-            if '/' in user_message:
-                return SQLCodes.tempfmp(timerange,g,access)
-            else:
-                d = 'DecSFT' if access == 'DecSFT' else d
-                return SQLCodes.tempdept(timerange,d)
+    if access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','Dept','DecSFT','M&W Dept','All','IT']:
         
         for task in ['youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(task):
@@ -212,6 +203,10 @@ def bot_responses(id,input_text):
         
         if command == 'deptfm':
             return SQLCodes.deptfm(d)
+        
+        if command.startswith('approve'):
+            a,userUID,telID,i = command.split('#')
+            return SQLCodes.approve_new_user_request(userUID,telID)
         
         if access in ['All','IT']:
             if command == 'deptphone':

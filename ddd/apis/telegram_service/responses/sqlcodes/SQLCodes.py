@@ -22,6 +22,75 @@ conn_str = """
     Pwd={5};
 """.format(DRIVER,HOST,DBPORT,DB,DB_USER,PASS)
 
+def reg_new_user_request(id,tname,user,pw):
+    
+    conn = odbc.connect(conn_str)
+
+    selectquery = f"""SELECT b.Access, m.GrpName, m.Name, m.UID
+    FROM BotAccess b
+	LEFT JOIN MemberData m ON m.UID = b.UID
+	WHERE b.UID = (SELECT UID FROM LoginData WHERE Username = '{user}' AND Password = '{pw}')"""
+ 
+ 
+    ds = pd.read_sql(selectquery, conn)
+    if len(ds) == 0:
+        return 'Invalid username or password'
+    
+    ds.columns = ['Access','Grp','Name','UID']
+    
+    uid = ds.loc[0,'UID']
+    name = ds.loc[0,'Name']
+    grp = ds.loc[0,'Grp']
+    access = ds.loc[0,'Access']
+    
+    insertvalidity = f"SELECT 1 FROM TelegramID WHERE UID = '{uid}' OR TelID = {id}"
+
+    dv = pd.read_sql(insertvalidity, conn)
+    if len(dv) > 0:
+        return 'Request has already been made under these credentials or this telegram account. Please follow up with your department leader.'
+    
+    insertquery = f"""IF NOT EXISTS (SELECT 1 FROM TelegramID WHERE UID = '{uid}' OR TelID = {id})
+                      INSERT INTO TelegramID (UID, TelID, Active) VALUES ('{uid}', {id}, 0)"""
+    bjnquery = f"SELECT ApproverID FROM CodeyUserRequest WHERE CodeyUser = '{uid}'"
+    
+    
+    db = pd.read_sql(bjnquery, conn)
+ 
+    conn.cursor().execute(insertquery)
+    conn.commit()
+    conn.cursor().close()
+    
+    reply_message = f"Codey registration request has been received and is awaiting approval. Please follow up with your department leader."
+    bjn_message = f"Telegram user [{tname}](tg://user?id={id}) has requested Codey access as:\n\nName: {name}\nGroup: {grp}\nAccess Level: {access}\n\nIf this is the correct telegram account, please reply with the following text: ```\nApprove: #{uid}#{id}#```"
+    bjn_id = int(db.iloc[0,0])
+
+    return [reply_message,bjn_message,bjn_id]
+
+
+
+def approve_new_user_request(userUID,telID):
+    
+    conn = odbc.connect(conn_str)
+
+    checkvalid = f"SELECT 1 FROM TelegramID WHERE UID = '{userUID}' AND TelID = {telID} AND Active = 0"
+    dv = pd.read_sql(checkvalid, conn)
+    if len(dv) == 0:
+        return 'Could not find registration request'
+    
+    updatequery = f"""UPDATE TelegramID SET Active = 1 WHERE UID = '{userUID}' AND TelID = {telID}"""
+ 
+    conn.cursor().execute(updatequery)
+    conn.commit()
+    conn.cursor().close()
+    
+    reply_message = "<i>Approved</i>"
+    member_message = "<i>Welcome to Codey. You are now eligible to use this bot. For a command list, please type 'commands'.</i>"
+    member_id = telID
+    
+    return [reply_message,member_message,member_id]
+
+
+
 def deptgroup(d):
     conn = odbc.connect(conn_str)
     group_query = f"SELECT DISTINCT MemberGroup, LEN(MemberGroup)Ignore FROM MemberData WHERE GROUP_IMWY LIKE '{d}' ORDER BY LEN(MemberGroup), MemberGroup"
@@ -106,19 +175,18 @@ def functionlog(uid, name, input_text, command):
 
 def teledata(id):
     conn = odbc.connect(conn_str)
-    access = f"""SELECT m.Region, t.Access, m.MemberGroup, m.GrpName, m.Group_IMWY, m.Name, m.UID,
-    CASE WHEN m.Group_IMWY = 'M&W Dept' THEN 'All' ELSE 'All' END AS SeasonDept, s.MemberGroup sftMemberGroup
-    FROM TelegramBotData t
-	LEFT JOIN MemberData m ON m.UID = t.UID
-	LEFT JOIN MemberDataSFT s ON s.UID = t.UID
-	WHERE TelID = {id}""" # Replace the first 'All' to m.Group_IMWY (or even just 'M&W Dept') to change M&W season back to M&W CT (change also on groupinfo function!)
+    access = f"""SELECT m.Region, b.Access, m.MemberGroup, m.GrpName, m.Group_IMWY, m.Name, m.UID,
+    CASE WHEN m.Group_IMWY = 'M&W Dept' THEN 'All' ELSE 'All' END AS SeasonDept
+    FROM BotAccess b
+	LEFT JOIN MemberData m ON m.UID = b.UID
+	WHERE TelID = {id} AND Active = 1""" # Replace the first 'All' to m.Group_IMWY (or even just 'M&W Dept') to change M&W season back to M&W CT (change also on groupinfo function!)
     da = pd.read_sql(access, conn)
     conn.cursor().close()
     
     if len(da) == 0:
-        return "None/None/None/None/None/None/None/None/None"
+        return "None/None/None/None/None/None/None/None"
     else:
-        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}/{da.iloc[0,8]}"
+        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}"
 
 def groupinfo(g):
     conn = odbc.connect(conn_str)
@@ -391,7 +459,7 @@ def weekmpfe(g):
 
 # UNIVERSAL MEMBER FMP FUNCTION
 
-def memberfmp(timerange,g,d,region,seasondept,access):
+def memberfmp(timerange,g,region,seasondept,access):
     
 #     print(f"""
 # {{
@@ -408,14 +476,14 @@ def memberfmp(timerange,g,d,region,seasondept,access):
                   'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
                   'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
                   'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"SELECT dbo.ssnstartdept('{d}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
+                  'season':    [f"SELECT dbo.ssnstart('{region}','{seasondept}')", 'SELECT dbo.tomorrow()', 'EV Season']}
    
     s,e,title = timevalues[timerange]
     
     conn = odbc.connect(conn_str)
     
-    memberQ = f"SELECT {name}, F, M, P, FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Grp LIKE '{g}'"
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyMemberFMP('{region}',({s}),({e})) WHERE Grp LIKE '{g}'"
+    memberQ = f"SELECT {name}, F, M, P, FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Grp LIKE '{g}'"
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Grp LIKE '{g}'"
     dm = pd.read_sql(memberQ, conn)
     dt = pd.read_sql(totalQ, conn)
 
@@ -2959,266 +3027,6 @@ def ev(id):
     result = f"{title}{format1}{fish}{nm}{om}{format2}{npk}{op}{ab}{im}{iff}{fp}{ac}{ic}"
     return result  
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Start universalising ALL codey functions to filter by region and division (e.g. M&W) (it means every bb function must intake parameters for region and division)
-# ALL bbt functions must take into account not just btm#, but bbt status (e.g. learning, active, etc.)
-# Get updated list for all bbt + btm 
-
-
-
-
-def lastseasonfmp(g):
-    conn = odbc.connect(conn_str)
-    sql_fish = f"""SELECT FishName Fish, ISNULL(l1.PREFERRED_NAME,'') L1, ISNULL(l1.MemberGroup,'') L1G, ISNULL(l2.PREFERRED_NAME,'') L2, ISNULL(l2.MemberGroup,'') L2G, ('0'+CAST(FishPhone AS VARCHAR(50))) Phone
-FROM FruitData f
-LEFT JOIN MemberData l1 ON l1.UID = F1_ID
-LEFT JOIN MemberData l2 ON l2.UID = F2_ID
-WHERE F_TIME >= '2023-07-20' AND F_TIME < '2023-09-13'
-AND M_TIME IS NULL
-AND (l1.MemberGroup LIKE '{g}' OR l2.MemberGroup LIKE '{g}')
-ORDER BY L1, Fish"""
-    sql_meet = f"""SELECT FishName Fish, ISNULL(l1.PREFERRED_NAME,'') L1, ISNULL(l1.MemberGroup,'') L1G, ISNULL(l2.PREFERRED_NAME,'') L2, ISNULL(l2.MemberGroup,'') L2G, ('0'+CAST(FishPhone AS VARCHAR(50))) Phone
-FROM FruitData f
-LEFT JOIN MemberData l1 ON l1.UID = Attendee_1_ID
-LEFT JOIN MemberData l2 ON l2.UID = Attendee_2_ID
-WHERE M_TIME >= '2023-07-20' AND M_TIME < '2023-09-13'
-AND P_TIME IS NULL
-AND (l1.MemberGroup LIKE '{g}' OR l2.MemberGroup LIKE '{g}')
-ORDER BY L1, Fish"""
-    sql_pick = f"""SELECT FruitName Fish, ISNULL(l1.PREFERRED_NAME,'') L1, ISNULL(l1.MemberGroup,'') L1G, ISNULL(l2.PREFERRED_NAME,'') L2, ISNULL(l2.MemberGroup,'') L2G, ('0'+CAST(f.FishPhone AS VARCHAR(50))) Phone
-FROM BBData b
-LEFT JOIN FruitData f ON b.UID = f.UID
-LEFT JOIN MemberData l1 ON l1.UID = b.L1_ID
-LEFT JOIN MemberData l2 ON l2.UID = b.L2_ID
-WHERE Season = 38
-AND b.UID NOT IN (SELECT UID FROM Report WHERE ClassDate >= '2023-07-20')
-AND (l1.MemberGroup LIKE '{g}' OR l2.MemberGroup LIKE '{g}')
-ORDER BY L1, Fish"""
-    sql_bb = f"""SELECT FruitName Fish, ISNULL(l1.PREFERRED_NAME,'') L1, ISNULL(l1.MemberGroup,'') L1G, ISNULL(l2.PREFERRED_NAME,'') L2, ISNULL(l2.MemberGroup,'') L2G, ('0'+CAST(f.FishPhone AS VARCHAR(50))) Phone
-FROM BBData b
-LEFT JOIN FruitData f ON b.UID = f.UID
-LEFT JOIN MemberData l1 ON l1.UID = b.L1_ID
-LEFT JOIN MemberData l2 ON l2.UID = b.L2_ID
-WHERE Season = 38
-AND Stat_Abbr != 'CCT'
-AND b.UID IN (SELECT UID FROM Report WHERE ClassDate >= '2023-07-20')
-AND (l1.MemberGroup LIKE '{g}' OR l2.MemberGroup LIKE '{g}')
-ORDER BY L1, Fish"""
-    df = pd.read_sql(sql_fish, conn)
-    dm = pd.read_sql(sql_meet, conn)
-    dp = pd.read_sql(sql_pick, conn)
-    db = pd.read_sql(sql_bb, conn)
-    df.columns = ['Fish','L1','L1G','L2','L2G','Phone']
-    dm.columns = ['Fish','L1','L1G','L2','L2G','Phone']
-    dp.columns = ['Fish','L1','L1G','L2','L2G','Phone']
-    db.columns = ['Fish','L1','L1G','L2','L2G','Phone']
-    df['L1G'] = df['L1G'].str.replace(r'^(\d)', r'G\1')
-    dm['L1G'] = dm['L1G'].str.replace(r'^(\d)', r'G\1')
-    dp['L1G'] = dp['L1G'].str.replace(r'^(\d)', r'G\1')
-    db['L1G'] = db['L1G'].str.replace(r'^(\d)', r'G\1')
-    df['L2G'] = df['L2G'].str.replace(r'^(\d)', r'G\1')
-    dm['L2G'] = dm['L2G'].str.replace(r'^(\d)', r'G\1')
-    dp['L2G'] = dp['L2G'].str.replace(r'^(\d)', r'G\1')
-    db['L2G'] = db['L2G'].str.replace(r'^(\d)', r'G\1')
-    conn.cursor().close()
-    if len(df) == 0:
-        fish = "None in finding stage\n"
-    else:
-        fish = str()
-        for r in range(len(df)):
-            fish = f"{fish}<pre>🐟{r+1}.{df.loc[r,'Fish']} - {df.loc[r,'L1']} ({df.loc[r,'L1G']}) / {df.loc[r,'L2']} ({df.loc[r,'L2G']}) — {df.loc[r,'Phone']}</pre>\n"
-        fish = f"<b><u>Finding Stage</u></b>\n\n{fish.replace('/  () ','')}"
-        
-    if len(dm) == 0:
-        meet = "None in FM stage\n"
-    else:
-        meet = str()
-        for r in range(len(dm)):
-            meet = f"{meet}<pre>❤️{r+1}.{dm.loc[r,'Fish']} - {dm.loc[r,'L1']} ({dm.loc[r,'L1G']}) / {dm.loc[r,'L2']} ({dm.loc[r,'L2G']}) — {dm.loc[r,'Phone']}</pre>\n"
-        meet = f"<b><u>FM Stage</u></b>\n\n{meet.replace('/  () ','')}"
-        
-    if len(dp) == 0:
-        pick = "None in picking stage\n"
-    else:
-        pick = str()
-        for r in range(len(dp)):
-            pick = f"{pick}<pre>💚{r+1}.{dp.loc[r,'Fish']} - {dp.loc[r,'L1']} ({dp.loc[r,'L1G']}) / {dp.loc[r,'L2']} ({dp.loc[r,'L2G']}) — {dp.loc[r,'Phone']}</pre>\n"
-        pick = f"<b><u>Picking Stage</u></b>\n\n{pick.replace('/  () ','')}"
-        
-    if len(db) == 0:
-        bb = "None in bb stage\n"
-    else:
-        bb = str()
-        for r in range(len(db)):
-            bb = f"{bb}<pre>💙{r+1}.{db.loc[r,'Fish']} - {db.loc[r,'L1']} ({db.loc[r,'L1G']}) / {db.loc[r,'L2']} ({db.loc[r,'L2G']}) — {db.loc[r,'Phone']}</pre>\n"
-        bb = f"<b><u>BB Stage</u></b>\n\n{bb.replace('/  () ','')}"
-    
-    g = re.sub(r'^(\d)',r'G\1',g).capitalize()
-    result = f"<b><u>{g} September CT FMP List</u></b>\n\n{fish}\n\n{meet}\n\n{pick}\n\n{bb}"
-    return result
-
-
-
-
-
-
-
-
-
-
-
-def tempfmp(timerange,g,access):
-        
-    name = 'Member' if access == 'IT' else 'MemberCode'
-  
-    timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
-                  'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
-                  'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
-                  'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"'2023-10-26'", 'SELECT dbo.tomorrow()', 'SFT Season (From 26 Oct)']}
-   
-    s,e,title = timevalues[timerange]
-    
-    conn = odbc.connect(conn_str)
-    
-    memberQ = f"SELECT {name}, F, M, P, FE FROM SFTMemberFMP(({s}), ({e})) WHERE Grp LIKE '{g}'"
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM SFTMemberFMP(({s}), ({e})) WHERE Grp LIKE '{g}'"
-    dm = pd.read_sql(memberQ, conn)
-    dt = pd.read_sql(totalQ, conn)
-
-    dm.columns = ['Member','F','M','P','FE']
-    dt.columns = ['F','M','P','FE']
-    g = re.sub(r'^(\d)',r'G\1',g).capitalize()
-    if len(dm) == 0:
-        return "No members found"
-    else:  
-        conn.cursor().close()
-        member = str()
-        
-        for r in range(len(dm)):
-            mem = str(dm.loc[r,'Member'])[:8] + ' '*(8-len(str(dm.loc[r,'Member'])[:8]))
-            f      = ' '*(4-len(str(dm.loc[r,'F'])))  + str(dm.loc[r,'F'])
-            m      = ' '*(4-len(str(dm.loc[r,'M'])))  + str(dm.loc[r,'M'])
-            p      = ' '*(3-len(str(dm.loc[r,'P'])))  + str(dm.loc[r,'P'])
-            fe     = ' '*(3-len(str(dm.loc[r,'FE']))) + str(dm.loc[r,'FE'])
-            
-            member = f'{member}{mem}[{f}|{m}|{p}|{fe}]\n'
-            
-        f      = ' '*(4-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
-        m      = ' '*(4-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
-        p      = ' '*(3-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
-        fe     = ' '*(3-len(str(dt.loc[0,'FE']))) + str(dt.loc[0,'FE'])
-        
-        total = f'Total   [{f}|{m}|{p}|{fe}]'
-        
-        member = f'<b><u>{g} FMPFE : {title}</u></b>\n\n<pre>Member  [FF.F|MM.M|P.P|F.E]\n\n{member}\n{total}</pre>'
-        member = re.sub(r'\.0',r'  ',member) # Replaces '.0' with empty space
-        member = re.sub(r'(\D)0([^.])',r'\1-\2',member)   # Replaces lone '0' with '-'
-        return member
-
-
-
-
-
-def tempdept(timerange,d):
-    
-    if d == '__':
-        d = "__' OR Dept = 'DecSFT"
-    if d == 'DecSFT':
-        d = "D6' OR Dept = 'DecSFT"
-    
-    if timerange in {'today','yesterday'}:
-        spc = [6,5,4,4,4,'Group [FFF.F|MM.M|PP.P|FF.E]',   'Total ']
-    if timerange in {'week','lastweek'}:
-        spc = [5,5,5,4,4,'Grp  [FFF.F|MMM.M|PP.P|FF.E]',   'Total']
-    if timerange == 'season':
-        spc = [4,6,6,5,5,'Grp [FFFF.F|MMMM.M|PPP.P|FFF.E]','Tot ']   
-
-    timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
-                  'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
-                  'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
-                  'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    ["'2023-10-26'", 'SELECT dbo.tomorrow()', 'SFT Season (From 26 Oct)']}
-    
-    s,e,timetitle = timevalues[timerange]
-       
-    conn = odbc.connect(conn_str)
-    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM SFTMemberFMP(({s}), ({e})) WHERE Dept LIKE '{d}' GROUP BY Grp ORDER BY LEN(Grp), Grp"
-    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM SFTMemberFMP(({s}), ({e})) WHERE Dept LIKE '{d}' GROUP BY Dept ORDER BY Dept"  
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM SFTMemberFMP(({s}), ({e})) WHERE Dept LIKE '{d}'"
-    dm = pd.read_sql(memberQ, conn)
-    dd = pd.read_sql(deptQ, conn)
-    dt = pd.read_sql(totalQ, conn)
-    # hello
-    dm.columns = ['Grp','F','M','P','FE']
-    dd.columns = ['Dept','F','M','P','FE']
-    dt.columns = ['F','M','P','FE']
-    dm['Grp'] = dm['Grp'].str.replace(r'^(\d)', r'G\1')
-    dd.replace(r' Dept',r'', regex = True, inplace = True)
-
-    conn.cursor().close()
-
-    group = str()
-    for r in range(len(dm)):
-        grp = str(dm.loc[r,'Grp']) + '.'*(spc[0]-len(str(dm.loc[r,'Grp'])))
-        f  = ' '*(spc[1]-len(str(dm.loc[r,'F'])))  + str(dm.loc[r,'F'])
-        m  = ' '*(spc[2]-len(str(dm.loc[r,'M'])))  + str(dm.loc[r,'M'])
-        p  = ' '*(spc[3]-len(str(dm.loc[r,'P'])))  + str(dm.loc[r,'P'])
-        fe = ' '*(spc[4]-len(str(dm.loc[r,'FE']))) + str(dm.loc[r,'FE'])
-        group = f'{group}{grp}[{f}|{m}|{p}|{fe}]\n'
-
-    dept = str()    
-    for r in range(len(dd)):
-        ds = str(dd.loc[r,'Dept']).replace('DecSFT','SFT')
-        dpt = ds + '.'*(spc[0]-len(ds))
-        f  = ' '*(spc[1]-len(str(dd.loc[r,'F'])))  + str(dd.loc[r,'F'])
-        m  = ' '*(spc[2]-len(str(dd.loc[r,'M'])))  + str(dd.loc[r,'M'])
-        p  = ' '*(spc[3]-len(str(dd.loc[r,'P'])))  + str(dd.loc[r,'P'])
-        fe = ' '*(spc[4]-len(str(dd.loc[r,'FE']))) + str(dd.loc[r,'FE'])
-        dept = f'{dept}{dpt}[{f}|{m}|{p}|{fe}]\n'
-
-    if d in ['__',"__' OR Dept = 'DecSFT"]:
-        f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
-        m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
-        p  = ' '*(spc[3]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
-        fe = ' '*(spc[4]-len(str(dt.loc[0,'FE']))) + str(dt.loc[0,'FE'])
-        total = f'\n{spc[6]}[{f}|{m}|{p}|{fe}]'
-    else:
-        total = str()
-        
-    depttitle = d.replace("__' OR Dept = 'DecSFT",'SFT Grouping').replace("D6' OR Dept = 'DecSFT",'D6 + SFT')
-
-    fmp = f"<b><u>{depttitle} FMPFE : {timetitle}</u></b>\n\n<pre>{spc[5]}\n\n{group}\n{dept}{total}</pre>"
-    fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
-    fmp = re.sub(r'(\D)0([^.])',r'\1-\2',fmp)   # Replaces lone '0' with '-'
-    return fmp
-
 
 
 

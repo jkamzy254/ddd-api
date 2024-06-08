@@ -185,7 +185,7 @@ def bot_responses(id,tname,input_text):
         if command == 'tolfull':
             return SQLCodes.tolfull(d)
         if command == 'bbfull':
-            return SQLCodes.bbfull(d)
+            return SQLCodes.bbfull(d,r)
         if command == 'bbactive':
             return SQLCodes.bbactive(d)
         if command == 'deptbbactive':

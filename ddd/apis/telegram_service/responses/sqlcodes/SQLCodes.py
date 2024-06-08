@@ -2590,22 +2590,22 @@ def deptfm(d):
 
 
 
-def bbfull(d):
+def bbfull(d,r):
     
     header = f"🌳{str(d).replace('__','Youth')} Tree of Life🌳"
     conn = odbc.connect(conn_str)
     
     bb_group = f"""SELECT s.Grp, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Tot bbTot
-FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
+FROM BBStatusNumbers('{r}') s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
 WHERE s.Dept LIKE '{d}'"""
     bb_dept = f"""SELECT s.Dept, SUM(pNew)pNew, SUM(pOld)pOld,SUM(bbA)bbA, SUM(cctA)cctA, 
 SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Tot)bbTot
-FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
+FROM BBStatusNumbers('{r}') s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
 WHERE s.Dept LIKE '{d}'
 GROUP BY s.Dept"""
     bb_youth = f"""SELECT SUM(pNew)pNew, SUM(pOld)pOld,SUM(bbA)bbA, SUM(cctA)cctA, 
 SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Tot)bbTot
-FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
+FROM BBStatusNumbers('{r}') s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
 WHERE s.Dept LIKE '{d}'"""
     
     dg = pd.read_sql(bb_group, conn)

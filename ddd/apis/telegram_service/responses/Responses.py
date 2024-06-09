@@ -210,7 +210,7 @@ def bot_responses(id,tname,input_text):
         
         if access in ['All','IT']:
             if command == 'deptphone':
-                return SQLCodes.deptphone(d)
+                return SQLCodes.deptphone(d,r)
             if command == 'bbtdeptold':
                 return SQLCodes.bbtdeptold()
             if command == 'bbtdept':

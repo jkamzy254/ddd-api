@@ -2037,17 +2037,17 @@ def newbbstatus(g):
 
 
 
-def tol(d):
+def tol(d,r):
     conn = odbc.connect(conn_str)
     t = d if d != '__' else 'Total'
     header = f"🏛{str(d).replace('__','Youth')} BB Status Classification🏛" if d != '__' else '🌳Tree of Life🌳'
     bb_dept = f"""SELECT m.*, pNew, pOld, bbA, bbME, bbFA, pFA, cctA, cctI, cct, Total
 FROM (
 SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(cctA + cctI)cct, SUM(Tot)Total
-FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept
+FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}' GROUP BY Dept
 UNION
 SELECT '{t}' Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(cctA + cctI)cct, SUM(Tot)Total
-FROM ScottStatusNumbers WHERE Dept LIKE '{d}'
+FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}'
 ) s
 LEFT JOIN
 (SELECT Dept, SUM(NewM)mNew, SUM(OldM)mOld FROM ScottOldNewMGrp WHERE Dept LIKE '{d}' GROUP BY Dept
@@ -2079,21 +2079,21 @@ ON m.Dept = s.Dept"""
 
 
 
-def deptphone(d):
+def deptphone(d,r):
     conn = odbc.connect(conn_str)
     bb_dept1 = f"""SELECT Dept, pNew, pOld, bbA, bbME, bbFA, pFA, cctA, cctI, cct, Total
 FROM (
 SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(cctA + cctI)cct, SUM(Tot)Total
-FROM ScottStatusNumbers WHERE Dept IN ('D1','D2','D3','D4') GROUP BY Dept
+FROM BBStatusNumbers('{r}') WHERE Dept IN ('D1','D2','D3','D4') GROUP BY Dept
 ) s"""
                   
     bb_dept2 = f"""SELECT Dept, pNew, pOld, bbA, bbME, bbFA, pFA, cctA, cctI, cct, Total
 FROM (
 SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(cctA + cctI)cct, SUM(Tot)Total
-FROM ScottStatusNumbers WHERE Dept IN ('D5','D6','D7','D8') GROUP BY Dept
+FROM BBStatusNumbers('{r}') WHERE Dept IN ('D5','D6','D7','D8') GROUP BY Dept
 UNION
 SELECT 'Total' Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(cctA + cctI)cct, SUM(Tot)Total
-FROM ScottStatusNumbers WHERE Dept LIKE 'D_'
+FROM BBStatusNumbers('{r}') WHERE Dept LIKE 'D_'
 ) s"""
 
     dd1 = pd.read_sql(bb_dept1, conn)
@@ -2130,22 +2130,22 @@ FROM ScottStatusNumbers WHERE Dept LIKE 'D_'
 
 
 
-def tolfull(d):
+def tolfull(d,r):
     
     header = f"🌳{str(d).replace('__','Youth')} Tree of Life🌳" if d != '__' else '🌳TOL Full🌳'
     conn = odbc.connect(conn_str)
     
     bb_group = f"""SELECT s.Grp, NewM mNew, OldM mOld, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Tot bbTot
-FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
+FROM BBStatusNumbers('{r}') s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
 WHERE s.Dept LIKE '{d}'"""
     bb_dept = f"""SELECT s.Dept, SUM(NewM)mNew, SUM(OldM)mOld, SUM(pNew)pNew, SUM(pOld)pOld,SUM(bbA)bbA, SUM(cctA)cctA, 
 SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Tot)bbTot
-FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
+FROM BBStatusNumbers('{r}') s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
 WHERE s.Dept LIKE '{d}'
 GROUP BY s.Dept"""
     bb_youth = f"""SELECT SUM(NewM)mNew, SUM(OldM)mOld, SUM(pNew)pNew, SUM(pOld)pOld,SUM(bbA)bbA, SUM(cctA)cctA, 
 SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Tot)bbTot
-FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
+FROM BBStatusNumbers('{r}') s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
 WHERE s.Dept LIKE '{d}'"""
     
     dg = pd.read_sql(bb_group, conn)
@@ -2228,13 +2228,13 @@ WHERE s.Dept LIKE '{d}'"""
 
 
 
-def bbactive(d):
+def bbactive(d,r):
     
     conn = odbc.connect(conn_str)
     
-    bb_group = f"SELECT Grp, Tot SP, pNew, bbA, cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"
-    bb_dept = f"""SELECT Dept, SUM(Tot)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
-    bb_youth = f"""SELECT SUM(Tot)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
+    bb_group = f"SELECT Grp, Tot SP, pNew, bbA, cctA FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}'"
+    bb_dept = f"""SELECT Dept, SUM(Tot)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}' GROUP BY Dept"""
+    bb_youth = f"""SELECT SUM(Tot)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}'"""
     
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
@@ -2288,13 +2288,13 @@ def bbactive(d):
 
 
 
-def deptbbactive(d):
+def deptbbactive(d,r):
     
     conn = odbc.connect(conn_str)
     
-    bb_group = f"SELECT Grp, Tot SP, pNew, bbA, cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"
-    bb_dept = f"""SELECT Dept, SUM(Tot)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
-    bb_youth = f"""SELECT SUM(Tot)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
+    bb_group = f"SELECT Grp, Tot SP, pNew, bbA, cctA FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}'"
+    bb_dept = f"""SELECT Dept, SUM(Tot)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}' GROUP BY Dept"""
+    bb_youth = f"""SELECT SUM(Tot)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}'"""
     
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
@@ -2340,13 +2340,13 @@ def deptbbactive(d):
 
 
 
-def bbinactive(d):
+def bbinactive(d,r):
     
     conn = odbc.connect(conn_str)
     
-    bb_group = f"""SELECT Grp, pOld, bbME, cctI, pFA, bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
-    bb_dept = f"""SELECT Dept, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
-    bb_youth = f"""SELECT SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
+    bb_group = f"""SELECT Grp, pOld, bbME, cctI, pFA, bbFA FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}'"""
+    bb_dept = f"""SELECT Dept, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}' GROUP BY Dept"""
+    bb_youth = f"""SELECT SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}'"""
     
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
@@ -2402,13 +2402,13 @@ def bbinactive(d):
 
 
 
-def deptbbinactive(d):
+def deptbbinactive(d,r):
     
     conn = odbc.connect(conn_str)
     
-    bb_group = f"""SELECT Grp, pOld, bbME, cctI, pFA, bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
-    bb_dept = f"""SELECT Dept, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept"""
-    bb_youth = f"""SELECT SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM ScottStatusNumbers WHERE Dept LIKE '{d}'"""
+    bb_group = f"""SELECT Grp, pOld, bbME, cctI, pFA, bbFA FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}'"""
+    bb_dept = f"""SELECT Dept, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}' GROUP BY Dept"""
+    bb_youth = f"""SELECT SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM BBStatusNumbers('{r}') WHERE Dept LIKE '{d}'"""
     
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
@@ -2592,22 +2592,22 @@ def deptfm(d):
 
 
 
-def bbfull(d):
+def bbfull(d,r):
     
     header = f"🌳{str(d).replace('__','Youth')} Tree of Life🌳"
     conn = odbc.connect(conn_str)
     
     bb_group = f"""SELECT s.Grp, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Tot bbTot
-FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
+FROM BBStatusNumbers('{r}') s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
 WHERE s.Dept LIKE '{d}'"""
     bb_dept = f"""SELECT s.Dept, SUM(pNew)pNew, SUM(pOld)pOld,SUM(bbA)bbA, SUM(cctA)cctA, 
 SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Tot)bbTot
-FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
+FROM BBStatusNumbers('{r}') s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
 WHERE s.Dept LIKE '{d}'
 GROUP BY s.Dept"""
     bb_youth = f"""SELECT SUM(pNew)pNew, SUM(pOld)pOld,SUM(bbA)bbA, SUM(cctA)cctA, 
 SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Tot)bbTot
-FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
+FROM BBStatusNumbers('{r}') s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
 WHERE s.Dept LIKE '{d}'"""
     
     dg = pd.read_sql(bb_group, conn)

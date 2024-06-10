@@ -183,17 +183,17 @@ def bot_responses(id,tname,input_text):
             return SQLCodes.bbtstatus(q,d,access)
         
         if command == 'tolfull':
-            return SQLCodes.tolfull(d)
+            return SQLCodes.tolfull(d,r)
         if command == 'bbfull':
-            return SQLCodes.bbfull(d)
+            return SQLCodes.bbfull(d,r)
         if command == 'bbactive':
-            return SQLCodes.bbactive(d)
+            return SQLCodes.bbactive(d,r)
         if command == 'deptbbactive':
-            return SQLCodes.deptbbactive(d)
+            return SQLCodes.deptbbactive(d,r)
         if command == 'bbinactive':
-            return SQLCodes.bbinactive(d)
+            return SQLCodes.bbinactive(d,r)
         if command == 'deptbbinactive':
-            return SQLCodes.deptbbinactive(d)
+            return SQLCodes.deptbbinactive(d,r)
         
         if command in ['youthmxpx','deptmxpx']:
             return SQLCodes.youthmxpx(d)
@@ -210,7 +210,7 @@ def bot_responses(id,tname,input_text):
         
         if access in ['All','IT']:
             if command == 'deptphone':
-                return SQLCodes.deptphone(d)
+                return SQLCodes.deptphone(d,r)
             if command == 'bbtdeptold':
                 return SQLCodes.bbtdeptold()
             if command == 'bbtdept':

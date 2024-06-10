@@ -104,7 +104,7 @@ class UserMembersViewSet(APIView):
             token = decode_jwt(request)   
             # user = Memberdata.objects.filter(id = payload['ID']).first()
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spUserGroupViewGetMembers {0}".format(token['UID']))
+                cursor.execute("EXEC spUserGroupViewGetMembersNew {0}".format(token['UID']))
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

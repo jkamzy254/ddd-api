@@ -484,6 +484,8 @@ def memberfmp(timerange,g,region,seasondept,access):
     
     memberQ = f"SELECT {name}, F, M, P, FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Grp LIKE '{g}'"
     totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM ScottMemberFMP((SELECT dbo.ssnid('{region}','{seasondept}')), ({s}), ({e})) WHERE Grp LIKE '{g}'"
+    print(memberQ)
+    
     dm = pd.read_sql(memberQ, conn)
     dt = pd.read_sql(totalQ, conn)
 

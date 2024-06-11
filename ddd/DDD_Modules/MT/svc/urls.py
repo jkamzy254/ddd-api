@@ -25,6 +25,7 @@ urlpatterns = [
  
     #For Dept
     path('getWeekServices/', d.SVCGetWeekServices.as_view()),
+    path('getTwoWeekServices/', d.SVCGetTwoWeekServices.as_view()),
 	path('getDeptBreakdown/', d.SVCGetDeptBreakdownViewSet.as_view()),
 	path('getAbsenteeByDept/', d.SVCGetAbsenteeByDept.as_view()),
 	path('getAbsenteeByGroup/', d.SVCGetAbsenteeByGroup.as_view()),

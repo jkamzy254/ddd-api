@@ -16,7 +16,7 @@ class SVCGetWeeklyServicesViewSet(APIView):
         try:
             token = decode_jwt(request)  
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM Service_GetTwoWeekServices")
+                cursor.execute("SELECT * FROM ThisWeekServicesView")
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(recs, status=status.HTTP_200_OK)

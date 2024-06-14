@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import get_object_or_404, render
 from django.http import Http404
 from rest_framework.decorators import api_view
@@ -9,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from django.db import connection
-from DDD_Modules.redis import redis
+from ....redis import redis
 
 # Create your views here.
 class FMPStatusGrpViewSet(APIView):
@@ -17,13 +18,22 @@ class FMPStatusGrpViewSet(APIView):
 
         try:
             token = decode_jwt(request)
+            # jsonRec = redis.Redis.jsonGet('getFruits')
+            jsonRec = redis.Redis.jsonIndexSearch('index:fruitIdx', "@leaf_one_group:(35)")
+            print(jsonRec)
+            if(jsonRec):
+                return Response(jsonRec, status=status.HTTP_200_OK)
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spFMPGroupViewGetRecords {0}".format(token['UID']))
                 fmprecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                print(fmprecs[2])
+                redis.Redis.jsonSet("getFruits:4", json.dumps(fmprecs[2], indent=4, sort_keys=True, default=str) )
+
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        redis.jsonSet('getFruits', fmprecs)
+        # jsonData = json.dumps(fmprecs, indent=4, sort_keys=True, default=str)
+        # redis.Redis.jsonSet('getFruits', json.loads(jsonData))
         return Response(fmprecs, status=status.HTTP_200_OK)
 
 class FMPStatusGrpPrevCTViewSet(APIView):

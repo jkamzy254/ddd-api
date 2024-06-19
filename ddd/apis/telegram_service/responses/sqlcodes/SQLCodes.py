@@ -647,7 +647,7 @@ def taskfmp(task,timerange,d,region,seasondept,access):
     	WHEN Title = 'GYJN' THEN Title
     	ELSE Task
     END AS Position
-    FROM CodeyMemberFMP('{region}',({s}),({e})) s)
+    FROM CodeyMemberFMP('{region}',({s}),({e})) s
     LEFT JOIN TaskHigh t ON s.UID = t.UID
     WHERE Dept LIKE '{d}') p
 WHERE Position LIKE '{task}'

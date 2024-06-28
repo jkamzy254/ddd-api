@@ -35,6 +35,7 @@ urlpatterns = [
 	path('fmp/', include('DDD_Modules.EV.fmp.urls')),
 	path('members/', include('DDD_Modules.members.urls')),
 	path('svc/', include('DDD_Modules.MT.svc.urls')),
+	path('eduAttendance/', include('DDD_Modules.Edu.attendance.urls')),
 	path('google_sheets/', include('google_sheets.urls')),
 ]
 

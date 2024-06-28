@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'DDD_Modules.EV.bb',
     'DDD_Modules.EV.fmp',
     'DDD_Modules.MT.svc',
+    'DDD_Modules.Edu.attendance',
     'debug_toolbar',
     'django_filters',
     'app',

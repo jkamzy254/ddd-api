@@ -20,7 +20,7 @@ def bot_responses(id,tname,input_text):
         return '-'
 
     
-    elif access in ['All','IT']:
+    if access in ['All','IT']:
         d = '__'
         if '/' in user_message:
             if '/d' in user_message:

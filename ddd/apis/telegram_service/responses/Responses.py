@@ -26,7 +26,9 @@ def bot_responses(id,tname,input_text):
             if '/d' in user_message:
                 try:
                     command,d = user_message.split('/')
+                    d = d.capitalize()
                     access = d
+                    print(f"command = {command}, d = {d}, access = {access}")
                 except ValueError:
                     return 'Format error: Too many "/"s' 
             else:
@@ -40,6 +42,8 @@ def bot_responses(id,tname,input_text):
                 gg,d,r,sd = SQLCodes.groupinfo(g).split('/')
         else:
             command = user_message
+            
+            
     
     elif access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','SFT','DecSFT','Dept','M&W Dept']:
         d = access if access != 'Dept' else d

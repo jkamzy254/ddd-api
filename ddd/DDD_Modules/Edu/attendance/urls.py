@@ -29,4 +29,5 @@ urlpatterns = [
     
 	#For Edu Dept
  	path('getDeptWeekBreakdown/', e.EDUGetDeptWeekBreakdown.as_view()),
+  	path('getAbsentList/', e.EDUGetAbsentList.as_view()),
 ]

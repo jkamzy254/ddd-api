@@ -27,7 +27,6 @@ from django.db.models import Q
 from django.db import connection
 import jwt, datetime, json, pandas as pd
 
-
 # Create your views here.
 class LoginView(APIView):
     def post(self, request):

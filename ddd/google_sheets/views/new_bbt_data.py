@@ -202,6 +202,7 @@ class GetBTMListViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
               
 class GetFebCTDataViewSet(APIView):
     def get(self, request):
@@ -234,7 +235,7 @@ class GetCurrentCTDataViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GetAllActiveCTDataViewSet(APIView):
-    def get(self):
+    def get(self, request):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(f"SELECT * FROM SheetAllActiveCTDataView")

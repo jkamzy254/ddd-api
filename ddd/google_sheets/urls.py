@@ -31,7 +31,6 @@ urlpatterns = [
   	path('getBBTMasterList/', nbd.GetBBTMasterListViewSet.as_view()),
   	path('updateBBTMasterList/', nbd.UpdateBBTMasterListViewSet.as_view()),
   	path('getDenomEthnic/', nbd.GetDenomEthnicViewSet.as_view()),
- 
 
 	#CT Student EV
 	path('getCurrentJDSN/', cse.GetCurrentJDSNViewSet.as_view()),

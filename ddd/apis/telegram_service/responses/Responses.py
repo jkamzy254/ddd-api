@@ -138,22 +138,22 @@ def bot_responses(id,tname,input_text):
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('status'):
         if d == '__' and '/' in user_message:
             i,d = user_message.split('/')
-        q,i = command.split('status') # removing 'inactive', leaving 'deptbbt'
-        i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
+        q,i = command.split('status') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
+        i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
         return SQLCodes.deptbbtstatus(q,d,r,access)
     
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
         if d == '__' and '/' in user_message:
             i,d = user_message.split('/')
-        q,i = command.split('active') # removing 'inactive', leaving 'deptbbt'
-        i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
+        q,i = command.split('active') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
+        i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
         return SQLCodes.deptbbtactive(q,d,r,access)
     
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('inactive'):
         if d == '__' and '/' in user_message:
             i,d = user_message.split('/')
-        q,i = command.split('inactive') # removing 'inactive', leaving 'deptbbt'
-        i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.)
+        q,i = command.split('inactive') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
+        i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
         return SQLCodes.deptbbtinactive(q,d,r,access)
     
     

@@ -234,9 +234,7 @@ class GetCurrentCTDataViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GetAllActiveCTDataViewSet(APIView):
-    def post(self, request):
-        print(request.data['season'])
-        season = request.data['season']
+    def get(self):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(f"SELECT * FROM SheetAllActiveCTDataView")
@@ -293,7 +291,6 @@ class GetBTMFruitsViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
 
         
 class GetBBTMasterListViewSet(APIView):

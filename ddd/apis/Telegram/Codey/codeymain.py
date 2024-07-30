@@ -25,7 +25,7 @@ import logging
 from telegram import ForceReply, Update, Bot, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
-bot = Bot(token=os.environ.get('TELEGRAM_TOKEN'))
+bot = Bot(token=os.environ.get('CODEY_BOT_TOKEN'))
 
 # Enable logging
 logging.basicConfig(

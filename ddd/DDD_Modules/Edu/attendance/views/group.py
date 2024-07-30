@@ -34,7 +34,7 @@ class EDUUpdateAttendanceViewSet(APIView):
             reason_value = f"'{rsn}'" if payload['reason'] is not None else "NULL"
             with connection.cursor() as cursor:
                 if payload['ea'] == 'E':
-                    cursor.execute(f"""EXEC sp_Education_UpdateExpectedAttendance 
+                    cursor.execute(f"""EXEC spEducation_UpdateExpectedAttendance 
                         @uid = {payload['uid']}, 
                         @eid = {payload['eid']}, 
                         @esid = {payload['esid']}, 
@@ -42,7 +42,7 @@ class EDUUpdateAttendanceViewSet(APIView):
                     """)
                     res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 elif payload['ea'] == 'A':
-                    cursor.execute(f"""EXEC sp_Education_UpdateActualAttendance 
+                    cursor.execute(f"""EXEC spEducation_UpdateActualAttendance 
                         @uid = {payload['uid']}, 
                         @eid = {payload['eid']}, 
                         @esid = {payload['esid']}, 
@@ -64,7 +64,7 @@ class EDUGetWeekBreakdown(APIView):
             token = decode_jwt(request)
             payload = request.data
             with connection.cursor() as cursor:
-                cursor.execute(f"EXEC sp_Education_GetWeekBreakdown('{token['UID']}')")
+                cursor.execute(f"EXEC spEducation_GetWeekBreakdown('{token['UID']}')")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:

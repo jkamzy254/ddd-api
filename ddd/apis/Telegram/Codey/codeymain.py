@@ -36,7 +36,6 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
-
 # Define a few command handlers. These usually take the two arguments update and
 # context.
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -88,7 +87,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 def main() -> None:
     """Start the bot."""
     # Create the Application and pass it your bot's token.
-    token = os.environ.get('TELEGRAM_TOKEN')
+    token = os.environ.get('CODEY_BOT_TOKEN')
     application = Application.builder().token(token).build()
 
     # on different commands - answer in Telegram

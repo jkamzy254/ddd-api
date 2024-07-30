@@ -51,7 +51,7 @@ class SVCUpdateAttendanceViewSet(APIView):
             reason_value = f"'{rsn}'" if payload['reason'] is not None else "NULL"
             with connection.cursor() as cursor:
                 if payload['ea'] == 'E':
-                    cursor.execute(f"""EXEC sp_Service_UpdateExpectedAttendance 
+                    cursor.execute(f"""EXEC spService_UpdateExpectedAttendance 
                         @uid = {payload['uid']}, 
                         @sid = {payload['sid']}, 
                         @ssid = {payload['ssid']}, 
@@ -59,7 +59,7 @@ class SVCUpdateAttendanceViewSet(APIView):
                     """)
                     res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 elif payload['ea'] == 'A':
-                    cursor.execute(f"""EXEC sp_Service_UpdateActualAttendance 
+                    cursor.execute(f"""EXEC spService_UpdateActualAttendance 
                         @uid = {payload['uid']}, 
                         @sid = {payload['sid']}, 
                         @ssid = {payload['ssid']}, 

@@ -32,7 +32,7 @@ class SVCGetGroupWeeklylogViewSet(APIView):
         try:
             token = decode_jwt(request)   
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT * FROM ServiceLogMemberListFuture('{token['UID']}')")
+                cursor.execute(f"SELECT * FROM ServiceLogMemberList('{token['UID']}')")
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(recs, status=status.HTTP_200_OK)

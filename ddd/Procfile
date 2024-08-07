@@ -1,2 +1,2 @@
 web: gunicorn ddd.wsgi --log-file -
-worker: python manage.py codey
+worker: python manage.py telegram_bot

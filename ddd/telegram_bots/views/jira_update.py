@@ -21,7 +21,7 @@ MSG_THREAD_ID = os.environ.get('TELEGRAM_JIRA_MSG_THREAD_ID')
 async def jira_webhook(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        # print(data)
+        print(data)
         timestamp = data["timestamp"] / 1000
         hook_time = datetime.datetime.fromtimestamp(timestamp)
         comment = data["comment"]

@@ -21,25 +21,34 @@ MSG_THREAD_ID = os.environ.get('TELEGRAM_JIRA_MSG_THREAD_ID')
 async def jira_webhook(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        print(data)
+        # print(data)
         timestamp = data["timestamp"] / 1000
         hook_time = datetime.datetime.fromtimestamp(timestamp)
         comment = data["comment"]
         issue = data["issue"]
         event = data.get('webhookEvent', 'Unknown event')
         
-        print(hook_time)
+        project_id = issue["fields"]["project"]["id"]
+        
+        # print(hook_time)
 
+        # comment
+        comment_id = comment["id"]
+        comment_Text = comment["body"]
+        comment_author_id = comment["author"]["accountId"]
+        comment_author_name = comment["author"]["displayName"]
+        comment_issue = issue["fields"]["summary"]
+        comment_assignee = issue["fields"]["assignee"]["accountId"]
         
         def create_comment():
             with connection.cursor() as cursor:
                 cursor.execute(f"""
                     EXEC spJiraAddComments 
-                    @CommentId='{comment["id"]}',
-                    @CommentText='{comment["body"]}',
-                    @Commenter='{comment["author"]["accountId"]}',
-                    @IssueName='{issue["fields"]["summary"]}',
-                    @IssueAssigned='{issue["fields"]["assignee"]["accountId"]}',
+                    @CommentId='{comment_id}',
+                    @CommentText='{comment_Text}',
+                    @Commenter='{comment_author_id}',
+                    @IssueName='{comment_issue}',
+                    @IssueAssigned='{comment_assignee}',
                     @Timestamp='{str(hook_time).split('.')[0]}'
                 """)
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
@@ -47,19 +56,19 @@ async def jira_webhook(request):
         
         def delete_comment():
             with connection.cursor() as cursor:
-                cursor.execute(f"EXEC spJiraDeleteComment @CommentId='{comment["id"]}'")
+                cursor.execute(f"""EXEC spJiraDeleteComment @CommentId='{comment_id}'""")
                 recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return recs
         
     
-        if issue["fields"]["project"]["id"] == "10000" or issue["fields"]["project"]["id"] == "10003":
+        if project_id == "10000" or project_id == "10003":
             if event == "comment_created":
                 recs = await sync_to_async(create_comment)()
                 
             elif event == "comment_deleted":
                 recs = await sync_to_async(delete_comment)()
                 
-            formatted_text = process_data(recs,comment["author"]["displayName"])
+            formatted_text = process_data(recs,comment_author_name)
             
             await bot.send_message(chat_id=CHAT_ID, text=formatted_text, message_thread_id=MSG_THREAD_ID)
         

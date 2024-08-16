@@ -70,7 +70,8 @@ INSTALLED_APPS = [
     'django_filters',
     'app',
     'google_sheets',
-    'telegram_bots'
+    'telegram_bots',
+    'apps_script'
 ]
 
 

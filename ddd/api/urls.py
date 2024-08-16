@@ -38,6 +38,7 @@ urlpatterns = [
 	path('edu/', include('DDD_Modules.Edu.attendance.urls')),
 	path('google_sheets/', include('google_sheets.urls')),
 	path('tg_bot/', include('telegram_bots.urls')),
+	path('apps_script/', include('apps_script.urls')),
 ]
 
 # urlpatterns = [

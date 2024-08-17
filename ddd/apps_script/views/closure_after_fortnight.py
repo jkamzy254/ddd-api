@@ -33,7 +33,7 @@ class GetMemberViewSet(APIView):
         
 class GetStudentsViewSet(APIView):
     def get(self, request):
-        uid = request.data['uid']
+        uid = request.GET.get('uid')
         print(uid)
         try:
             with connection.cursor() as cursor:

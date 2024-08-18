@@ -49,11 +49,17 @@ class ReportStudentViewSet(APIView):
         fid = request.data['fid']
         uid = request.data['uid']
         reason = request.data['reason']
+        description = request.data['description'].replace("'", "''")
         
         print(reason)
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"EXEC spBBReportFortnightFallen @UID = '{fid}', @Reason = '{reason}', @Reporter = '{uid}'")
+                cursor.execute(f"""EXEC spBBReportFortnightFallen 
+                                    @UID = '{fid}', 
+                                    @Reason = '{description}', 
+                                    @ReasonCategory = '{reason}', 
+                                    @Reporter = '{uid}'
+                               """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

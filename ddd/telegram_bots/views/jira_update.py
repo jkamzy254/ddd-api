@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from telegram import Bot
+from telegram.request import HTTPXRequest
 import json
 import datetime
 from django.db import connection
@@ -12,7 +13,8 @@ from dotenv import load_dotenv, find_dotenv
 import os
 load_dotenv(find_dotenv())
 
-bot = Bot(token=os.environ.get('JIRA_BOT_TOKEN'))
+trequest = HTTPXRequest(connection_pool_size=20)
+bot = Bot(token=os.environ.get('JIRA_BOT_TOKEN'), request=trequest)
 CHAT_ID = os.environ.get('TELEGRAM_JIRA_CHAT_ID')
 MSG_THREAD_ID = os.environ.get('TELEGRAM_JIRA_MSG_THREAD_ID')
 

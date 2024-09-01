@@ -1,19 +1,3 @@
-#!/usr/bin/env python
-# pylint: disable=unused-argument
-# This program is dedicated to the public domain under the CC0 license.
-
-"""
-Simple Bot to reply to Telegram messages.
-
-First, a few handler functions are defined. Then, those functions are passed to
-the Application and registered at their respective places.
-Then, the bot is started and runs until we press Ctrl-C on the command line.
-
-Usage:
-Basic Echobot example, repeats messages.
-Press Ctrl-C on the command line or send a signal to the process to stop the
-bot.
-"""
 from dotenv import load_dotenv, find_dotenv
 import os
 load_dotenv(find_dotenv())
@@ -36,7 +20,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
-# Define a few command handlers. These usually take the two arguments update and
+# Define a few command handlers. These usually take the two arguments update and 
 # context.
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /start is issued."""
@@ -84,7 +68,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 
-def main() -> None:
+def main():
     """Start the bot."""
     # Create the Application and pass it your bot's token.
     token = os.environ.get('CODEY_BOT_TOKEN')
@@ -101,6 +85,8 @@ def main() -> None:
     # Run the bot until the user presses Ctrl-C
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
+    return application
 
-if __name__ == "__main__":
-    main()
+
+# if __name__ == "__main__":
+#     main()

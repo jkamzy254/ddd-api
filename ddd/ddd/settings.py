@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     # 'rest_framework_simplejwt',
+    # 'dj_rq',
     'rest_framework_nested',
     'ddd',
     'api',
@@ -68,8 +69,20 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'django_filters',
     'app',
-    'google_sheets'
+    'google_sheets',
+    'telegram_bots',
+    'apps_script'
 ]
+
+
+# Configure RQ (adjust as needed)
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+    }
+}
 
 MIDDLEWARE = [
     "debug_toolbar.middleware.DebugToolbarMiddleware",

@@ -7,59 +7,66 @@ def bot_responses(id,tname,input_text):
             i,user,pw = input_text.split('.')
             return SQLCodes.reg_new_user_request(id,tname,user,pw)
     
-    r,access,g,gg,d,name,uid,sd = SQLCodes.teledata(id).split('/')
+    uid,name,access,g,d,sid,ss = SQLCodes.teledata(id).split('/')
+    original_uid,original_name = uid,name
+    print(f"""TELEDATA:
+          uid - {uid}
+          name - {name}
+          access - {access}
+          g - {g}
+          d - {d}
+          sid - {sid}
+          ss - {ss}""")
     
     user_message = str(input_text).lower().replace(' ','')
         
     if access == 'IT':
         if '|' in input_text:
-            user_message,access = input_text.split('|')
+            user_message,user_name = input_text.split('|')
             user_message = user_message.lower()
+            uid,name,access,g,d,sid,ss = SQLCodes.namedata(user_name).split('/')
+            print(f"""NAMEDATA:
+          uid - {uid}
+          name - {name}
+          access - {access}
+          g - {g}
+          d - {d}
+          sid - {sid}
+          ss - {ss}""")
                         
     if access == 'None':
         return '-'
 
     
     if access in ['All','IT']:
-        d = '__'
-        if '/' in user_message:
-            if '/d' in user_message:
-                try:
-                    command,d = user_message.split('/')
-                    d = d.capitalize()
-                    access = d
-                    print(f"command = {command}, d = {d}, access = {access}")
-                except ValueError:
-                    return 'Format error: Too many "/"s' 
-            else:
-                try:
-                    command,g = user_message.split('/')
-                    access = 'Group' # If specific group is specified, their access for the current function reduced to Group-level
-                except ValueError:
+        d = 'D[0-9]%'
+        if '//' in user_message:
+            try:
+                command,d = user_message.split('//')
+                d = d.capitalize()
+                access = d
+                print(f"command = {command}, d = {d}, access = {access}")
+            except ValueError:
                     return 'Format error: Too many "/"s'
-                if g.lower() not in ['gd','glg','hangul','serving']:
-                    g = g.replace('g','').replace('G','')
-                gg,d,r,sd = SQLCodes.groupinfo(g).split('/')
+        elif '/' in user_message:
+            try:
+                command,g = user_message.split('/')
+                access = 'Group' # If specific group is specified, their access for the current function reduced to Group-level
+            except ValueError:
+                return 'Format error: Too many "/"s'
+            d,sid,ss = SQLCodes.groupinfo(g).split('/')
         else:
             command = user_message
-            
-            
     
     elif access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','SFT','DecSFT','Dept','M&W Dept']:
         d = access if access != 'Dept' else d
-        if access == 'DecSFT':
-            d = 'D6'
         allowed_groups = SQLCodes.deptgroup(d)
-        if access == 'DecSFT':
-            allowed_groups = ['26','27','28','29','30','t1','t2','t3','t4','t5','t6']
         if '/' in user_message:
             try:
                 command,g = user_message.split('/')
             except ValueError:
                 return 'Format error: Too many "/"s'
-            if g.lower() not in ['gd','glg','hangul','serving']:
-                g = g.replace('g','').replace('G','')
-            gg,d,r,sd = SQLCodes.groupinfo(g).split('/')
+            d,sid,ss = SQLCodes.groupinfo(g).split('/')
             access = 'Group' # If specific group is specified, their access for the current function reduced to Group-level
             if g not in allowed_groups and user_message.lower()[:3] != 'ev/':
                 return 'Sorry, this group is outside your department!'
@@ -71,14 +78,14 @@ def bot_responses(id,tname,input_text):
         if command in ['youthtoday','youthyesterday','youthweek','youthlastweek','youthseason','depttoday','deptyesterday','deptweek','deptlastweek','deptseason','gyjntoday','gyjnyesterday','gyjnweek','gyjnlastweek','gyjnseason','oevtoday','oevyesterday','oevweek','oevlastweek','oevseason','tgwtoday','tgwyesterday','tgwweek','tgwlastweek','tgwseason','bbfull','tolfull','bblastseason','youthmxpx','bbdept']:
             return 'You are not allowed to use this function'
 
-    SQLCodes.functionlog(uid, name, input_text, command)
+    SQLCodes.functionlog(original_uid, original_name, input_text, command)
     
-    if r in ('Geelong','Darwin'):
-        r = 'Online'
+    # if r in ('Geelong','Darwin'):
+    #     r = 'Online'
         
     if command.startswith('all'):
-        r = '%'
-        print(r)
+        sid = '%'
+        print(f"sid - {sid}")
         command = command[3:]
     
     if 'phonenumber' in str(user_message):
@@ -91,7 +98,7 @@ def bot_responses(id,tname,input_text):
             return '<b><u>List of commands</u></b>\n<i>g = group number\nd = department\nT = today/yesterday/week/lastweek/season\n\n<b><u>FMP Fish Lists</u></b></i>\n<pre>🔹todayfish/g  🔹todaympfe/g\n🔹weekfish/g   🔹weekmpfe/g\n🔹seasonpick/g 🔹seasonfe/g\n🔹mxlist/g     🔹pxlist/g\n🔹fmlist/g</pre>\n\n<b><u><i>FMP Per Member</i></u></b>\n<pre>🔸Tfmp/g       🔸gyjnT\n🔸oevT         🔸ievT\n🔸eduT         🔸svT\n🔸fmstatus/g</pre>\n\n<b><u><i>FMP Per Group</i></u></b>\n<pre>🔺youthT       🔺tgwT\n🔺memberT      🔺deptfm\n♦️youthmxpx</pre>\n\n<b><u><i>BB Fruit Lists (Leaf Standard)</i></u></b>\n<pre>📙bbpick/g     📘bbfe/g\n📚bbstatus/g</pre>\n\n<b><u><i>BB Per Group (Leaf Standard)</i></u></b>\n<pre>🖥bbactive     🖥bbinactive\n🖥bbfull       🏛deptphone\n🌳tolfull      🌳tol</pre>\n\n<b><i><u>BB / Grp (BBT std)</u>   <u>BB Per BBT</u></i></b>\n<pre>📖bbtstatus    📖bbtstatus/d\n📖btm12status  📖btm12status/d\n📖btm13status  📖btm13status/d</pre>\n\n<b><i><u>All BB Students</u>         <u>Dept BB Students</u></i></b>\n<pre>📜bbtlist      📜bbtlist/d\n📜btm12list    📜btm12list/d\n📜btm13list    📜btm13list\n📜gyjnbbtlist  📜gyjnbbtlist/d</pre>\n\n<b><u><i>BB / Grp (BBT std)</i></u></b>\n<pre>🏛bbtdept</pre>\n\n<b><u><i>Member EV Summary</i></u></b>\n<pre>ev/id</pre>\n\n<b><u><i>Double Fish Check</i></u></b>\n<pre>📱04........</pre>'
         if access == 'All':
             return '<b><u>List of commands</u></b>\n<i>g = group number\nd = department\nT = today/yesterday/week/lastweek/season\n# = number</i>\n\n<b><u><i>FMP Per Member</i></u></b>\n<pre>🔸Tfmp/g       🔸gyjnT\n🔸oevT         🔸ievT\n🔸eduT         🔸svT\n🔸fmstatus/g</pre>\n\n<b><u><i>FMP Per Group</i></u></b>\n<pre>🔺youthT       🔺tgwT\n🔺memberT      🔺deptfm\n♦️youthmxpx</pre>\n\n<b><u><i>BB Per Group (Leaf Standard)</i></u></b>\n<pre>🖥bbactive     🖥bbinactive\n🖥bbfull       🏛deptphone\n🌳tolfull      🌳tol</pre>\n\n<b><i><u>BB / Grp (BBT std)</u>   <u>BB Per BBT</u></i></b>\n<pre>📖bbtstatus    📖bbtstatus/d\n📖btm#status   📖btm#status/d</pre>\n\n<b><u><i>BB / Grp (BBT std)</i></u></b>\n<pre>🏛bbtdept</pre>\n\n<b><u><i>Double Fish Check</i></u></b>\n<pre>📱04........</pre>'
-        if access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','Dept','SFT','M&W Dept']:
+        if access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','SFT','Dept','M&W Dept']:
             return f"<b><u>List of commands</u></b>\n<i>g = group number\nT = today/yesterday/week/lastweek/season\n# = number</i>\n\n<b><u><i>FMP Per Member</i></u></b>\n<pre>🔸Tfmp/g       🔸gyjnT\n🔸oevT         🔸ievT\n🔸eduT         🔸svT\n🔸fmstatus/g</pre>\n\n<b><u><i>FMP Per Group</i></u></b>\n<pre>🔺deptT        🔺tgwT\n🔺memberT      🔺deptfm\n♦️deptmxpx</pre>\n\n<b><u><i>BB Per Group (Leaf Standard)</i></u></b>\n<pre>🖥bbactive     🖥bbinactive\n🖥bbfull       🏛bbdept\n🌳tolfull</pre>\n\n<b><i><u>BB Per BBT</u></i></b>\n<pre>📖bbtstatus\n📖btm#status</pre>\n\n<b><u><i>Double Fish Check</i></u></b>\n<pre>📱04........</pre>"
         if access == 'Group':
             return '<b><u>List of commands</u></b>\n\n<b><i><u>FMP Per Member</u></i></b>\n<pre>🔸todayfmp     🔸yesterdayfmp\n🔸weekfmp      🔸lastweekfmp\n🔸seasonfmp    🔸fmstatus</pre>\n\n<b><i><u>Double Fish Check</u></i></b>\n<pre>📱[phonenumber]</pre>'
@@ -103,65 +110,65 @@ def bot_responses(id,tname,input_text):
     
     if command in ['todayfmp','yesterdayfmp','weekfmp','lastweekfmp','seasonfmp']:
         timerange = command[:-3]
-        return SQLCodes.memberfmp(timerange,g,r,sd,access)
+        return SQLCodes.memberfmp(timerange,g,sid,ss,access)
         
     if command == 'fmstatus':
         return SQLCodes.fmstatus(g,access)
         
     if command == 'bblist':
-        return SQLCodes.bblist(d,g,r,access)
+        return SQLCodes.bblist(d,g,access)
     
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('list'):
-        if d == '__' and '/' in user_message:
+        if d == 'D[0-9]%' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('list')
-        return SQLCodes.bbtlist(q,d,g,r,access)
+        return SQLCodes.bbtlist(q,d,g,access)
         
     if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('status'):
-        if d == '__' and '/' in user_message:
+        if d == 'D[0-9]%' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('status')
-        return SQLCodes.bbtstatus(q,g,d,r,access)
+        return SQLCodes.bbtstatus(q,g,d,sid,access)
         
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
-        if d == '__' and '/' in user_message:
+        if d == 'D[0-9]%' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('active')
-        return SQLCodes.bbtactive(q,g,d,r,access)
+        return SQLCodes.bbtactive(q,g,d,access)
     
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('inactive'):
-        if d == '__' and '/' in user_message:
+        if d == 'D[0-9]%' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('inactive')
-        return SQLCodes.bbtinactive(q,g,d,r,access)
+        return SQLCodes.bbtinactive(q,g,d,access)
     
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('status'):
-        if d == '__' and '/' in user_message:
+        if d == 'D[0-9]%' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('status') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
-        return SQLCodes.deptbbtstatus(q,d,r,access)
+        return SQLCodes.deptbbtstatus(q,d,access)
     
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
-        if d == '__' and '/' in user_message:
+        if d == 'D[0-9]%' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('active') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
-        return SQLCodes.deptbbtactive(q,d,r,access)
+        return SQLCodes.deptbbtactive(q,d,access)
     
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('inactive'):
-        if d == '__' and '/' in user_message:
+        if d == 'D[0-9]%' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('inactive') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
-        return SQLCodes.deptbbtinactive(q,d,r,access)
+        return SQLCodes.deptbbtinactive(q,d,access)
     
     
     
     if command == 'classtoday':
-        return SQLCodes.classes(gg,d,access,'today')
+        return SQLCodes.classes(g,d,access,'today')
     if command == 'classweek':
-        return SQLCodes.classes(gg,d,access,'week')
+        return SQLCodes.classes(g,d,access,'week')
     
     
     
@@ -176,28 +183,28 @@ def bot_responses(id,tname,input_text):
                 # If the rest of the string is a Y value, return X and Y
                 if timerange in ['today', 'yesterday', 'week', 'lastweek', 'season']:
                     if task in ['youth','dept','tgw','member']:
-                        return SQLCodes.deptfmp(task,timerange,d,r,sd,access)
+                        return SQLCodes.deptfmp(task,timerange,d,sid,ss,access)
                     if task in ['gyjn','oev','iev','edu','sv']:
-                        return SQLCodes.taskfmp(task,timerange,d,r,sd,access)    
+                        return SQLCodes.taskfmp(task,timerange,d,sid,ss,access)    
         
         if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('status'):
-            if d == '__' and '/' in user_message:
+            if d == 'D[0-9]%' and '/' in user_message:
                 i,d = user_message.split('/')
             q,i = command.split('status')
             return SQLCodes.bbtstatus(q,d,access)
         
         if command == 'tolfull':
-            return SQLCodes.tolfull(d,r)
+            return SQLCodes.tolfull(d)
         if command == 'bbfull':
-            return SQLCodes.bbfull(d,r)
+            return SQLCodes.bbfull(d)
         if command == 'bbactive':
-            return SQLCodes.bbactive(d,r)
+            return SQLCodes.bbactive(d)
         if command == 'deptbbactive':
-            return SQLCodes.deptbbactive(d,r)
+            return SQLCodes.deptbbactive(d)
         if command == 'bbinactive':
-            return SQLCodes.bbinactive(d,r)
+            return SQLCodes.bbinactive(d)
         if command == 'deptbbinactive':
-            return SQLCodes.deptbbinactive(d,r)
+            return SQLCodes.deptbbinactive(d)
         
         if command in ['youthmxpx','deptmxpx']:
             return SQLCodes.youthmxpx(d)
@@ -214,11 +221,11 @@ def bot_responses(id,tname,input_text):
         
         if access in ['All','IT']:
             if command == 'deptphone':
-                return SQLCodes.deptphone(d,r)
+                return SQLCodes.deptphone(d)
             if command == 'bbtdeptold':
                 return SQLCodes.bbtdeptold()
             if command == 'bbtdept':
-                return SQLCodes.bbtdept(r)
+                return SQLCodes.bbtdept(sid)
             if command == 'bbtbtmstatus':
                 return SQLCodes.bbtbtmstatus()
             
@@ -253,7 +260,7 @@ def bot_responses(id,tname,input_text):
             return SQLCodes.fmlist(g)
 
         if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('listold'):
-            if d == '__' and '/' in user_message:
+            if d == 'D[0-9]%' and '/' in user_message:
                 i,d = user_message.split('/')
             q,i = command.split('listold')
             return SQLCodes.bbtlistold(q,d)
@@ -262,7 +269,7 @@ def bot_responses(id,tname,input_text):
             i,id = user_message.split('/')
             if access == 'IT':
                 return SQLCodes.ev(id)
-            if access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','SFT','DecSFT','Dept','M&W Dept']:
+            if access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','DecSFT','SFT','Dept','M&W Dept']:
                 idlist = SQLCodes.idlist('dept',d)
             if access == 'Group':
                 idlist = SQLCodes.idlist('group',g)

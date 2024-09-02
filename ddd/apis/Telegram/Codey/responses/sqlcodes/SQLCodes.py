@@ -96,13 +96,12 @@ def approve_new_user_request(userUID,telID):
 
 def deptgroup(d):
     conn = odbc.connect(conn_str)
-    group_query = f"SELECT DISTINCT MemberGroup, LEN(MemberGroup)Ignore FROM MemberData WHERE GROUP_IMWY LIKE '{d}' ORDER BY LEN(MemberGroup), MemberGroup"
+    group_query = f"SELECT Grp FROM GroupInfo WHERE Dept LIKE '{d}'"
     ga = pd.read_sql(group_query, conn)
-    ga.columns = ['Grp','Ignore']
     conn.cursor().close()
     grouplist = []
     for n in range(len(ga)):
-        grouplist.append(ga.loc[n,'Grp'].lower())
+        grouplist.append(ga.iloc[n,0].lower())
     return grouplist
 
 def maillist():

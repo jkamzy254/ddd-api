@@ -1373,12 +1373,21 @@ def deptbbtinactive(q, d, r, access):
 
 
 
-def bblist(d,g,r,access):
+# def bblist(d,g,r,access):
+#     d = d.capitalize()
+#     g = '%' if access != 'Group' else g
+#     gd = re.sub(r'^(\d)',r'G\1',g).capitalize() if access == 'Group' else str(d).replace('D[0-9]%','Youth')
+    
+#     query = f"FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}') AND (L1D LIKE '{d}' OR L2D LIKE '{d}')"
+#     conn = odbc.connect(conn_str)   
+
+
+def bblist(d,g,access):
     d = d.capitalize()
     g = '%' if access != 'Group' else g
     gd = re.sub(r'^(\d)',r'G\1',g).capitalize() if access == 'Group' else str(d).replace('D[0-9]%','Youth')
     
-    query = f"FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}') AND (L1D LIKE '{d}' OR L2D LIKE '{d}')"
+    query = f"FROM CodeyBBList('%') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}') AND (L1D LIKE '{d}' OR L2D LIKE '{d}')"
     conn = odbc.connect(conn_str)   
 
     dNP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {query} AND NewStatus = 'New P'    ORDER BY BBTN", conn)
@@ -1488,7 +1497,9 @@ def bblist(d,g,r,access):
 
 
 
-def bbtlist(q,d,g,r,access):
+# def bbtlist(q,d,g,r,access):
+    
+def bbtlist(q,d,g,access):
     d = d.capitalize()
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],

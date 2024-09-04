@@ -511,7 +511,7 @@ def deptfmp(task,timerange,d,sid,ss,access):
     
     taskvalues = {'youth' : [''       , ''            ],
                   'tgw'   : [' TGW'   , " AND Title IN ('TJN','GYJN')"],
-                  'member': [' Member', " AND Title NOT IN ('TJN','GYJN')"]}
+                  'member': [' Member', " AND (Title IS NULL OR Title NOT IN ('TJN','GYJN'))"]}
     tasktitle = taskvalues[task][0]
     taskQ = taskvalues[task][1]
   

@@ -116,13 +116,13 @@ def bot_responses(id,tname,input_text):
         return SQLCodes.fmstatus(g,access)
         
     if command == 'bblist':
-        return SQLCodes.bblist(d,g,access)
+        return SQLCodes.bblist(d,g,sid,access)
     
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('list'):
         if d == 'D[0-9]%' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('list')
-        return SQLCodes.bbtlist(q,d,g,access)
+        return SQLCodes.bbtlist(q,d,g,sid,access)
         
     if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('status'):
         if d == 'D[0-9]%' and '/' in user_message:

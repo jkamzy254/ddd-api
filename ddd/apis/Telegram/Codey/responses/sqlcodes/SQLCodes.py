@@ -1373,12 +1373,15 @@ def deptbbtinactive(q, d, r, access):
 
 
 
-def bblist(d,g,r,access):
+def bblist(d,g,sid,access):
     d = d.capitalize()
     g = '%' if access != 'Group' else g
     gd = re.sub(r'^(\d)',r'G\1',g).capitalize() if access == 'Group' else str(d).replace('D[0-9]%','Youth')
     
-    query = f"FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}') AND (L1D LIKE '{d}' OR L2D LIKE '{d}')"
+    query = f"FROM CodeyBBList('{sid}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}') AND (L1D LIKE '{d}' OR L2D LIKE '{d}')"
+    
+    print(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {query} AND NewStatus = 'New P'    ORDER BY BBTN")
+    
     conn = odbc.connect(conn_str)   
 
     dNP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {query} AND NewStatus = 'New P'    ORDER BY BBTN", conn)
@@ -1488,7 +1491,7 @@ def bblist(d,g,r,access):
 
 
 
-def bbtlist(q,d,g,r,access):
+def bbtlist(q,d,g,sid,access):
     d = d.capitalize()
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
@@ -1498,16 +1501,21 @@ def bbtlist(q,d,g,r,access):
     gd = re.sub(r'^(\d)',r'G\1',g).capitalize() if access == 'Group' else str(d).replace('D[0-9]%','Youth')
     bbttype,query = bbtvalues[i]
     
+    columns = "LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate"
+    grp_dept_filter = f"BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN"
+    
+    print(f"SELECT {columns} FROM CodeyBBList('{sid}') c WHERE NewStatus = 'New P' AND {grp_dept_filter}")
+    
     conn = odbc.connect(conn_str)   
 
-    dNP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'New P'    AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dOP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'Old P'    AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dAB = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'ABB'      AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dIM = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'IBB ME'   AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dIF = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'IBB FA'   AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dFP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'Fallen P' AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dAC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'ABB CCT'  AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
-    dIC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate FROM CodeyBBList('{r}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE NewStatus = 'IBB CCT'  AND BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN", conn)
+    dNP = pd.read_sql(f"SELECT {columns} FROM CodeyBBList('{sid}') c WHERE NewStatus = 'New P'    AND {grp_dept_filter}", conn)
+    dOP = pd.read_sql(f"SELECT {columns} FROM CodeyBBList('{sid}') c WHERE NewStatus = 'Old P'    AND {grp_dept_filter}", conn)
+    dAB = pd.read_sql(f"SELECT {columns} FROM CodeyBBList('{sid}') c WHERE NewStatus = 'ABB'      AND {grp_dept_filter}", conn)
+    dIM = pd.read_sql(f"SELECT {columns} FROM CodeyBBList('{sid}') c WHERE NewStatus = 'IBB ME'   AND {grp_dept_filter}", conn)
+    dIF = pd.read_sql(f"SELECT {columns} FROM CodeyBBList('{sid}') c WHERE NewStatus = 'IBB FA'   AND {grp_dept_filter}", conn)
+    dFP = pd.read_sql(f"SELECT {columns} FROM CodeyBBList('{sid}') c WHERE NewStatus = 'Fallen P' AND {grp_dept_filter}", conn)
+    dAC = pd.read_sql(f"SELECT {columns} FROM CodeyBBList('{sid}') c WHERE NewStatus = 'ABB CCT'  AND {grp_dept_filter}", conn)
+    dIC = pd.read_sql(f"SELECT {columns} FROM CodeyBBList('{sid}') c WHERE NewStatus = 'IBB CCT'  AND {grp_dept_filter}", conn)
     dNP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
     dOP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
     dAB.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']

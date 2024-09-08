@@ -2588,10 +2588,11 @@ WHERE s.Dept LIKE '{d}'"""
 def bbtdept(sid):
     conn = odbc.connect(conn_str)
     header = "🏛BBT Status Summary🏛"
-    bb_dept = f"""SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total
+    bb_dept = f"""SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA,  SUM(cctI)cctI,  SUM(Total)Total
 FROM CodeyBBTStatusMembers('{sid}')
 WHERE Dept LIKE 'D[0-9]%'
 GROUP BY Dept WITH ROLLUP"""
+    print(bb_dept)
     dd = pd.read_sql(bb_dept, conn)
     conn.cursor().close()
 

@@ -103,7 +103,8 @@ CORS_ORIGIN_WHITELIST = (
     'https://ang-dj.herokuapp.com', #Django backend
     'https://ddd-ticket-trial-6cb8f882f1d8.herokuapp.com', #Ticket Module Testing Site
     'https://ddd-service-trial-21b3ab6fd735.herokuapp.com', #Service Module Testing Site
-    'https://cadillac-dpi-vr-bd6205ea960b.herokuapp.com' #Main (production) Site
+    'https://cadillac-dpi-vr-bd6205ea960b.herokuapp.com', #Main (production) Site
+    'https://api.notion.com' #Notion Site
 )
 CORS_ALLOW_CREDENTIALS = True
 

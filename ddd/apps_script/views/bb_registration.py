@@ -45,6 +45,19 @@ class GetStudentsViewSet(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+class GetSuburbsViewSet(APIView):
+    def get(self, request):
+        
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("Select * From SuburbTable")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            
+            return Response(result, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 class ReportStudentViewSet(APIView):
     def post(self, request):
         fid = request.data['fid']

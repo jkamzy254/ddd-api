@@ -85,9 +85,9 @@ async def av_form_webhook(request):
         end_time = req["claim_date"]+"T"+req["end_time"]+":00+10:00"
 
         data = {
-            "URL": {"title": [{"text": {"content": req["borrower_dept"]+": "+req["borrower_name"]}}]},
-            "Title": {"rich_text": [{"text": {"content": "Request for "+req["item"]}}]},
-            "Published": {"date": {"start":start_time, "end": end_time}}
+            "Name": {"title": [{"text": {"content": req["borrower_dept"]+": "+req["borrower_name"]}}]},
+            "Item to Borrow": {"rich_text": [{"text": {"content": "Request for "+req["item"]}}]},
+            "Borrow Period": {"date": {"start":start_time, "end": end_time}}
         }
         notion_res = create_page(data)
         print(notion_res)

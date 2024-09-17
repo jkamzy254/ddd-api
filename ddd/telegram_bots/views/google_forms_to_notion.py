@@ -37,8 +37,6 @@ async def av_form_webhook(request):
             create_url = "https://api.notion.com/v1/pages"
 
             payload = {"parent": {"database_id": os.environ.get('NOTION_DB_ID')}, "properties": data}
-            print(headers)
-            print(payload)
 
             res = requests.post(create_url, headers=headers, json=payload)
             # print(res.status_code)

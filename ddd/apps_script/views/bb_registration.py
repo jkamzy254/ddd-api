@@ -1,8 +1,3 @@
-from django.shortcuts import get_object_or_404, render
-from django.http import Http404
-from rest_framework.decorators import api_view
-from ddd.utils import decode_jwt
-
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
@@ -60,22 +55,27 @@ class GetSuburbsViewSet(APIView):
         
 class ReportStudentViewSet(APIView):
     def post(self, request):
-        fid = request.data['fid']
-        uid = request.data['uid']
-        reason = request.data['reason']
-        description = request.data['description'].replace("'", "''")
+        data = request.data
         
-        print(reason)
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"""EXEC spBBReportFortnightFallen 
-                                    @UID = '{fid}', 
-                                    @Reason = '{description}', 
-                                    @ReasonCategory = '{reason}', 
-                                    @Reporter = '{uid}'
+                cursor.execute(f"""EXEC spBBReportStudRegistration 
+                                    @UID = '{data['uid']}', 
+                                    @Fname = '{data['fname'].replace("'", "''")}', 
+                                    @Mname = '{data['mname'].replace("'", "''")}', 
+                                    @Lname = '{data['lname'].replace("'", "''")}', 
+                                    @Suburb = '{data['suburb'].replace("'", "''")}', 
+                                    @English = {data['english']}, 
+                                    @DoB = {data['dob']}, 
+                                    @Gender = {data['gender']}, 
+                                    @Church = {data['church'].replace("'", "''")}, 
+                                    @Period = {data['period']}, 
+                                    @CtCheck = {data['ctcheck']}, 
+                                    @PrevCT = {data['prevct'].replace("'", "''")}
                                """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

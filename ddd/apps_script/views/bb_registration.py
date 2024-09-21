@@ -35,7 +35,7 @@ class GetStudentsViewSet(APIView):
         print(uid)
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"""Select UID, FruitName, Stat_Abbr From BBDataView WHERE BBT_ID = '{uid}' And Stat_Abbr != 'FA'
+                cursor.execute(f"""Select UID, FruitName, Status From BBDataView WHERE BBT_ID = '{uid}' And Status != 'FA'
                                 And Season IN (Select ID From EVSeason WHERE ClosingDate > (SELECT SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time'))""")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 

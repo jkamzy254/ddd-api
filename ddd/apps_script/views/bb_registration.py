@@ -16,7 +16,9 @@ class GetMemberViewSet(APIView):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(f"""Select UID, PREFERRED_NAME as 'Name' From MemberData 
-                               Where BBT = 1 And Username = '{username}' And Password = '{password}' AND UID IN (Select BBT_ID From PrevSsnStudentsView)""")
+                               Where BBT = 1 And Username = '{username}' And Password = '{password}' AND UID IN (
+                                   SELECT * FROM BBDataView WHERE Season IN (Select ID From EVSeason WHERE ClosingDate > (SELECT SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time'))
+                               )""")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 
             if len(result) == 0:
@@ -33,7 +35,8 @@ class GetStudentsViewSet(APIView):
         print(uid)
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"Select UID, FruitName, Stat_Abbr From PrevSsnStudentsView WHERE BBT_ID = '{uid}' And Stat_Abbr != 'FA'")
+                cursor.execute(f"""Select UID, FruitName, Stat_Abbr From BBDataView WHERE BBT_ID = '{uid}' And Stat_Abbr != 'FA'
+                                And Season IN (Select ID From EVSeason WHERE ClosingDate > (SELECT SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time'))""")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

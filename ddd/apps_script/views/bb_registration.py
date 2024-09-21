@@ -65,13 +65,13 @@ class ReportStudentViewSet(APIView):
                                     @Mname = '{data['mname'].replace("'", "''")}', 
                                     @Lname = '{data['lname'].replace("'", "''")}', 
                                     @Suburb = '{data['suburb'].replace("'", "''")}', 
-                                    @English = {data['english']}, 
-                                    @DoB = {data['dob']}, 
-                                    @Gender = {data['gender']}, 
-                                    @Church = {data['church'].replace("'", "''")}, 
+                                    @English = '{data['english']}', 
+                                    @DoB = '{data['dob']}', 
+                                    @Gender = '{data['gender']}', 
+                                    @Church = '{data['church'].replace("'", "''")}', 
                                     @Period = {data['period']}, 
-                                    @CtCheck = {data['ctcheck']}, 
-                                    @PrevCT = {data['prevct'].replace("'", "''")}
+                                    @CtCheck = '{data['ctcheck']}', 
+                                    @PrevCT = '{data['prevct'].replace("'", "''")}'
                                """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 

@@ -45,10 +45,11 @@ class GetStudentsViewSet(APIView):
         
 class GetSuburbsViewSet(APIView):
     def get(self, request):
+        uid = request.GET.get('uid')
         
         try:
             with connection.cursor() as cursor:
-                cursor.execute("Select * From SuburbTable")
+                cursor.execute(f"EXEC spBBGetSuburbList '{uid}'")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             
             return Response(result, status=status.HTTP_200_OK)

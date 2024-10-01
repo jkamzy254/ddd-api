@@ -1,0 +1,23 @@
+[
+    {
+        "roleId": 1,
+        "dept": "MT",
+        "name": "Department Leader",
+        "permissions_json": [
+            {
+                "PermissionID": 1,
+                "Area": "maintaining",
+                "Name": "svc_att",
+                "Operation": 5,
+                "data_level": 31
+            },
+            {
+                "PermissionID": 2,
+                "Area": "general",
+                "Name": "fmp_form",
+                "Operation": 3,
+                "data_level": 1
+            }
+        ]
+    }
+]

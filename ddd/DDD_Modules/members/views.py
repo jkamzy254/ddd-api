@@ -52,8 +52,7 @@ class LoginView(APIView):
                             """)
             pid = pd.DataFrame(cursor.fetchall())
             pid.columns = [i[0] for i in cursor.description]
-            pid = pid[pid['MemberID']==user.uid]
-            print( pid['WLID'].values[0])
+
         for i in wl:
             wlid.append(i.title)
         member = Member.objects.filter(id = user.id).first()
@@ -83,14 +82,21 @@ class LoginView(APIView):
         # Generate an access token
         # token = str(refresh.access_token)
 
+                # token = str(refresh.access_token)
+        f = open('../ddd/api/permission.json')
+        permissions = json.load(f)
+        print(permissions)
+
         payload = {
             "ID":user.id,
-            "UID": user.uid,
+            "UID":user.uid,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=(60*24)),
             'iat': datetime.datetime.utcnow(),
             'user': serializer.data,
-            'roles': wlid
+            'roles': wlid,
+            'permissions': permissions
         }
+
         token = ('Bearer '+encode_jwt(payload).decode()).encode()
         response = Response()
         response.set_cookie(key='token',value=token, httponly=True)

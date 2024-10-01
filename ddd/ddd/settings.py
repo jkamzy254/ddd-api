@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
+    'redis_search_django',
     # 'rest_framework_simplejwt',
     'rest_framework_nested',
     'ddd',
@@ -158,15 +159,15 @@ AUTH_PASSWORD_VALIDATORS = [
 
 CACHES = {
     "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.environ.get('REDIS_URL'),
+        "BACKEND": "redis_cache.RedisCache",
+        "LOCATION": 'redis://redis-19314.c51.ap-southeast-2-1.ec2.cloud.redislabs.com:19314',
         "OPTIONS": {
-
-            "PASSWORD": os.environ.get('REDIS_PASSWORD'),
+            "PASSWORD": 'fTjZuqrFufSdxBPiKTTu0LC6LFWLfZs7',
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     }
 }
+
 
 # REST_FRAMEWORK = {
 

@@ -71,9 +71,6 @@ async def av_form_webhook(request):
             {'✅BGM' if req['need_bgm'] == 'Yes' else '▫️BGM'}
             {'✅External link (e.g. Kahoot, Menti etc.): '+req['ext_link'] if req['ext_link'] != '' and req['ext_link'] != 'No' else '▫️External link (e.g. Kahoot, Menti etc.)'}
             {'✅Zoom required' if req['zoom_required'] == 'Yes' else '▫️Zoom required'}
-
-
-            ▫️Zoom required
             ▫️Recording required
 
             All materials must be sent at least a day prior to the event ‼️

@@ -27,6 +27,8 @@ async def av_form_webhook(request):
         req = json.loads(request.body)
         print(req)
         
+        print(f"Chat ID: {os.environ.get('TELEGRAM_AV_CHAT_ID')}, Thread: {os.environ.get('TELEGRAM_AV_MSG_THREAD_ID')}")
+        
         def create_page(data: dict):
             headers = {
                 "Authorization": "Bearer " + os.environ.get('NOTION_TOKEN'),
@@ -68,6 +70,7 @@ async def av_form_webhook(request):
             {'✅Videos' if req['need_bgm'] == 'Yes' else '▫️Videos'}
             {'✅BGM' if req['need_bgm'] == 'Yes' else '▫️BGM'}
             {'✅External link (e.g. Kahoot, Menti etc.): '+req['ext_link'] if req['ext_link'] != '' and req['ext_link'] != 'No' else '▫️External link (e.g. Kahoot, Menti etc.)'}
+            {'✅Zoom required' if req['zoom_required'] == 'Yes' else '▫️Zoom required'}
 
 
             ▫️Zoom required
@@ -75,6 +78,7 @@ async def av_form_webhook(request):
 
             All materials must be sent at least a day prior to the event ‼️
             """
+            
 
             await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID)
             return JsonResponse({'status': 'success'})

@@ -46,7 +46,7 @@ class AddTicketViewSet(APIView):
         
 
         # Create Jira issue
-        def create_jira_issue(project_key, summary, description, issue_type_id, uploads=None):
+        def create_jira_issue(project_key, summary, description, issue_type_id, uploads=None, urls=None):
             jira = get_jira_client()
             
             # Define issue details
@@ -57,6 +57,8 @@ class AddTicketViewSet(APIView):
                 'issuetype': {'id': issue_type_id},
                 'customfield_10073': token['UID']
             }
+            if len(urls) > 0:
+                issue_dict['customfield_10114'] = urls
             
             # Create the issue
             new_issue = jira.create_issue(fields=issue_dict)
@@ -86,7 +88,7 @@ class AddTicketViewSet(APIView):
                 description = form['description']
 
             
-            create_jira_issue('DTT', form['subject'], description, form['type'], upload_files)
+            create_jira_issue('DTT', form['subject'], description, form['type'], upload_files, image_urls)
             
             resp = {
                 'message': 'Ticket Added.',

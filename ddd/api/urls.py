@@ -33,6 +33,7 @@ urlpatterns = [
     # path("", include(bbstudents_router.urls)),
 	path('bb/', include('DDD_Modules.EV.bb.urls')),
 	path('fmp/', include('DDD_Modules.EV.fmp.urls')),
+	path('tickets/', include('DDD_Modules.Help.tickets.urls')),
 	path('members/', include('DDD_Modules.members.urls')),
 	path('svc/', include('DDD_Modules.MT.svc.urls')),
 	path('edu/', include('DDD_Modules.Edu.attendance.urls')),

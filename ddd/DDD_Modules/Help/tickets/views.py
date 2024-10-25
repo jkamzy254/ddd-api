@@ -37,14 +37,12 @@ def get_jira_client():
 class AddTicketViewSet(APIView):
     
     def post(self, request):
-        print("Request Received")
         form = request.data
         upload_files = form.getlist('ticketFiles')
         date_time = datetime.datetime.now()
         epoch_time = int(date_time.timestamp())
         token = decode_jwt(request)
         
-
         # Create Jira issue
         def create_jira_issue(project_key, summary, description, issue_type_id, uploads=None, urls=None):
             jira = get_jira_client()
@@ -71,11 +69,8 @@ class AddTicketViewSet(APIView):
             if upload_files:
                 # Create a BlobServiceClient using the connection string
                 blob_service_client = BlobServiceClient.from_connection_string(os.environ.get('AZURE_STORAGE_CONNECTION_STRING'))
-
-                # Get the container client
                 container_client = blob_service_client.get_container_client(os.environ.get('TICKET_CONTAINER'))
 
-                # Upload the file to Azure Blob Storage
                 for file in upload_files:
                     blob_client = container_client.get_blob_client(token['UID']+str(epoch_time)+file.name)
                     blob_client.upload_blob(file.read(), overwrite=True)
@@ -88,7 +83,7 @@ class AddTicketViewSet(APIView):
                 description = form['description']
 
             
-            create_jira_issue('DTT', form['subject'], description, form['type'], upload_files, image_urls)
+            create_jira_issue('DTT', form['subject'], description, form['type'], upload_files, ','.join(image_urls))
             
             resp = {
                 'message': 'Ticket Added.',

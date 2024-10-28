@@ -60,6 +60,11 @@ class AddTicketViewSet(APIView):
             
             # Create the issue
             new_issue = jira.create_issue(fields=issue_dict)
+            with connection.cursor() as cursor:
+                cursor.execute(f"""
+                    DECLARE @CurrDate DATE = CAST((SELECT SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') AS DATE);
+                    Insert into JiraTicket (JiraID, Timestamp, SenderID) VALUES ({new_issue.id}, @CurrDate, '{token['UID']}')
+                """)
             if uploads:
                 for file in uploads:
                     jira.add_attachment(issue=new_issue, attachment=file, filename=file.name  )
@@ -369,7 +374,6 @@ class GetMyIssuesViewSet(APIView):
                 for rec in issuerecs:
                     issue = jira.issue(rec['JiraID'])
                     # Issue._parse_raw(issue)
-                    print(issue.raw)
             
                     issues.append(issue.raw)  
         except Exception as e:
@@ -387,15 +391,15 @@ class GetGroupIssuesViewSet(APIView):
             token = decode_jwt(request)   
             issues = []
             with connection.cursor() as cursor:
-                cursor.execute("""SELECT * FROM JiraTicket J LEFT JOIN MemberData M ON M.UID = J.SenderId 
+                cursor.execute("""SELECT M.Name 'Mname', J.* FROM JiraTicket J LEFT JOIN MemberData M ON M.UID = J.SenderId 
                                 WHERE M.MemberGroup = (Select MemberGroup From MemberData WHERE UID = '{0}')""".format(token['UID']))
                 issuerecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 for rec in issuerecs:
                     issue = jira.issue(rec['JiraID'])
-                    # Issue._parse_raw(issue)
-                    print(issue.raw)
+                    issue_raw = issue.raw
+                    issue_raw['Member'] = rec['Mname']
             
-                    issues.append(issue.raw)  
+                    issues.append(issue_raw)  
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'DDD_Modules.members',
     'DDD_Modules.EV.bb',
     'DDD_Modules.EV.fmp',
+    'DDD_Modules.EV.fruit_profile',
     'DDD_Modules.MT.svc',
     'DDD_Modules.Edu.attendance',
     'DDD_Modules.Help.tickets',

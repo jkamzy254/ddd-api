@@ -102,6 +102,7 @@ CORS_ORIGIN_WHITELIST = (
     'http://localhost:4200',
     'http://127.0.0.1:4200',
     'http://127.0.0.1:8000',
+    'https://dddmelb84.atlassian.net', #Jira URL
     'https://ang-dj.herokuapp.com', #Django backend
     'https://ddd-ticket-trial-6cb8f882f1d8.herokuapp.com', #Ticket Module Testing Site
     'https://ddd-service-trial-21b3ab6fd735.herokuapp.com', #Service Module Testing Site

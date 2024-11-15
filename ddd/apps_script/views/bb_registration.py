@@ -35,8 +35,7 @@ class GetStudentsViewSet(APIView):
         print(uid)
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"""Select UID, FruitName, Status From BBRegistrationView WHERE BBT_ID = '{uid}'
-                                And Season = 68""")
+                cursor.execute(f"Select UID, FruitName, Status From BBRegistrationView WHERE BBT_ID = '{uid}'")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

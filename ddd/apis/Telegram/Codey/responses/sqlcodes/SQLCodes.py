@@ -927,6 +927,7 @@ def bbstatus(g, d, sid, access):
                 
     g = g if access == 'Group' else '%'
     d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     if access == 'Group':
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
@@ -1036,6 +1037,7 @@ def bbtstatus(q, g, d, sid, access):
         
     g = g if access == 'Group' else '%'
     d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     if access == 'Group':
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
@@ -1143,6 +1145,7 @@ def deptbbtstatus(q, d, r, access):
     
     name = 'BBT' if access == 'IT' else 'BBTCode'
     d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
@@ -1206,6 +1209,7 @@ def bbtactive(q, g, d, r, access):
     name = 'BBT' if access == 'IT' else 'BBTCode2'
     g = g if access == 'Group' else '%'
     d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     if access == 'Group':
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
@@ -1292,6 +1296,7 @@ def deptbbtactive(q, d, r, access):
         
     name = 'BBT' if access == 'IT' else 'BBTCode'
     d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     
@@ -1348,6 +1353,7 @@ def bbtinactive(q, g, d, r, access):
     name = 'BBT' if access == 'IT' else 'BBTCode2'
     g = g if access == 'Group' else '%'
     d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     if access == 'Group':
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
@@ -1441,6 +1447,7 @@ def deptbbtinactive(q, d, r, access):
     
     name = 'BBT' if access == 'IT' else 'BBTCode'
     d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
@@ -1493,8 +1500,13 @@ def deptbbtinactive(q, d, r, access):
 
 def bblist(d,g,sid,access):
     d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     g = '%' if access != 'Group' else g
-    gd = re.sub(r'^(\d)',r'G\1',g).capitalize() if access == 'Group' else str(d).replace('D[0-9]%','Youth')
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    else:
+        grpdept = str(d).replace('D[0-9]%','Youth')
     
     query = f"FROM CodeyBBList('{sid}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}') AND (L1D LIKE '{d}' OR L2D LIKE '{d}')"
     
@@ -1593,7 +1605,7 @@ def bblist(d,g,sid,access):
             ic = f"{ic}⭐️{r+1}. [{dIC.loc[r,'LastClass']}] [{dIC.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dIC.loc[r,'FruitName'][:8]} - {dIC.loc[r,'L1N']}{dIC.loc[r,'L2N']} - {(dIC.loc[r,'BBTN'])} - {(dIC.loc[r,'LastTopic'])} → [{(dIC.loc[r,'NextClassDate'])}]\n"
         ic = ic + '</pre>\n'
     
-    result = f"<b><u>📚{gd} BB Fruit List📚</u></b>\n\n<i>▫️Status▫️\n#. [LastClassDate] [Pts] - Fruit - L1 / L2 - BBT - LastTopic → [NextClassDate]</i>\n\n{np}{op}{ab}{im}{fa}{fp}{ac}{ic}<b><i><u>Total: {sum(pts)} Pts</u></i></b>"
+    result = f"<b><u>📚{grpdept} BB Fruit List📚</u></b>\n\n<i>▫️Status▫️\n#. [LastClassDate] [Pts] - Fruit - L1 / L2 - BBT - LastTopic → [NextClassDate]</i>\n\n{np}{op}{ab}{im}{fa}{fp}{ac}{ic}<b><i><u>Total: {sum(pts)} Pts</u></i></b>"
     result = re.sub(r'\.0',r'',result)
     result = re.sub(r' \(\)',r'',result)
     result = re.sub(r'\((\d+)\)', r'(G\1)', result)
@@ -1611,12 +1623,17 @@ def bblist(d,g,sid,access):
 
 def bbtlist(q,d,g,sid,access):
     d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
                  'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     g = '%' if access != 'Group' else g
-    gd = re.sub(r'^(\d)',r'G\1',g).capitalize() if access == 'Group' else str(d).replace('D[0-9]%','Youth')
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    else:
+        grpdept = str(d).replace('D[0-9]%','Youth')
     bbttype,query = bbtvalues[i]
     
     columns = "LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate"
@@ -1708,7 +1725,7 @@ def bbtlist(q,d,g,sid,access):
             ic = f"{ic}⭐️{r+1}. [{dIC.loc[r,'LastClass']}] {(dIC.loc[r,'BBTN'])[:8]} - {dIC.loc[r,'FruitName'][:8]} - {dIC.loc[r,'L1N'][:8]}{dIC.loc[r,'L2N'][:11]} - {(dIC.loc[r,'LastTopic'])} → [{(dIC.loc[r,'NextClassDate'])}]\n"
         ic = ic + '</pre>\n'
     
-    result = f"<b><u>📖{gd} {bbttype} Student List📖</u></b>\n\n<i>▫️Status▫️\n#. [LastClassDate] BBT - Student - Leaf1 / Leaf2 - LastTopic → [NextClassDate]</i>\n\n{np}{op}{ab}{im}{fa}{fp}{ac}{ic}<b><i><u>Total: {sum([len(dNP),len(dOP),len(dAB),len(dIM),len(dIF),len(dFP),len(dAC),len(dIC)])} Pts</u></i></b>"
+    result = f"<b><u>📖{grpdept} {bbttype} Student List📖</u></b>\n\n<i>▫️Status▫️\n#. [LastClassDate] BBT - Student - Leaf1 / Leaf2 - LastTopic → [NextClassDate]</i>\n\n{np}{op}{ab}{im}{fa}{fp}{ac}{ic}<b><i><u>Total: {sum([len(dNP),len(dOP),len(dAB),len(dIM),len(dIF),len(dFP),len(dAC),len(dIC)])} Pts</u></i></b>"
     result = re.sub(r'\.0',r'',result)
     result = re.sub(r' \(\)',r'',result)
     result = re.sub(r'\((\d+)\)', r'(G\1)', result)
@@ -1719,6 +1736,7 @@ def bbtlist(q,d,g,sid,access):
 
 def bbtlistold(q,d):
     d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   " AND BbtStatus = 'Active'"],
                  'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
@@ -2577,7 +2595,7 @@ WHERE s.Dept LIKE '{d}'"""
         
         dept = f'{dept}{dpt}[{pn}|{po}{separator}{ba}|{ca}]   [{bm}|{ci}{separator}{pf}|{bf}]   [{t}]\n'
             
-    if d == 'D[0-9]%':
+    if d.endswith('D[0-9]%'):
         pn = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -2612,12 +2630,12 @@ WHERE s.Dept LIKE '{d}'"""
 
 
 
-def bbtdept(sid):
+def bbtdept(d,sid):
     conn = odbc.connect(conn_str)
     header = "🏛BBT Status Summary🏛"
     bb_dept = f"""SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA,  SUM(cctI)cctI,  SUM(Total)Total
 FROM CodeyBBTStatusMembers('{sid}')
-WHERE Dept LIKE 'D[0-9]%'
+WHERE Dept LIKE '{d}'
 GROUP BY Dept WITH ROLLUP"""
     print(bb_dept)
     dd = pd.read_sql(bb_dept, conn)
@@ -2890,6 +2908,7 @@ def classes(g, d, access, time):
     
     g = g if access == 'Group' else '%'
     d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     if access == 'Group':
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)

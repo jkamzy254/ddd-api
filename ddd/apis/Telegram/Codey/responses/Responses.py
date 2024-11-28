@@ -96,20 +96,22 @@ def bot_responses(id,tname,input_text):
     elif access in ['¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Dept','M&W Dept']:
         d = access if access != 'Dept' else d
         allowed_groups = SQLCodes.deptgroup(d)
-        if access[0] in ['¹','²'] and '/g' in user_message.lower():
-            try:
-                command,g = user_message.split('/')
-                g = f'{access[0]}{g.capitalize()}'
-            except ValueError:
-                return 'Format error: Too many "/"s'
-        elif '/' in user_message:
-            try:
-                command,g = user_message.split('/')
-            except ValueError:
-                return 'Format error: Too many "/"s'
+        if '/' in user_message:
+            if access[0] in ['¹','²'] and '/g' in user_message.lower():
+                print('access[0] in [¹,²]')
+                try:
+                    command,g = user_message.split('/')
+                    g = f'{access[0]}{g.capitalize()}'
+                except ValueError:
+                    return 'Format error: Too many "/"s'
+            else:
+                try:
+                    command,g = user_message.split('/')
+                except ValueError:
+                    return 'Format error: Too many "/"s'
             d,sid,ss = SQLCodes.groupinfo(g).split('/')
             access = 'Group' # If specific group is specified, their access for the current function reduced to Group-level
-            if g not in allowed_groups and user_message.lower()[:3] != 'ev/':
+            if g.lower() not in allowed_groups and user_message.lower()[:3] != 'ev/':
                 return 'Sorry, this group is outside your department!'
         else:
             command = user_message

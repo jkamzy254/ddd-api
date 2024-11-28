@@ -21,7 +21,7 @@ def process_data(data, author):
         output_lines = []
     
         for user in data:
-            name = user["Name"]
+            name = user.get("Name", "")
             comments = user.get('Comments')
             
             if comments:

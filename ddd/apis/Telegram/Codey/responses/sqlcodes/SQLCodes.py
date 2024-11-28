@@ -575,7 +575,7 @@ def deptfmp(task,timerange,d,sid,ss,access):
         fe = ' '*(spc[4]-len(str(dd.loc[r,'FE']))) + str(dd.loc[r,'FE'])
         dept = f'{dept}{dpt}[{f}|{m}|{p}|{fe}]\n'
 
-    if d == 'D[0-9]%' :
+    if d.endswith('D[0-9]%'):
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
         p  = ' '*(spc[3]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
@@ -584,7 +584,7 @@ def deptfmp(task,timerange,d,sid,ss,access):
     else:
         total = str()
         
-    depttitle = d.replace('D[0-9]%','Youth')
+    depttitle = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 2')
 
     fmp = f"<b><u>{depttitle}{tasktitle} FMPFE : {timetitle}</u></b>\n\n<pre>{spc[5]}\n\n{group}{dept}{total}</pre>"
     fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
@@ -665,7 +665,7 @@ def taskfmp(task,timerange,d,sid,ss,access):
         fe = ' '*(spc[4]-len(str(dd.loc[r,'FE']))) + str(dd.loc[r,'FE'])
         dept = f'{dept}{dpt}[{f}|{m}|{p}|{fe}]\n'
 
-    if d == 'D[0-9]%' :
+    if d.endswith('D[0-9]%'):
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
         p  = ' '*(spc[3]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
@@ -674,7 +674,7 @@ def taskfmp(task,timerange,d,sid,ss,access):
     else:
         total = str()
         
-    depttitle = d.replace('D[0-9]%','Youth')
+    depttitle = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 2')
 
     fmp = f"<b><u>{depttitle}{tasktitle} FMPFE : {timetitle}</u></b>\n\n<pre>{spc[5]}\n\n{group}\n{dept}{total}</pre>"
     fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
@@ -715,7 +715,7 @@ def youthmxpx(d):
         px = ' '*(4-len(str(dd.loc[r,'Px']))) + str(dd.loc[r,'Px'])
         dept = f'{dept}{dpt}[{mx}|{px}]\n'
     
-    if d == 'D[0-9]%':
+    if d.endswith('D[0-9]%'):
         spc = ' '*(4-len(str(dy.iloc[0,0])))
         mx = ' '*(4-len(str(dy.loc[0,'Mx']))) + str(dy.loc[0,'Mx'])
         px = ' '*(4-len(str(dy.loc[0,'Px']))) + str(dy.loc[0,'Px'])
@@ -932,7 +932,7 @@ def bbstatus(g, d, sid, access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('D[0-9]%','Youth')
+        grpdept = str(d).replace('_D[0-9]%','Youth')
         
     
     print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'")
@@ -1042,7 +1042,7 @@ def bbtstatus(q, g, d, sid, access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('D[0-9]%','Youth')
+        grpdept = str(d).replace('_D[0-9]%','Youth')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
@@ -1180,7 +1180,7 @@ def deptbbtstatus(q, d, r, access):
         t   = ' '*(3-len(str(dd.loc[r,'Tot'])))  + str(dd.loc[r,'Tot'])
         dept = f'{dept}{dpt}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
             
-    if d == 'D[0-9]%':
+    if d.endswith('D[0-9]%'):
         pn  = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(3-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -1195,7 +1195,7 @@ def deptbbtstatus(q, d, r, access):
     else:
         youth = str()
     
-    summary = f"<b><u>{str(d).replace('D[0-9]%','Youth')} {bbttype} Status Summary</u></b>\n\n<pre>   [ NP| OP| AB| CA| ME| CI| FP| FA|TOT]\n\n{dept}{youth}</pre>"
+    summary = f"<b><u>{str(d).replace('_D[0-9]%','Youth')} {bbttype} Status Summary</u></b>\n\n<pre>   [ NP| OP| AB| CA| ME| CI| FP| FA|TOT]\n\n{dept}{youth}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -1214,7 +1214,7 @@ def bbtactive(q, g, d, r, access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('D[0-9]%','Youth')
+        grpdept = str(d).replace('_D[0-9]%','Youth')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
@@ -1270,7 +1270,7 @@ def bbtactive(q, g, d, r, access):
             ca  = ' '*(3-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
             dept = f'{dept}{dpt}[{pn}|{ba}|{ca}]\n'
             
-    if d == 'D[0-9]%':
+    if d.endswith('D[0-9]%'):
         pn = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba = ' '*(3-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
         ca = ' '*(3-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
@@ -1326,7 +1326,7 @@ def deptbbtactive(q, d, r, access):
         ca  = ' '*(3-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
         dept = f'{dept}{dpt}[{pn}|{ba}|{ca}]\n'
             
-    if d == 'D[0-9]%':
+    if d.endswith('D[0-9]%'):
         pn = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba = ' '*(3-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
         ca = ' '*(3-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
@@ -1335,7 +1335,7 @@ def deptbbtactive(q, d, r, access):
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('D[0-9]%','Youth')} {bbttype} Active BB Status </u></b>\n\n<pre>Grp [ NP| AB| CA]\n\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('_D[0-9]%','Youth')} {bbttype} Active BB Status </u></b>\n\n<pre>Grp [ NP| AB| CA]\n\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -1358,7 +1358,7 @@ def bbtinactive(q, g, d, r, access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('D[0-9]%','Youth')
+        grpdept = str(d).replace('_D[0-9]%','Youth')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
@@ -1420,7 +1420,7 @@ def bbtinactive(q, g, d, r, access):
             bf  = ' '*(3-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
             dept = f'{dept}{dpt}[{po}|{bm}|{ci}|{pf}|{bf}]\n'
             
-    if d == 'D[0-9]%':
+    if d.endswith('D[0-9]%'):
         bm = ' '*(3-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         po = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ci = ' '*(3-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -1478,7 +1478,7 @@ def deptbbtinactive(q, d, r, access):
         bf  = ' '*(3-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
         dept = f'{dept}{dpt}[{po}|{bm}|{ci}|{pf}|{bf}]\n'
             
-    if d == 'D[0-9]%':
+    if d.endswith('D[0-9]%'):
         bm = ' '*(3-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         po = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ci = ' '*(3-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -1489,7 +1489,7 @@ def deptbbtinactive(q, d, r, access):
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('D[0-9]%','Youth')} {bbttype} Inactive BB Status </u></b>\n\n<pre>Grp [ OP| ME| CI| FP| FA]\n\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('_D[0-9]%','Youth')} {bbttype} Inactive BB Status </u></b>\n\n<pre>Grp [ OP| ME| CI| FP| FA]\n\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -1506,7 +1506,7 @@ def bblist(d,g,sid,access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('D[0-9]%','Youth')
+        grpdept = str(d).replace('_D[0-9]%','Youth')
     
     query = f"FROM CodeyBBList('{sid}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}') AND (L1D LIKE '{d}' OR L2D LIKE '{d}')"
     
@@ -1633,7 +1633,7 @@ def bbtlist(q,d,g,sid,access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('D[0-9]%','Youth')
+        grpdept = str(d).replace('_D[0-9]%','Youth')
     bbttype,query = bbtvalues[i]
     
     columns = "LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate"
@@ -1826,7 +1826,7 @@ def bbtlistold(q,d):
             ic = f"{ic}⭐️{r+1}. {(dIC.loc[r,'BBTN'])[:8]} - {dIC.loc[r,'FruitName'][:8]} - {dIC.loc[r,'L1N'][:8]}{dIC.loc[r,'L2N'][:11]} ({dIC.loc[r,'L2G']})\n"
         ic = ic + '</pre>\n'
     
-    result = f"<b><u>📖{str(d).replace('D[0-9]%','Youth')} {bbttype} Student List📖</u></b>\n\n<i>▫️Status▫️\n#. BBT - Fruit - Leaf1 / Leaf2</i>\n\n{np}{op}{ab}{im}{fa}{fp}{ac}{ic}"
+    result = f"<b><u>📖{str(d).replace('_D[0-9]%','Youth')} {bbttype} Student List📖</u></b>\n\n<i>▫️Status▫️\n#. BBT - Fruit - Leaf1 / Leaf2</i>\n\n{np}{op}{ab}{im}{fa}{fp}{ac}{ic}"
     result = re.sub(r'\.0',r'',result)
     result = re.sub(r' \(\)',r'',result)
     result = re.sub(r'\((\d+)\)', r'(G\1)', result)
@@ -1989,7 +1989,7 @@ LEFT JOIN BBData bb ON bb.UID = b.UID
 def tol(d):
     conn = odbc.connect(conn_str)
     t = d if d != 'D[0-9]%' else 'Total'
-    header = f"🏛{str(d).replace('D[0-9]%','Youth')} BB Status Classification🏛" if d != 'D[0-9]%' else '🌳Tree of Life🌳'
+    header = f"🏛{str(d).replace('_D[0-9]%','Youth')} BB Status Classification🏛" if d != 'D[0-9]%' else '🌳Tree of Life🌳'
     bb_dept = f"""SELECT m.*, pNew, pOld, bbA, bbME, bbFA, pFA, cctA, cctI, cct, Total
 FROM (
 SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(cctA + cctI)cct, SUM(Tot)Total
@@ -2070,7 +2070,7 @@ FROM ScottStatusNumbers WHERE Dept LIKE 'D_'
         dept1 = f"{dept1}]\n"
         dept2 = f"{dept2}]\n"
         
-    result = f"<b><u>🏛{str(d).replace('D[0-9]%','Youth')} BB Status Classification🏛</u></b>\n\n<pre>Dept[  D1 |  D2 |  D3 |  D4 ]\n\n{dept1}\n\nDept[  D5 |  D6 |  D7 |  D8 |Total]\n\n{dept2}</pre>"
+    result = f"<b><u>🏛{str(d).replace('_D[0-9]%','Youth')} BB Status Classification🏛</u></b>\n\n<pre>Dept[  D1 |  D2 |  D3 |  D4 ]\n\n{dept1}\n\nDept[  D5 |  D6 |  D7 |  D8 |Total]\n\n{dept2}</pre>"
     result = re.sub(r'\|]',r']',result)  # Replaces '|]' with ']'
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
@@ -2081,7 +2081,7 @@ FROM ScottStatusNumbers WHERE Dept LIKE 'D_'
 
 def tolfull(d):
     
-    header = f"🌳{str(d).replace('D[0-9]%','Youth')} Tree of Life🌳" if d != 'D[0-9]%' else '🌳TOL Full🌳'
+    header = f"🌳{str(d).replace('_D[0-9]%','Youth')} Tree of Life🌳" if d != 'D[0-9]%' else '🌳TOL Full🌳'
     conn = odbc.connect(conn_str)
     
     bb_group = f"""SELECT s.Grp, NewM mNew, OldM mOld, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Tot bbTot
@@ -2145,7 +2145,7 @@ WHERE s.Dept LIKE '{d}'"""
         
         dept = f'{dept}{dpt}[{mn}|{mo}]   [{pn}|{po}{separator}{ba}|{ca}]   [{bm}|{ci}{separator}{pf}|{bf}]   [{t}]\n'
             
-    if d == 'D[0-9]%':
+    if d.endswith('D[0-9]%'):
         mn = ' '*(5-len(str(dy.loc[0,'mNew']))) + str(dy.loc[0,'mNew'])
         mo = ' '*(6-len(str(dy.loc[0,'mOld']))) + str(dy.loc[0,'mOld'])
         pn = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
@@ -2216,7 +2216,7 @@ def bbactive(d):
         ca  = ' '*(4-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
         dept = f'{dept}{dpt}[{sp}][{pn}|{ba}|{ca}]\n'
             
-    if d == 'D[0-9]%':
+    if d.endswith('D[0-9]%'):
         sp = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -2226,7 +2226,7 @@ def bbactive(d):
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('D[0-9]%','Youth')} Active BB Status </u></b>\n\n<pre>Grp [  SP ][  NP |  AB | CA ]\n\n{group}\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('_D[0-9]%','Youth')} Active BB Status </u></b>\n\n<pre>Grp [  SP ][  NP |  AB | CA ]\n\n{group}\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -2264,7 +2264,7 @@ def deptbbactive(d):
         ca  = ' '*(4-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
         dept = f'{dept}{dpt}[{sp}][{pn}|{ba}|{ca}]\n'
             
-    if d == 'D[0-9]%':
+    if d.endswith('D[0-9]%'):
         sp = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -2274,7 +2274,7 @@ def deptbbactive(d):
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('D[0-9]%','Youth')} Active BB Status </u></b>\n\n<pre>Grp [  SP ][  NP |  AB | CA ]\n\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('_D[0-9]%','Youth')} Active BB Status </u></b>\n\n<pre>Grp [  SP ][  NP |  AB | CA ]\n\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -2328,7 +2328,7 @@ def bbinactive(d):
         bf  = ' '*(4-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
         dept = f'{dept}{dpt}[{po}|{bm}|{ci}{separator}{pf}|{bf}]\n'
             
-    if d == 'D[0-9]%':
+    if d.endswith('D[0-9]%'):
         bm = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         po = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ci = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -2339,7 +2339,7 @@ def bbinactive(d):
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('D[0-9]%','Youth')} Inactive BB Status </u></b>\n\n<pre>Grp [ OP | ME | CI {separator} FP | FA ]\n\n{group}\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('_D[0-9]%','Youth')} Inactive BB Status </u></b>\n\n<pre>Grp [ OP | ME | CI {separator} FP | FA ]\n\n{group}\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -2379,7 +2379,7 @@ def deptbbinactive(d):
         bf  = ' '*(4-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
         dept = f'{dept}{dpt}[{po}|{bm}|{ci}{separator}{pf}|{bf}]\n'
             
-    if d == 'D[0-9]%':
+    if d.endswith('D[0-9]%'):
         bm = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         po = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ci = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -2390,7 +2390,7 @@ def deptbbinactive(d):
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('D[0-9]%','Youth')} Inactive BB Status </u></b>\n\n<pre>Grp [ OP | ME | CI {separator} FP | FA ]\n\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('_D[0-9]%','Youth')} Inactive BB Status </u></b>\n\n<pre>Grp [ OP | ME | CI {separator} FP | FA ]\n\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -2512,14 +2512,14 @@ def deptfm(d):
         om  = ' '*(6-len(str(dd.loc[r,'OldM'])))  + str(dd.loc[r,'OldM'])
         dept = f'{dept}{dpt}[{nm}|{om}]\n'
 
-    if d == 'D[0-9]%' :
+    if d.endswith('D[0-9]%') :
         nm  = ' '*(6-len(str(dt.loc[0,'NewM'])))  + str(dt.loc[0,'NewM'])
         om  = ' '*(6-len(str(dt.loc[0,'OldM'])))  + str(dt.loc[0,'OldM'])
         total = f'\nTotal [{nm}|{om}]'
     else:
         total = str()
         
-    depttitle = d.replace('D[0-9]%','Youth')
+    depttitle = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 2')
 
     fmp = f"<b><u>{depttitle} FM Status</u></b>\n\n<pre>Grp   [ NewM | OldM ]\n\n{group}\n{dept}{total}</pre>"
     fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
@@ -2535,7 +2535,7 @@ def deptfm(d):
 
 def bbfull(d):
     
-    header = f"🌳{str(d).replace('D[0-9]%','Youth')} Tree of Life🌳"
+    header = f"🌳{str(d).replace('_D[0-9]%','Youth')} Tree of Life🌳"
     conn = odbc.connect(conn_str)
     
     bb_group = f"""SELECT s.Grp, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Tot bbTot
@@ -2913,7 +2913,7 @@ def classes(g, d, access, time):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('D[0-9]%','Youth')
+        grpdept = str(d).replace('_D[0-9]%','Youth')
     bbtgrp = 'BBT' if access == 'Group' else 'Grp'
     if time == 'today':
         timetitle = 'Today'

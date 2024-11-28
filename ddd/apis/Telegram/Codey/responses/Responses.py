@@ -46,6 +46,8 @@ def bot_responses(id,tname,input_text):
             try:
                 print('//r')
                 command,d = user_message.lower().split('//')
+                d = 'r1d[0-9]%' if d == 'r1' else d
+                d = 'r2d[0-9]%' if d == 'r2' else d
                 d = d.replace('r1','¹').replace('r2','²').replace('d','D')
                 access = d
                 print(f"command = {command}, d = {d}, access = {access}")
@@ -93,7 +95,7 @@ def bot_responses(id,tname,input_text):
         else:
             command = user_message
     
-    elif access in ['¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Dept','M&W Dept']:
+    elif access in ['¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Dept','M&W Dept']:
         d = access if access != 'Dept' else d
         allowed_groups = SQLCodes.deptgroup(d)
         if '/' in user_message:
@@ -220,7 +222,7 @@ def bot_responses(id,tname,input_text):
     
     
     # Dept and above functions
-    if access in ['¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','Dept','SFT','M&W Dept','¹','²','All','IT']:
+    if access in ['¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','Dept','SFT','M&W Dept','¹','²','All','IT']:
         
         for task in ['youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(task):
@@ -309,7 +311,7 @@ def bot_responses(id,tname,input_text):
             i,id = user_message.split('/')
             if access == 'IT':
                 return SQLCodes.ev(id)
-            if access in ['¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Dept','M&W Dept']:
+            if access in ['¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Dept','M&W Dept']:
                 idlist = SQLCodes.idlist('dept',d)
             if access == 'Group':
                 idlist = SQLCodes.idlist('group',g)

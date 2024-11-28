@@ -182,9 +182,9 @@ def teledata(id):
     conn.cursor().close()
     
     if len(da) == 0:
-        return "None/None/None/None/None/None/None"
+        return "None/None/None/None/None/None/None/None"
     else:
-        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}"
+        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}"
     
 def namedata(user_name):
     conn = odbc.connect(conn_str)
@@ -193,9 +193,9 @@ def namedata(user_name):
     conn.cursor().close()
     
     if len(da) == 0:
-        return "None/None/None/None/None/None/None"
+        return "None/None/None/None/None/None/None/None"
     else:
-        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}"
+        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}"
 
 def groupinfo(g):
     conn = odbc.connect(conn_str)
@@ -234,6 +234,7 @@ def todayfish(g):
     sql_pts = f"SELECT(ISNULL((SELECT SUM(F1P) FROM ScottTodayFish('{g}') WHERE F1G LIKE '{g}'),0) + ISNULL((SELECT SUM(F2P) FROM ScottTodayFish('{g}') WHERE F2G LIKE '{g}'),0)) AS Points"
     dp = pd.read_sql(sql_fish, conn)
     g = g.capitalize()
+    g = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     
     if len(dp) == 0:
         return "No fish found"
@@ -259,6 +260,7 @@ def weekfish(g):
     sql_pts = f"SELECT(ISNULL((SELECT SUM(F1P) FROM ScottWeekFish('{g}') WHERE F1G LIKE '{g}'),0) + ISNULL((SELECT SUM(F2P) FROM ScottWeekFish('{g}') WHERE F2G LIKE '{g}'),0)) AS Points"
     dp = pd.read_sql(sql_fish, conn)
     g = g.capitalize()
+    g = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     
     if len(dp) == 0:
         return "No fish found"
@@ -286,6 +288,7 @@ def seasonpick(g):
     sql_pts = f"SELECT(ISNULL((SELECT SUM(P1P) FROM ScottSeasonPick('{g}') WHERE P1G LIKE '{g}'),0) + ISNULL((SELECT SUM(P2P) FROM ScottSeasonPick('{g}') WHERE P2G LIKE '{g}'),0)) AS Points"
     dp = pd.read_sql(sql_fish, conn)
     g = g.capitalize()
+    g = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     
     if len(dp) == 0:
         return "No fish found"
@@ -312,6 +315,7 @@ def seasonfe(g):
     sql_pts = f"SELECT(ISNULL((SELECT SUM(L1P) FROM ScottSeasonFE('{g}') WHERE L1G LIKE '{g}'),0) + ISNULL((SELECT SUM(L2P) FROM ScottSeasonFE('{g}') WHERE L2G LIKE '{g}'),0)) AS Points"
     dp = pd.read_sql(sql_fish, conn)
     g = g.capitalize()
+    g = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     
     if len(dp) == 0:
         return "No fish found"
@@ -347,6 +351,7 @@ def todaympfe(g):
 
     conn.cursor().close()
     g = g.capitalize()
+    g = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     
     if len(dpm) == 0:
         meet = 'No meetings'
@@ -404,6 +409,7 @@ def weekmpfe(g):
 
     conn.cursor().close()
     g = g.capitalize()
+    g = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     
     if len(dpm) == 0:
         meet = 'No meetings'
@@ -471,6 +477,7 @@ def memberfmp(timerange,g,sid,ss,access):
     dm.columns = ['Member','F','M','P','FE']
     dt.columns = ['F','M','P','FE']
     g = g.capitalize()
+    g = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     if len(dm) == 0:
         return "No members found"
     else:  
@@ -535,6 +542,7 @@ def deptfmp(task,timerange,d,sid,ss,access):
     deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept ORDER BY Dept"  
     totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ}"
     print(memberQ)
+
     dm = pd.read_sql(memberQ, conn)
     dd = pd.read_sql(deptQ, conn)
     dt = pd.read_sql(totalQ, conn)
@@ -919,7 +927,12 @@ def bbstatus(g, d, sid, access):
                 
     g = g if access == 'Group' else '%'
     d = d.capitalize()
-    grpdept = g.capitalize() if access == 'Group' else str(d).replace('D[0-9]%','Youth')
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    else:
+        grpdept = str(d).replace('D[0-9]%','Youth')
+        
     
     print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'")
     
@@ -1023,7 +1036,11 @@ def bbtstatus(q, g, d, sid, access):
         
     g = g if access == 'Group' else '%'
     d = d.capitalize()
-    grpdept = g.capitalize() if access == 'Group' else str(d).replace('D[0-9]%','Youth')
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    else:
+        grpdept = str(d).replace('D[0-9]%','Youth')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
@@ -1189,7 +1206,11 @@ def bbtactive(q, g, d, r, access):
     name = 'BBT' if access == 'IT' else 'BBTCode2'
     g = g if access == 'Group' else '%'
     d = d.capitalize()
-    grpdept = re.sub(r'^(\d)',r'G\1',g).capitalize() if access == 'Group' else str(d).replace('D[0-9]%','Youth')
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    else:
+        grpdept = str(d).replace('D[0-9]%','Youth')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
@@ -1327,7 +1348,11 @@ def bbtinactive(q, g, d, r, access):
     name = 'BBT' if access == 'IT' else 'BBTCode2'
     g = g if access == 'Group' else '%'
     d = d.capitalize()
-    grpdept = re.sub(r'^(\d)',r'G\1',g).capitalize() if access == 'Group' else str(d).replace('D[0-9]%','Youth')
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    else:
+        grpdept = str(d).replace('D[0-9]%','Youth')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   ""],
@@ -2375,6 +2400,7 @@ def fmlist(g):
     
     nPt,oPt = 0,0
     g = g.capitalize()
+    g = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     
     if len(dN) == 0:
         nM = ''
@@ -2411,6 +2437,7 @@ def fmstatus(d,g,ssnstart,access):
     dm.columns = ['Member','NewM','OldM']
     dt.columns = ['NewM','OldM']
     g = g.capitalize()
+    g = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     conn.cursor().close()
     
     if len(dm) == 0:
@@ -2863,7 +2890,11 @@ def classes(g, d, access, time):
     
     g = g if access == 'Group' else '%'
     d = d.capitalize()
-    grpdept = g if access == 'Group' else str(d).replace('D[0-9]%','').replace('%','')
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    else:
+        grpdept = str(d).replace('D[0-9]%','Youth')
     bbtgrp = 'BBT' if access == 'Group' else 'Grp'
     if time == 'today':
         timetitle = 'Today'

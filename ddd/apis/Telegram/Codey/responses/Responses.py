@@ -7,7 +7,7 @@ def bot_responses(id,tname,input_text):
             i,user,pw = input_text.split('.')
             return SQLCodes.reg_new_user_request(id,tname,user,pw)
     
-    uid,name,access,g,d,sid,ss = SQLCodes.teledata(id).split('/')
+    uid,name,access,g,d,r,sid,ss = SQLCodes.teledata(id).split('/')
     original_uid,original_name = uid,name
     print(f"""TELEDATA:
           uid - {uid}
@@ -15,6 +15,7 @@ def bot_responses(id,tname,input_text):
           access - {access}
           g - {g}
           d - {d}
+          r - {r}
           sid - {sid}
           ss - {ss}""")
     
@@ -24,13 +25,14 @@ def bot_responses(id,tname,input_text):
         if '|' in input_text:
             user_message,user_name = input_text.split('|')
             user_message = user_message.lower()
-            uid,name,access,g,d,sid,ss = SQLCodes.namedata(user_name).split('/')
+            uid,name,access,g,d,r,sid,ss = SQLCodes.namedata(user_name).split('/')
             print(f"""NAMEDATA:
           uid - {uid}
           name - {name}
           access - {access}
           g - {g}
           d - {d}
+          r - {r}
           sid - {sid}
           ss - {ss}""")
                         
@@ -39,11 +41,20 @@ def bot_responses(id,tname,input_text):
 
     
     if access in ['All','IT']:
-        d = 'D[0-9]%'
-        if '//' in user_message:
+        d = f'%D[0-9]%'
+        if '//r' in user_message.lower():
             try:
+                print('//r')
+                command,d = user_message.lower().split('//')
+                d = d.replace('r1','¹').replace('r2','²').replace('d','D')
+                access = d
+                print(f"command = {command}, d = {d}, access = {access}")
+            except ValueError:
+                    return 'Format error: Too many "/"s'
+        elif '//' in user_message:
+            try:
+                print('//')
                 command,d = user_message.split('//')
-                d = d.capitalize()
                 access = d
                 print(f"command = {command}, d = {d}, access = {access}")
             except ValueError:
@@ -58,7 +69,7 @@ def bot_responses(id,tname,input_text):
         else:
             command = user_message
     
-    elif access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','SFT','DecSFT','Dept','M&W Dept']:
+    elif access in ['¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Dept','M&W Dept']:
         d = access if access != 'Dept' else d
         allowed_groups = SQLCodes.deptgroup(d)
         if '/' in user_message:
@@ -177,7 +188,7 @@ def bot_responses(id,tname,input_text):
     
     
     # Dept and above functions
-    if access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','Dept','SFT','DecSFT','M&W Dept','All','IT']:
+    if access in ['¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','Dept','SFT','M&W Dept','All','IT']:
         
         for task in ['youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(task):
@@ -268,7 +279,7 @@ def bot_responses(id,tname,input_text):
             i,id = user_message.split('/')
             if access == 'IT':
                 return SQLCodes.ev(id)
-            if access in ['D1','D2','D3','D4','D5','D6','D7','D8','D9','DecSFT','SFT','Dept','M&W Dept']:
+            if access in ['¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Dept','M&W Dept']:
                 idlist = SQLCodes.idlist('dept',d)
             if access == 'Group':
                 idlist = SQLCodes.idlist('group',g)

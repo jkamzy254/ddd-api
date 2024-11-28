@@ -96,7 +96,13 @@ def bot_responses(id,tname,input_text):
     elif access in ['¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Dept','M&W Dept']:
         d = access if access != 'Dept' else d
         allowed_groups = SQLCodes.deptgroup(d)
-        if '/' in user_message:
+        if access[0] in ['¹','²'] and '/g' in user_message.lower():
+            try:
+                command,g = user_message.split('/')
+                g = f'{access[0]}{g.capitalize()}'
+            except ValueError:
+                return 'Format error: Too many "/"s'
+        elif '/' in user_message:
             try:
                 command,g = user_message.split('/')
             except ValueError:
@@ -114,6 +120,16 @@ def bot_responses(id,tname,input_text):
             return 'You are not allowed to use this function'
 
     SQLCodes.functionlog(original_uid, original_name, input_text, command)
+    
+    print(f"""Final parameters before command call:
+          uid - {uid}
+          name - {name}
+          access - {access}
+          g - {g}
+          d - {d}
+          r - {r}
+          sid - {sid}
+          ss - {ss}""")
     
     # if r in ('Geelong','Darwin'):
     #     r = 'Online'

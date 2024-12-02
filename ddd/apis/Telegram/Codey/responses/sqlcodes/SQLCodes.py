@@ -1855,30 +1855,24 @@ def bbpick(g):
     dPts.set_index('P_Status', inplace=True)
         
     conn.cursor().close()
-           
-    if len(dn) == 0:
-        new = ''
-    else: 
-        new = f"<i><b><u>New Picking ({dPts.loc['New','Pts']} pt)</u></b></i>\n"
-        for r in range(len(dn)):
-            new = f"{new}<pre>🟡{r+1}. [{dn.loc[r,'Points']}] {dn.loc[r,'FruitName'][:8]} - {dn.loc[r,'L1N'][:8]} ({dn.loc[r,'L1G']}){dn.loc[r,'L2N'][:11]} ({dn.loc[r,'L2G']}) - {(dn.loc[r,'BBTN'])[:8]} ({dn.loc[r,'BBTG']}) [{dn.loc[r,'P_Date']}]</pre>\n"
-        new = new + '\n'
-        
-    if len(do) == 0:
-        old = ''
-    else: 
-        old = f"<i><b><u>Old Picking ({dPts.loc['Old','Pts']} pt)</u></b></i>\n"
-        for r in range(len(do)):
-            old = f"{old}<pre>⚪️{r+1}. [{do.loc[r,'Points']}] {do.loc[r,'FruitName'][:8]} - {do.loc[r,'L1N'][:8]} ({do.loc[r,'L1G']}){do.loc[r,'L2N'][:11]} ({do.loc[r,'L2G']}) - {(do.loc[r,'BBTN'])[:8]} ({do.loc[r,'BBTG']}) [{do.loc[r,'P_Date']}]</pre>\n"
-        old = old + '\n'
     
-    if len(df) == 0:
-        fallen = ''
-    else: 
-        fallen = f"<i><b><u>Fallen Picking ({dPts.loc['Fallen','Pts']} pt)</u></b></i>\n"
+    new = ''
+    if len(dn) > 0:
+        for r in range(len(dn)):
+            new = f"{new}🟡{r+1}. [{dn.loc[r,'Points']}] {dn.loc[r,'FruitName'][:8]} - {dn.loc[r,'L1N'][:8]} ({dn.loc[r,'L1G']}){dn.loc[r,'L2N'][:11]} ({dn.loc[r,'L2G']}) - {(dn.loc[r,'BBTN'])[:8]} ({dn.loc[r,'BBTG']}) [{dn.loc[r,'P_Date']}]\n"
+        new = f"<i><b><u>New Picking ({dPts.loc['New','Pts']} pt)</u></b></i>\n<pre>{new}</pre>\n"
+    
+    old = ''
+    if len(do) > 0:
+        for r in range(len(do)):
+            old = f"{old}⚪️{r+1}. [{do.loc[r,'Points']}] {do.loc[r,'FruitName'][:8]} - {do.loc[r,'L1N'][:8]} ({do.loc[r,'L1G']}){do.loc[r,'L2N'][:11]} ({do.loc[r,'L2G']}) - {(do.loc[r,'BBTN'])[:8]} ({do.loc[r,'BBTG']}) [{do.loc[r,'P_Date']}]\n"
+        old = f"<i><b><u>Old Picking ({dPts.loc['Old','Pts']} pt)</u></b></i>\n<pre>{old}</pre>\n"
+    
+    fallen = ''
+    if len(df) > 0:
         for r in range(len(df)):
-            fallen = f"{fallen}<pre>⚫️{r+1}. [{df.loc[r,'Points']}] {df.loc[r,'FruitName'][:8]} - {df.loc[r,'L1N'][:8]} ({df.loc[r,'L1G']}){df.loc[r,'L2N'][:11]} ({df.loc[r,'L2G']}) - {(df.loc[r,'BBTN'])[:8]} ({df.loc[r,'BBTG']}) [{df.loc[r,'P_Date']}]</pre>\n"
-        fallen = fallen + '\n' 
+            fallen = f"{fallen}⚫️{r+1}. [{df.loc[r,'Points']}] {df.loc[r,'FruitName'][:8]} - {df.loc[r,'L1N'][:8]} ({df.loc[r,'L1G']}){df.loc[r,'L2N'][:11]} ({df.loc[r,'L2G']}) - {(df.loc[r,'BBTN'])[:8]} ({df.loc[r,'BBTG']}) [{df.loc[r,'P_Date']}]\n"
+        fallen = f"<i><b><u>Fallen Picking ({dPts.loc['Fallen','Pts']} pt)</u></b></i>\n<pre>{fallen}</pre>\n" 
     
     result = f"<b><u>📙{g} Picking Status📙</u></b>\n\n<i>▫️Status▫️\n#. Fruit - Leaf1 / Leaf2 - BBT [Picking Date]</i>\n\n{new}{old}{fallen}"
     result = re.sub(r'\.0',r'',result)

@@ -105,7 +105,7 @@ CORS_ORIGIN_WHITELIST = (
     'https://dddmelb84.atlassian.net', #Jira URL
     'https://ang-dj.herokuapp.com', #Django backend
     'https://ddd-ticket-trial-6cb8f882f1d8.herokuapp.com', #Ticket Module Testing Site
-    'https://ddd-service-trial-21b3ab6fd735.herokuapp.com', #Service Module Testing Site
+    'https://ddd-edu-trial-8ac6a6509c36.herokuapp.com', #Edu Module Testing Site
     'https://cadillac-dpi-vr-bd6205ea960b.herokuapp.com', #Main (production) Site
     'https://api.notion.com' #Notion Site
 )

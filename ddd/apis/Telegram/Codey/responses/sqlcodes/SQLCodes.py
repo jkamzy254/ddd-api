@@ -538,17 +538,20 @@ def deptfmp(task,timerange,d,sid,ss,access):
     s,e,timetitle = timevalues[timerange]
        
     conn = odbc.connect(conn_str)
-    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Grp ORDER BY LEN(Grp), Grp"
-    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept ORDER BY Dept"  
+    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Grp, GID ORDER BY GID"
+    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept, DID ORDER BY DID"  
+    regionQ   = f"SELECT District, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY District ORDER BY District"  
     totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ}"
     print(memberQ)
 
     dm = pd.read_sql(memberQ, conn)
     dd = pd.read_sql(deptQ, conn)
+    dr = pd.read_sql(regionQ, conn)
     dt = pd.read_sql(totalQ, conn)
 
     dm.columns = ['Grp','F','M','P','FE']
     dd.columns = ['Dept','F','M','P','FE']
+    dr.columns = ['Region','F','M','P','FE']
     dt.columns = ['F','M','P','FE']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
 
@@ -574,19 +577,31 @@ def deptfmp(task,timerange,d,sid,ss,access):
         p  = ' '*(spc[3]-len(str(dd.loc[r,'P'])))  + str(dd.loc[r,'P'])
         fe = ' '*(spc[4]-len(str(dd.loc[r,'FE']))) + str(dd.loc[r,'FE'])
         dept = f'{dept}{dpt}[{f}|{m}|{p}|{fe}]\n'
+    dept = dept + '\n'
+    
+    region = str()
+    if d.endswith('D[0-9]%'):    
+        for r in range(len(dr)):
+            reg = str(dr.loc[r,'Region']) + '.'*(spc[0]-len(str(dr.loc[r,'Region'])))
+            f  = ' '*(spc[1]-len(str(dr.loc[r,'F'])))  + str(dr.loc[r,'F'])
+            m  = ' '*(spc[2]-len(str(dr.loc[r,'M'])))  + str(dr.loc[r,'M'])
+            p  = ' '*(spc[3]-len(str(dr.loc[r,'P'])))  + str(dr.loc[r,'P'])
+            fe = ' '*(spc[4]-len(str(dr.loc[r,'FE']))) + str(dr.loc[r,'FE'])
+            region = f'{region}{reg}[{f}|{m}|{p}|{fe}]\n'
+        region = region + '\n'
 
-    if d.endswith('D[0-9]%'):
+    if d == '_D[0-9]%':
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
         p  = ' '*(spc[3]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
         fe = ' '*(spc[4]-len(str(dt.loc[0,'FE']))) + str(dt.loc[0,'FE'])
-        total = f'\n{spc[6]}[{f}|{m}|{p}|{fe}]'
+        total = f'{spc[6]}[{f}|{m}|{p}|{fe}]\n'
     else:
         total = str()
         
     depttitle = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 2')
 
-    fmp = f"<b><u>{depttitle}{tasktitle} FMPFE : {timetitle}</u></b>\n\n<pre>{spc[5]}\n\n{group}{dept}{total}</pre>"
+    fmp = f"<b><u>{depttitle}{tasktitle} FMPFE : {timetitle}</u></b>\n\n<pre>{spc[5]}\n\n{group}{dept}{region}{total}</pre>"
     fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
     fmp = re.sub(r'(\D)0([^.])',r'\1-\2',fmp)   # Replaces lone '0' with '-'
     return fmp

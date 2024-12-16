@@ -174,7 +174,10 @@ def bot_responses(id,tname,input_text):
         return SQLCodes.bblist(d,g,sid,access)
     
     if command == 'bbstatus':
-            return SQLCodes.bbstatus(g, d, sid, access)
+        return SQLCodes.bbstatus(g, d, sid, access)
+        
+    if command == 'newbbstatus':
+        return SQLCodes.newbbstatus(g, d, sid, access)
     
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('list'):
         q = command.removesuffix('list')

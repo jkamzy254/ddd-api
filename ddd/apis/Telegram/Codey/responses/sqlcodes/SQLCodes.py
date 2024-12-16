@@ -1208,6 +1208,152 @@ def bbtstatus(q, g, d, sid, access):
 
 
 
+
+def newbbstatus(g, d, sid, access):
+                
+    g = g if access == 'Group' else '%'
+    d = d.capitalize().replace('d','D')
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    else:
+        grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+        
+    
+    print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'")
+    
+    table = f"CodeyBBStatusMembersUBB('{sid}')"
+    cols = "Dept, Grp, MemberCode, pNew, pOld, pFA, FE, bbA, cct1, cct2, cctI, UBB, bbME, bbFA, Total"
+    sums = "SUM(pNew)pNew, SUM(pOld)pOld, SUM(pFA)pFA, SUM(FE)FE, SUM(bbA)bbA, SUM(cct1)cct1, SUM(cct2)cct2, SUM(cctI)cctI, SUM(UBB)UBB, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(Total)Total"
+    conditions = f"Dept LIKE '{d}' AND Grp LIKE '{g}'"
+    
+    conn = odbc.connect(conn_str)
+    bb_mem    = f"SELECT {cols} FROM {table} WHERE {conditions} ORDER BY GID"
+    bb_group  = f"SELECT Grp, {sums} FROM {table} WHERE {conditions} GROUP BY Grp, GID ORDER BY GID"
+    bb_dept   = f"SELECT Dept, {sums} FROM {table} WHERE {conditions} GROUP BY Dept, DID ORDER BY DID"
+    bb_region = f"SELECT District, {sums} FROM {table} WHERE {conditions} GROUP BY District"
+    bb_youth  = f"SELECT {sums} FROM {table} WHERE {conditions}"
+    
+    print(bb_group)
+    
+    dm = pd.read_sql(bb_mem, conn)
+    dg = pd.read_sql(bb_group, conn)
+    dd = pd.read_sql(bb_dept, conn)
+    dr = pd.read_sql(bb_region, conn)
+    dy = pd.read_sql(bb_youth, conn)
+
+    dm.columns = ['Dept','Grp','Member','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
+    dg.columns = ['Grp','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
+    dd.columns = ['Dept','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
+    dr.columns = ['Region','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
+    dy.columns = ['pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
+    dd.replace(r' Dept',r'', regex = True, inplace = True)
+    
+    conn.cursor().close()
+
+    member = str()
+    if access == 'Group':
+        for r in range(len(dm)):
+            bbt =   str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
+            pn  = ' '*(4-len(str(dm.loc[r,'pNew']))) + str(dm.loc[r,'pNew'])
+            po  = ' '*(4-len(str(dm.loc[r,'pOld']))) + str(dm.loc[r,'pOld'])
+            pf  = ' '*(4-len(str(dm.loc[r,'pFA'])))  + str(dm.loc[r,'pFA'])
+            fe  = ' '*(4-len(str(dm.loc[r,'FE'])))   + str(dm.loc[r,'FE'])
+            ba  = ' '*(4-len(str(dm.loc[r,'bbA'])))  + str(dm.loc[r,'bbA'])
+            c1  = ' '*(4-len(str(dm.loc[r,'cct1']))) + str(dm.loc[r,'cct1'])
+            c2  = ' '*(4-len(str(dm.loc[r,'cct2']))) + str(dm.loc[r,'cct2'])
+            ci  = ' '*(4-len(str(dm.loc[r,'cctI']))) + str(dm.loc[r,'cctI'])
+            ub  = ' '*(4-len(str(dm.loc[r,'UBB'])))  + str(dm.loc[r,'UBB'])
+            bm  = ' '*(4-len(str(dm.loc[r,'bbME']))) + str(dm.loc[r,'bbME'])
+            fa  = ' '*(4-len(str(dm.loc[r,'bbFA']))) + str(dm.loc[r,'bbFA'])
+            t   = ' '*(5-len(str(dm.loc[r,'Tot'])))  + str(dm.loc[r,'Tot'])
+            member = f'{member}{bbt}[{pn}|{po}|{pf}|{fe}|{ba}|{c1}|{c2}|{ci}|{ub}|{bm}|{fa}|{t}]\n'
+        member = member + '\n'
+            
+            
+    group = str()    
+    for r in range(len(dg)):
+        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        pn  = ' '*(4-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
+        po  = ' '*(4-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
+        pf  = ' '*(4-len(str(dg.loc[r,'pFA'])))  + str(dg.loc[r,'pFA'])
+        fe  = ' '*(4-len(str(dg.loc[r,'FE'])))   + str(dg.loc[r,'FE'])
+        ba  = ' '*(4-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
+        c1  = ' '*(4-len(str(dg.loc[r,'cct1']))) + str(dg.loc[r,'cct1'])
+        c2  = ' '*(4-len(str(dg.loc[r,'cct2']))) + str(dg.loc[r,'cct2'])
+        ci  = ' '*(4-len(str(dg.loc[r,'cctI']))) + str(dg.loc[r,'cctI'])
+        ub  = ' '*(4-len(str(dg.loc[r,'UBB'])))  + str(dg.loc[r,'UBB'])
+        bm  = ' '*(4-len(str(dg.loc[r,'bbME']))) + str(dg.loc[r,'bbME'])
+        fa  = ' '*(4-len(str(dg.loc[r,'bbFA']))) + str(dg.loc[r,'bbFA'])
+        t   = ' '*(5-len(str(dg.loc[r,'Tot'])))  + str(dg.loc[r,'Tot'])
+        group = f'{group}{grp}[{pn}|{po}|{pf}|{fe}|{ba}|{c1}|{c2}|{ci}|{ub}|{bm}|{fa}|{t}]\n'
+    group = group + '\n'
+            
+    dept = str()  
+    if access != 'Group':
+        for r in range(len(dd)):
+            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            pn  = ' '*(4-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
+            po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
+            pf  = ' '*(4-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
+            fe  = ' '*(4-len(str(dd.loc[r,'FE'])))   + str(dd.loc[r,'FE'])
+            ba  = ' '*(4-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
+            c1  = ' '*(4-len(str(dd.loc[r,'cct1']))) + str(dd.loc[r,'cct1'])
+            c2  = ' '*(4-len(str(dd.loc[r,'cct2']))) + str(dd.loc[r,'cct2'])
+            ci  = ' '*(4-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
+            ub  = ' '*(4-len(str(dd.loc[r,'UBB'])))  + str(dd.loc[r,'UBB'])
+            bm  = ' '*(4-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
+            fa  = ' '*(4-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
+            t   = ' '*(5-len(str(dd.loc[r,'Tot'])))  + str(dd.loc[r,'Tot'])
+            dept = f'{dept}{dpt}[{pn}|{po}|{pf}|{fe}|{ba}|{c1}|{c2}|{ci}|{ub}|{bm}|{fa}|{t}]\n'
+        dept = dept + '\n'
+    
+    region = str()
+    if d.endswith('D[0-9]%'):    
+        for r in range(len(dr)):
+            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+            pn  = ' '*(4-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
+            po  = ' '*(4-len(str(dr.loc[r,'pOld']))) + str(dr.loc[r,'pOld'])
+            pf  = ' '*(4-len(str(dr.loc[r,'pFA'])))  + str(dr.loc[r,'pFA'])
+            fe  = ' '*(4-len(str(dr.loc[r,'FE'])))   + str(dr.loc[r,'FE'])
+            ba  = ' '*(4-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
+            c1  = ' '*(4-len(str(dr.loc[r,'cct1']))) + str(dr.loc[r,'cct1'])
+            c2  = ' '*(4-len(str(dr.loc[r,'cct2']))) + str(dr.loc[r,'cct2'])
+            ci  = ' '*(4-len(str(dr.loc[r,'cctI']))) + str(dr.loc[r,'cctI'])
+            ub  = ' '*(4-len(str(dr.loc[r,'UBB'])))  + str(dr.loc[r,'UBB'])
+            bm  = ' '*(4-len(str(dr.loc[r,'bbME']))) + str(dr.loc[r,'bbME'])
+            fa  = ' '*(4-len(str(dr.loc[r,'bbFA']))) + str(dr.loc[r,'bbFA'])
+            t   = ' '*(5-len(str(dr.loc[r,'Tot'])))  + str(dr.loc[r,'Tot'])
+            region = f'{region}{reg}[{pn}|{po}|{pf}|{fe}|{ba}|{c1}|{c2}|{ci}|{ub}|{bm}|{fa}|{t}]\n'
+        region = region + '\n'
+    
+    total = str()
+    if d == '_D[0-9]%':
+        pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
+        po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
+        pf  = ' '*(4-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
+        fe  = ' '*(4-len(str(dy.loc[0,'FE'])))   + str(dy.loc[0,'FE'])
+        ba  = ' '*(4-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
+        c1  = ' '*(4-len(str(dy.loc[0,'cct1']))) + str(dy.loc[0,'cct1'])
+        c2  = ' '*(4-len(str(dy.loc[0,'cct2']))) + str(dy.loc[0,'cct2'])
+        ci  = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
+        ub  = ' '*(4-len(str(dy.loc[0,'UBB'])))  + str(dy.loc[0,'UBB'])
+        bm  = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
+        fa  = ' '*(4-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA'])
+        t   = ' '*(5-len(str(dy.loc[0,'Tot'])))  + str(dy.loc[0,'Tot'])
+        total = f'Total[{pn}|{po}|{pf}|{fe}|{ba}|{c1}|{c2}|{ci}|{ub}|{bm}|{fa}|{t}]'
+    
+    summary = f"<b><u>{grpdept} BB Status Summary</u></b>\n\n<pre>     [ NP | OP | FP | FE | AB | C1 | C2 | CI | UB | ME | FA | TOT ]\n\n{member}{group}{dept}{region}{total}</pre>"
+    summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
+    summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
+    return summary
+
+
+
+
+
+
 def deptbbtstatus(q, d, r, access):
     
     name = 'BBT' if access == 'IT' else 'BBTCode'

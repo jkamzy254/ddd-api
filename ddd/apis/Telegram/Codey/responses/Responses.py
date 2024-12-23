@@ -174,7 +174,22 @@ def bot_responses(id,tname,input_text):
         return SQLCodes.bblist(d,g,sid,access)
     
     if command == 'bbstatus':
-            return SQLCodes.bbstatus(g, d, sid, access)
+        return SQLCodes.bbstatus(g, d, sid, access)
+        
+    if command == 'newbblist':
+        return SQLCodes.newbblist(d,g,sid,access)
+    
+    if command == 'newbbstatus':
+        return SQLCodes.newbbstatus(g, d, sid, access)
+        
+    if (command.startswith('newbtm') or command.startswith('newbbt') or command.startswith('newgyjnbbt')) and command.endswith('list'):
+        q = command.removesuffix('list')
+        return SQLCodes.newbbtlist(q,d,g,sid,access)
+        
+    if (command.startswith('newbtm') or command.startswith('newbbt') or command.startswith('newgyjnbbt')) and command.endswith('status'):
+        q,i = command.split('status')
+        return SQLCodes.newbbtstatus(q,g,d,sid,access)
+        
     
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('list'):
         q = command.removesuffix('list')

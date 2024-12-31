@@ -89,13 +89,12 @@ class CTUpdateScheduleViewSet(APIView):
         
 class CTUpdateAttendanceViewSet(APIView):
     def post(self, request):
-        data = request.data
+        rec = request.data
         try:
             with connection.cursor() as cursor:
-                for rec in data:
-                    cursor.execute(f"""EXEC spCTUpdateAttendance 
-                        @UID = {rec.get('UID')}, @Attendance = {rec.get('Attendance')}, @ID = {rec.get('ID')}, @Reason = {rec.get('Reason')}
-                    """)
+                cursor.execute(f"""EXEC spCTUpdateAttendance 
+                    @UID = {rec.get('UID')}, @Attendance = {rec.get('Attendance')}, @ID = {rec.get('ID')}, @Reason = {rec.get('Reason')}
+                """)
                 result = f"Update for CT Day {data[0]['Date']} done"
 
             return Response(result, status=status.HTTP_200_OK)

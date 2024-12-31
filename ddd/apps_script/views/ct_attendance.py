@@ -94,7 +94,7 @@ class CTUpdateAttendanceViewSet(APIView):
             with connection.cursor() as cursor:
                 for rec in data:
                     cursor.execute(f"""EXEC spCTUpdateAttendance 
-                        @UID = {rec.get('UID')}, @Date = {rec.get('Date')}, @Attendance = {rec.get('Attendance')}, @CTID = {rec.get('CTID')}, @Reason = {rec.get('Reason')}
+                        @UID = {rec.get('UID')}, @Attendance = {rec.get('Attendance')}, @ID = {rec.get('ID')}, @Reason = {rec.get('Reason')}
                     """)
                 result = f"Update for CT Day {data[0]['Date']} done"
 

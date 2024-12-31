@@ -95,7 +95,7 @@ class CTUpdateAttendanceViewSet(APIView):
                 cursor.execute(f"""EXEC spCTUpdateAttendance 
                     @UID = {rec.get('UID')}, @Attendance = {rec.get('Attendance')}, @ID = {rec.get('ID')}, @Reason = {rec.get('Reason')}
                 """)
-                result = f"Update for CT Day {data[0]['Date']} done"
+                result = f"Update for CT Day {rec['Date']} done"
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:

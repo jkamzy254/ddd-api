@@ -1094,7 +1094,7 @@ def bbtstatus(q, g, d, sid, access):
         grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus = 'Active'"],
+    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
                  'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
@@ -1366,7 +1366,7 @@ def newbbtstatus(q, g, d, sid, access):
         grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
     
     i = q if q in ['newbbt','newgyjnbbt'] else 'newbtm'
-    bbtvalues = {'newbbt'     : ['BBT',   " AND BBTStatus = 'Active'"],
+    bbtvalues = {'newbbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
                  'newgyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
                  'newbtm'     : [q.upper().replace('NEW',''), f" AND BtmNo = '{q[6:]}'"]}
     bbttype,query = bbtvalues[i]
@@ -1506,7 +1506,7 @@ def deptbbtstatus(q, d, r, access):
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus = 'Active'"],
+    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
                  'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
@@ -1575,7 +1575,7 @@ def bbtactive(q, g, d, r, access):
         grpdept = str(d).replace('_D[0-9]%','Youth')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus = 'Active'"],
+    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
                  'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
@@ -1658,7 +1658,7 @@ def deptbbtactive(q, d, r, access):
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus = 'Active'"],
+    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
                  'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
@@ -1719,7 +1719,7 @@ def bbtinactive(q, g, d, r, access):
         grpdept = str(d).replace('_D[0-9]%','Youth')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus = 'Active'"],
+    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
                  'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
@@ -1808,7 +1808,7 @@ def deptbbtinactive(q, d, r, access):
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus = 'Active'"],
+    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
                  'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
@@ -1983,7 +1983,7 @@ def bbtlist(q,d,g,sid,access):
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus = 'Active'"],
+    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
                  'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     g = '%' if access != 'Group' else g
@@ -2258,7 +2258,7 @@ def newbbtlist(q,d,g,sid,access):
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     i = q if q in ['newbbt','newgyjnbbt'] else 'btm'
-    bbtvalues = {'newbbt'     : ['BBT',   " AND BBTStatus = 'Active'"],
+    bbtvalues = {'newbbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
                  'newgyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
                  'newbtm'     : [q.upper().replace('NEW',''), f" AND BtmNo = '{q[3:]}'"]}
     g = '%' if access != 'Group' else g
@@ -2418,7 +2418,7 @@ def bbtlistold(q,d):
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BbtStatus = 'Active'"],
+    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
                  'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]

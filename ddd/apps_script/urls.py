@@ -28,5 +28,6 @@ urlpatterns = [
 	path('getAttendance/', ca.CTGetAttendanceViewSet.as_view()),
 	path('updateSchedule/', ca.CTUpdateScheduleViewSet.as_view()),
 	path('updateAttendance/', ca.CTUpdateAttendanceViewSet.as_view()),
+	path('updateStudentStatus/', ca.CTUpdateStudentStatusViewSet.as_view()),
  
 ]

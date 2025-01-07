@@ -2845,12 +2845,105 @@ WHERE s.Dept LIKE '{d}'"""
 
 
 
+def bbactive(g, d, sid, access):
+                
+    g = g if access == 'Group' else '%'
+    d = d.capitalize().replace('d','D')
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    else:
+        grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+        
+    
+    print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'")
+    
+    conn = odbc.connect(conn_str)
+    bb_mem    = f"SELECT Dept, Grp, MemberCode, Total SP, pNew, bbA, cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID"
+    bb_group  = f"SELECT Grp, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
+    bb_dept   = f"SELECT Dept, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
+    bb_region = f"SELECT District, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY District"
+    bb_youth  = f"SELECT SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+    
+    print(bb_group)
+    
+    dm = pd.read_sql(bb_mem, conn)
+    dg = pd.read_sql(bb_group, conn)
+    dd = pd.read_sql(bb_dept, conn)
+    dr = pd.read_sql(bb_region, conn)
+    dy = pd.read_sql(bb_youth, conn)
+
+    dm.columns = ['Dept','Grp','Member','SP','pNew','bbA','cctA']
+    dg.columns = ['Grp','SP','pNew','bbA','cctA']
+    dd.columns = ['Dept','SP','pNew','bbA','cctA']
+    dr.columns = ['Region','SP','pNew','bbA','cctA']
+    dy.columns = ['SP','pNew','bbA','cctA']
+    dd.replace(r' Dept',r'', regex = True, inplace = True)
+    
+    conn.cursor().close()
+
+    member = str()
+    if access == 'Group':
+        for r in range(len(dm)):
+            bbt =   str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
+            sp  = ' '*(5-len(str(dm.loc[r,'SP']))) + str(dm.loc[r,'SP'])
+            pn  = ' '*(5-len(str(dm.loc[r,'pNew']))) + str(dm.loc[r,'pNew'])
+            ba  = ' '*(5-len(str(dm.loc[r,'bbA'])))  + str(dm.loc[r,'bbA'])
+            ca  = ' '*(4-len(str(dm.loc[r,'cctA']))) + str(dm.loc[r,'cctA'])
+            member = f'{member}{bbt}[{sp}][{pn}|{ba}|{ca}]\n'
+        member = member + '\n'
+            
+            
+    group = str()    
+    for r in range(len(dg)):
+        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        sp  = ' '*(5-len(str(dg.loc[r,'SP'])))   + str(dg.loc[r,'SP'])
+        pn  = ' '*(5-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
+        ba  = ' '*(5-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
+        ca  = ' '*(4-len(str(dg.loc[r,'cctA']))) + str(dg.loc[r,'cctA'])
+        group = f'{group}{grp}[{sp}][{pn}|{ba}|{ca}]\n'
+    group = group + '\n'
+            
+    dept = str()  
+    if access != 'Group':
+        for r in range(len(dd)):
+            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            sp  = ' '*(5-len(str(dd.loc[r,'SP'])))   + str(dd.loc[r,'SP'])
+            pn  = ' '*(5-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
+            ba  = ' '*(5-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
+            ca  = ' '*(4-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
+            dept = f'{dept}{dpt}[{sp}][{pn}|{ba}|{ca}]\n'
+        dept = dept + '\n'
+    
+    region = str()
+    if d.endswith('D[0-9]%'):    
+        for r in range(len(dr)):
+            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+            sp  = ' '*(5-len(str(dr.loc[r,'SP'])))   + str(dr.loc[r,'SP'])
+            pn  = ' '*(5-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
+            ba  = ' '*(5-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
+            ca  = ' '*(4-len(str(dr.loc[r,'cctA']))) + str(dr.loc[r,'cctA'])
+            region = f'{region}{reg}[{sp}][{pn}|{ba}|{ca}]\n'
+        region = region + '\n'
+    
+    total = str()
+    if d == '_D[0-9]%':
+        sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
+        pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
+        ba  = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
+        ca  = ' '*(4-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
+        total = f'Total[{sp}][{pn}|{ba}|{ca}]'
+    
+    summary = f"<b><u>{grpdept} Active BB Status Summary</u></b>\n\n<pre>     [  SP ][  NP |  AB | CA ]\n\n{member}{group}{dept}{region}{total}</pre>"
+    summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
+    summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
+    return summary
 
 
 
 
-
-def bbactive(d):
+def oldbbactive(d):
     
     conn = odbc.connect(conn_str)
     

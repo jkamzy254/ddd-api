@@ -174,13 +174,19 @@ def bot_responses(id,tname,input_text):
         return SQLCodes.bblist(d,g,sid,access)
     
     if command == 'bbstatus':
-        return SQLCodes.bbstatus(g, d, sid, access)
+            return SQLCodes.bbstatus(g, d, sid, access)
+    
+    if command == 'bbactive':
+        return SQLCodes.bbactive(g, d, sid, access)
+        
+    if command == 'bbinactive':
+            return SQLCodes.bbinactive(g, d, sid, access)
         
     if command == 'newbblist':
         return SQLCodes.newbblist(d,g,sid,access)
     
     if command == 'newbbstatus':
-        return SQLCodes.newbbstatus(g, d, sid, access)
+            return SQLCodes.newbbstatus(g, d, sid, access)
         
     if (command.startswith('newbtm') or command.startswith('newbbt') or command.startswith('newgyjnbbt')) and command.endswith('list'):
         q = command.removesuffix('list')
@@ -258,12 +264,10 @@ def bot_responses(id,tname,input_text):
             return SQLCodes.tolfull(d)
         if command == 'bbfull':
             return SQLCodes.bbfull(d)
-        if command == 'bbactive':
-            return SQLCodes.bbactive(d)
+        if command == 'oldbbactive':
+            return SQLCodes.oldbbactive(d)
         if command == 'deptbbactive':
             return SQLCodes.deptbbactive(d)
-        if command == 'bbinactive':
-            return SQLCodes.bbinactive(d)
         if command == 'deptbbinactive':
             return SQLCodes.deptbbinactive(d)
         

@@ -22,7 +22,12 @@ class GetMemberViewSet(APIView):
         
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"""Select M.UID, PREFERRED_NAME as 'Name' From MemberData M
+                cursor.execute(f"""Select M.UID, PREFERRED_NAME as 'Name', Case
+                            When PID = 140 Then 'JDSN'
+                            When PID = 160 Then 'GSN'
+                            Else ''
+                        End As Pos 
+                    From MemberData M
                     LEFT JOIN (SELECT * FROM TGWPositionLog WHERE EndDate IS NULL) T ON T.UID = M.UID
                     Where BBT = 1 And Username = '{username}' And Password = '{password}' AND M.UID IN (
                         Select UID From TGWPositionLog WHERE TID = 11 AND (PID >= 140)

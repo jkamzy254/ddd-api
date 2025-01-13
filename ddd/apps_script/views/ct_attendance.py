@@ -15,6 +15,28 @@ import pandas as pd
 
 
         
+class GetMemberViewSet(APIView):
+    def get(self, request):
+        username = request.GET.get('username')
+        password = request.GET.get('password')
+        
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"""Select M.UID, PREFERRED_NAME as 'Name' From MemberData M
+                    LEFT JOIN (SELECT * FROM TGWPositionLog WHERE EndDate IS NULL) T ON T.UID = M.UID
+                    Where BBT = 1 And Username = '{username}' And Password = '{password}' AND M.UID IN (
+                        Select UID From TGWPositionLog WHERE TID = 11 AND (PID >= 140)
+                    )""")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                
+            if len(result) == 0:
+                return Response({'error': 'Unauthorized Access'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+            return Response(result, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 class CTGetAttendanceSummaryViewSet(APIView):
     def get(self, request):
         ctid = request.GET.get("CTID")

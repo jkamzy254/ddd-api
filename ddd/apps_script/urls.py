@@ -23,11 +23,12 @@ urlpatterns = [
 	path('bbRegReportStudent/', br.ReportStudentViewSet.as_view()),
  
 	#CT Attendance
-	path('getStudentList/', ca.CTGetStudentListViewSet.as_view()),
-	path('getWeeklySchedule/', ca.CTGetWeeklyScheduleViewSet.as_view()),
-	path('getAttendance/', ca.CTGetAttendanceViewSet.as_view()),
-	path('updateSchedule/', ca.CTUpdateScheduleViewSet.as_view()),
-	path('updateAttendance/', ca.CTUpdateAttendanceViewSet.as_view()),
-	path('updateStudentStatus/', ca.CTUpdateStudentStatusViewSet.as_view()),
+	path('ctGetMember/', ca.GetMemberViewSet.as_view()),
+	path('ctGetStudentList/', ca.CTGetStudentListViewSet.as_view()),
+	path('ctGetWeeklySchedule/', ca.CTGetWeeklyScheduleViewSet.as_view()),
+	path('ctGetAttendance/', ca.CTGetAttendanceViewSet.as_view()),
+	path('ctUpdateSchedule/', ca.CTUpdateScheduleViewSet.as_view()),
+	path('ctUpdateAttendance/', ca.CTUpdateAttendanceViewSet.as_view()),
+	path('ctUpdateStudentStatus/', ca.CTUpdateStudentStatusViewSet.as_view()),
  
 ]

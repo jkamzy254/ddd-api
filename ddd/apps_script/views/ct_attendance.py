@@ -44,15 +44,10 @@ class GetMemberViewSet(APIView):
         
 class CTGetAttendanceSummaryViewSet(APIView):
     def get(self, request):
-        ctid = request.GET.get("CTID")
+        uid = request.GET.get("UID")
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"""
-                    SELECT *, 
-                    (Select Count(*) From CTScheduleLogTable WHERE CTID = C.CTID) 'CTClasses', 
-                    (Select Count(*) From CTAttendanceTable CA LEFT JOIN CTScheduleLogTable CS ON CS.ID = CA.CTDayID WHERE CTID = C.CTID AND UID = C.UID) 'StudAttendance'
-                    FROM CTStudentTable C WHERE CTID = {ctid}
-                """)
+                cursor.execute(f"spCTGetAttendanceSummary {uid}")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

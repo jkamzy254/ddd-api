@@ -114,6 +114,40 @@ class FMPGetFPPreviousFruitHistoryViewSet(APIView):
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+# Django View to get an issue by its ID
+class FMPGetFPBBSummaryViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('uid')
+        
+        try:
+            token = decode_jwt(request)   
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spFMPGetFPBBSummary '{0}'".format(uid))
+                fp_rec = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(fp_rec, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+# Django View to get an issue by its ID
+class FMPGetFPBBHistoryViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('uid')
+        
+        try:
+            token = decode_jwt(request)   
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spFMPGetFPBBHistory '{0}'".format(uid))
+                fp_rec = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(fp_rec, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class FMPAssignBBTViewSet(APIView):
     def post(self, request):

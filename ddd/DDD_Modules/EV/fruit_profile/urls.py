@@ -15,4 +15,7 @@ urlpatterns = [
 	path('getSeasonHistory/', v.FMPGetFPSeasonHistoryViewSet.as_view()),
 	path('getPreviousFruitHistory/', v.FMPGetFPPreviousFruitHistoryViewSet.as_view()),
 	path('assignBBT/', v.FMPAssignBBTViewSet.as_view()),
+ 
+	path('getBBSummary/', v.FMPGetFPBBSummaryViewSet.as_view()),
+	path('getBBHistory/', v.FMPGetFPBBHistoryViewSet.as_view()),
 ]

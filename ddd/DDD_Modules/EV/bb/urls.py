@@ -3,6 +3,7 @@ from django.urls import path, include, re_path
 from .views import group as g
 from .views import individual as i
 from .views import shared as s
+from .views import forms as f
 from django.views.generic.base import TemplateView
 
 from django.urls import path
@@ -27,4 +28,8 @@ urlpatterns = [
  
     #Shared
 	path('getAllSeasons/', s.BBGetAllSeasonsViewSet.as_view()),
+ 
+    #BB Reports
+	path('bbAddReport/', f.BBFormAddBBReportViewSet.as_view()),
+	path('bbEditReport/', f.BBFormEditBBReportViewSet.as_view()),
 ]

@@ -34,12 +34,12 @@ class BBFormAddBBReportViewSet(APIView):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(f"""
-                    EXEC spBBAddReport
+                    EXEC spBBReportAdd
                     @BBT			    = '{token['UID']}',
-                    @Topic			    = '${form['topic']}',
-                    @ClassDate		    = '${form['date']}',
-                    @Label			    = '${form['label']}',
-                    @NextDate		    = '${form['ndate']}',
+                    @Topic			    = '${form['bbTopic']}',
+                    @ClassDate		    = '${form['bbDate']}',
+                    @Label			    = '${form['bbCCT']}',
+                    @NextDate		    = '${form['bbNextDate']}',
                     @CTSched            = '${form['bbCTDays']}',
                     @Reaction           = '${form['reaction']}',
                     @FKey			    = '${form['fruitId']}',
@@ -60,13 +60,13 @@ class BBFormEditBBReportViewSet(APIView):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(f"""
-                    EXEC spBBEditReport
+                    EXEC spBBReportEdit
                     @RepId			    = '{token['repId']}',
                     @BBT			    = '{token['UID']}',
-                    @Topic			    = '${form['topic']}',
-                    @ClassDate		    = '${form['date']}',
-                    @Label			    = '${form['label']}',
-                    @NextDate		    = '${form['ndate']}',
+                    @Topic			    = '${form['bbTopic']}',
+                    @ClassDate		    = '${form['bbDate']}',
+                    @Label			    = '${form['bbCCT']}',
+                    @NextDate		    = '${form['bbNextDate']}',
                     @CTSched            = '${form['bbCTDays']}',
                     @Reaction           = '${form['reaction']}',
                     @FKey			    = '${form['fruitId']}',

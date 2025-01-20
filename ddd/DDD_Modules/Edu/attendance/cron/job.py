@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from django.db import connection
 
-def EduSetAbsent(self, request):
+def edu_set_absent():
     
     with connection.cursor() as cursor:
         cursor.execute("EXEC spEducation_UpdateNullToAbsent")

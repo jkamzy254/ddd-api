@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from django.db import connection
 
-def SVCSetAbsent(self, request):
+def svc_set_absent():
     
     with connection.cursor() as cursor:
         cursor.execute("EXEC DailyNullToAbsent")

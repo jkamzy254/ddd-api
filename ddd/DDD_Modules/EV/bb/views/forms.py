@@ -61,7 +61,7 @@ class BBFormEditBBReportViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute(f"""
                     EXEC spBBReportEdit
-                    @RepId			    = '{token['repId']}',
+                    @RepId			    = '{form['repId']}',
                     @BBT			    = '{token['UID']}',
                     @Topic			    = '${form['bbTopic']}',
                     @ClassDate		    = '${form['bbDate']}',

@@ -100,7 +100,7 @@ class CTUpdateScheduleViewSet(APIView):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(f"EXEC spCTUpdateSchedule @CTID = {data.get('CTID')}, @Date = '{data.get('Date')}', @Topic = '{data.get('Topic')}'")
-                result = f"Update for CT Day {data[0]['Date']} done"
+                result = f"Update for CT Day {data.get('Date')} done"
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:

@@ -33,18 +33,28 @@ class BBFormAddBBReportViewSet(APIView):
 
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"""
+                cursor.execute("""
                     EXEC spBBReportAdd
-                    @BBT			    = '{token['UID']}',
-                    @Topic			    = '${form['bbTopic']}',
-                    @ClassDate		    = '${form['bbDate']}',
-                    @Label			    = '${form['bbCCT']}',
-                    @NextDate		    = '${form['bbNextDate']}',
-                    @CTSched            = '${form['bbCTDays']}',
-                    @Reaction           = '${form['reaction']}',
-                    @FKey			    = '${form['fruitId']}',
-                    @AdditionalInfo    = '${form['notes']}'
-                """)
+                    @BBT = %s,
+                    @Topic = %s,
+                    @ClassDate = %s,
+                    @Label = %s,
+                    @NextDate = %s,
+                    @CTSched = %s,
+                    @Reaction = %s,
+                    @FKey = %s,
+                    @AdditionalInfo = %s
+                """, [
+                    token['UID'],
+                    form['bbTopic'],
+                    form['bbDate'],
+                    form.get('bbCCT', ''),  # Default to empty string if not provided
+                    form['bbNextDate'],
+                    form.get('bbCTDays', ''),  # Default to empty string if not provided
+                    form['reaction'],
+                    form['fruitId'],
+                    form.get('notes', '')  # Default to empty string if not provided
+                ])
                 fp_rec = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(fp_rec, status=status.HTTP_200_OK)
 
@@ -59,19 +69,30 @@ class BBFormEditBBReportViewSet(APIView):
 
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"""
+                cursor.execute("""
                     EXEC spBBReportEdit
-                    @RepId			    = '{form['repId']}',
-                    @BBT			    = '{token['UID']}',
-                    @Topic			    = '${form['bbTopic']}',
-                    @ClassDate		    = '${form['bbDate']}',
-                    @Label			    = '${form['bbCCT']}',
-                    @NextDate		    = '${form['bbNextDate']}',
-                    @CTSched            = '${form['bbCTDays']}',
-                    @Reaction           = '${form['reaction']}',
-                    @FKey			    = '${form['fruitId']}',
-                    @AdditionalInfo    = '${form['notes']}'
-                """)
+                    @RepId = %s,
+                    @BBT = %s,
+                    @Topic = %s,
+                    @ClassDate = %s,
+                    @Label = %s,
+                    @NextDate = %s,
+                    @CTSched = %s,
+                    @Reaction = %s,
+                    @FKey = %s,
+                    @AdditionalInfo = %s
+                """, [
+                    form.get('repId'),
+                    token['UID'],
+                    form.get('bbTopic'),
+                    form.get('bbDate'),
+                    form.get('bbCCT'),
+                    form.get('bbNextDate'),
+                    form.get('bbCTDays'),
+                    form.get('reaction'),
+                    form.get('fruitId'),
+                    form.get('notes')
+                ])
                 fp_rec = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(fp_rec, status=status.HTTP_200_OK)
 

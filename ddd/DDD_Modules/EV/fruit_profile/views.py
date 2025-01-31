@@ -168,3 +168,34 @@ class FMPAssignBBTViewSet(APIView):
             print(str(e))
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class FMPSeasonUpdateLogViewSet(APIView):
+    def post(self, request):
+        form = request.data
+        token = decode_jwt(request)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spFMPSeasonUpdateLog @UID = %s, @SsnID = %s, @BBTs = %s""", [form.get('UID'), form.get('Season'), token['UID']])
+                update = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(update, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(str(e))
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class FMPCTScheduleUpdateLogViewSet(APIView):
+    def post(self, request):
+        form = request.data
+        token = decode_jwt(request)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spFMPSeasonUpdateLog @UID = %s, @CTDays = %s, @BBTs = %s""", [form.get('UID'), form.get('CTDays'), token['UID']])
+                update = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(update, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(str(e))
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+

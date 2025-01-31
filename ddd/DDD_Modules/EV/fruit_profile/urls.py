@@ -11,4 +11,11 @@ urlpatterns = [
     #Per group
 	path('getFruitProfile/', v.FMPGetFruitProfileViewSet.as_view()),
 	path('updateFruitProfile/', v.FMPUpdateFruitProfileViewSet.as_view()),
+ 
+	path('getSeasonHistory/', v.FMPGetFPSeasonHistoryViewSet.as_view()),
+	path('getPreviousFruitHistory/', v.FMPGetFPPreviousFruitHistoryViewSet.as_view()),
+	path('assignBBT/', v.FMPAssignBBTViewSet.as_view()),
+ 
+	path('getBBSummary/', v.FMPGetFPBBSummaryViewSet.as_view()),
+	path('getBBHistory/', v.FMPGetFPBBHistoryViewSet.as_view()),
 ]

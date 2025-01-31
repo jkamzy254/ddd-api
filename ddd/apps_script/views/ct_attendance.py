@@ -15,17 +15,39 @@ import pandas as pd
 
 
         
-class CTGetAttendanceSummaryViewSet(APIView):
+class GetMemberViewSet(APIView):
     def get(self, request):
-        ctid = request.GET.get("CTID")
+        username = request.GET.get('username')
+        password = request.GET.get('password')
+        
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"""
-                    SELECT *, 
-                    (Select Count(*) From CTScheduleLogTable WHERE CTID = C.CTID) 'CTClasses', 
-                    (Select Count(*) From CTAttendanceTable CA LEFT JOIN CTScheduleLogTable CS ON CS.ID = CA.CTDayID WHERE CTID = C.CTID AND UID = C.UID) 'StudAttendance'
-                    FROM CTStudentTable C WHERE CTID = {ctid}
-                """)
+                cursor.execute(f"""Select M.UID, PREFERRED_NAME as 'Name', Case
+                            When PID = 140 Then 'JDSN'
+                            When PID = 160 Then 'GSN'
+                            Else ''
+                        End As Pos 
+                    From MemberData M
+                    LEFT JOIN (SELECT * FROM TGWPositionLog WHERE EndDate IS NULL) T ON T.UID = M.UID
+                    Where BBT = 1 And Username = '{username}' And Password = '{password}' AND M.UID IN (
+                        Select UID From TGWPositionLog WHERE TID = 11 AND (PID >= 140)
+                    )""")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                
+            if len(result) == 0:
+                return Response({'error': 'Unauthorized Access'}, status=status.HTTP_401_UNAUTHORIZED)
+            
+            return Response(result, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class CTGetAttendanceSummaryViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get("UID")
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"spCTGetAttendanceSummary {uid}")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)
@@ -77,11 +99,8 @@ class CTUpdateScheduleViewSet(APIView):
         data = request.data
         try:
             with connection.cursor() as cursor:
-                for rec in data:
-                    cursor.execute(f"""EXEC spCTUpdateSchedule 
-                        @CTID = {rec.get('CTID')}, @Date = {rec.get('Date')}, @Topic = {rec.get('Topic')}
-                    """)
-                result = f"Update for CT Day {data[0]['Date']} done"
+                cursor.execute(f"EXEC spCTUpdateSchedule @CTID = {data.get('CTID')}, @Date = '{data.get('Date')}', @Topic = '{data.get('Topic')}'")
+                result = f"Update for CT Day {data.get('Date')} done"
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
@@ -101,3 +120,29 @@ class CTUpdateAttendanceViewSet(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+        
+class CTUpdateStudentStatusViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"""EXEC spCTUpdateStudentStatus
+                    @UID = '{rec.get('UID')}', @Registration = {rec.get('Registration')}, @Status = {rec.get('Status')}
+                """)
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class CTScheduleAddDaysViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spCTScheduleAddClasses")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

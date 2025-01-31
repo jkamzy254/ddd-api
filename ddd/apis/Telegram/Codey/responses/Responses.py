@@ -267,9 +267,9 @@ def bot_responses(id,tname,input_text):
         if command == 'oldbbactive':
             return SQLCodes.oldbbactive(d)
         if command == 'deptbbactive':
-            return SQLCodes.deptbbactive(d)
+            return SQLCodes.deptbbactive(d, sid, access)
         if command == 'deptbbinactive':
-            return SQLCodes.deptbbinactive(d)
+            return SQLCodes.deptbbinactive(d, sid, access)
         
         if command in ['youthmxpx','deptmxpx']:
             return SQLCodes.youthmxpx(d)

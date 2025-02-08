@@ -7,7 +7,7 @@ def bot_responses(id,tname,input_text):
             i,user,pw = input_text.split('.')
             return SQLCodes.reg_new_user_request(id,tname,user,pw)
     
-    uid,name,access,g,d,r,sid,ss = SQLCodes.teledata(id).split('/')
+    uid,name,access,g,d,r,fmp_sid,fmp_ss,bb_sid,bb_ss = SQLCodes.teledata(id).split('/')
     original_uid,original_name = uid,name
     print(f"""TELEDATA:
           uid - {uid}
@@ -16,8 +16,10 @@ def bot_responses(id,tname,input_text):
           g - {g}
           d - {d}
           r - {r}
-          sid - {sid}
-          ss - {ss}""")
+          fmp_sid - {fmp_sid}
+          fmp_ss - {fmp_ss}
+          bb_sid - {bb_sid}
+          bb_ss - {bb_ss}""")
     
     user_message = str(input_text).lower().replace(' ','')
         
@@ -25,16 +27,18 @@ def bot_responses(id,tname,input_text):
         if '|' in input_text:
             user_message,user_name = input_text.split('|')
             user_message = user_message.lower()
-            uid,name,access,g,d,r,sid,ss = SQLCodes.namedata(user_name).split('/')
+            uid,name,access,g,d,r,fmp_sid,fmp_ss,bb_sid,bb_ss = SQLCodes.namedata(user_name).split('/')
             print(f"""NAMEDATA:
-          uid - {uid}
-          name - {name}
-          access - {access}
-          g - {g}
-          d - {d}
-          r - {r}
-          sid - {sid}
-          ss - {ss}""")
+            uid - {uid}
+            name - {name}
+            access - {access}
+            g - {g}
+            d - {d}
+            r - {r}
+            fmp_sid - {fmp_sid}
+            fmp_ss - {fmp_ss}
+            bb_sid - {bb_sid}
+            bb_ss - {bb_ss}""")
                         
     if access == 'None':
         return '-'
@@ -68,7 +72,7 @@ def bot_responses(id,tname,input_text):
                 access = 'Group' # If specific group is specified, their access for the current function reduced to Group-level
             except ValueError:
                 return 'Format error: Too many "/"s'
-            d,sid,ss = SQLCodes.groupinfo(g).split('/')
+            d,fmp_sid,fmp_ss,bb_sid,bb_ss = SQLCodes.groupinfo(g).split('/')
         else:
             command = user_message
         print(f'after: command = {command}, g = {g}, d = {d}, access = {access}')
@@ -91,7 +95,7 @@ def bot_responses(id,tname,input_text):
                 access = 'Group' # If specific group is specified, their access for the current function reduced to Group-level
             except ValueError:
                 return 'Format error: Too many "/"s'
-            d,sid,ss = SQLCodes.groupinfo(g).split('/')
+            d,fmp_sid,fmp_ss,bb_sid,bb_ss = SQLCodes.groupinfo(g).split('/')
         else:
             command = user_message
     
@@ -111,7 +115,7 @@ def bot_responses(id,tname,input_text):
                     command,g = user_message.split('/')
                 except ValueError:
                     return 'Format error: Too many "/"s'
-            d,sid,ss = SQLCodes.groupinfo(g).split('/')
+            d,fmp_sid,fmp_ss,bb_sid,bb_ss = SQLCodes.groupinfo(g).split('/')
             access = 'Group' # If specific group is specified, their access for the current function reduced to Group-level
             if g.lower() not in allowed_groups and user_message.lower()[:3] != 'ev/':
                 return 'Sorry, this group is outside your department!'
@@ -132,15 +136,19 @@ def bot_responses(id,tname,input_text):
           g - {g}
           d - {d}
           r - {r}
-          sid - {sid}
-          ss - {ss}""")
+          fmp_sid - {fmp_sid}
+          fmp_ss - {fmp_ss}
+          bb_sid - {bb_sid}
+          bb_ss - {bb_ss}""")
     
     # if r in ('Geelong','Darwin'):
     #     r = 'Online'
         
     if command.startswith('all'):
-        sid = '%'
-        print(f"sid - {sid}")
+        fmp_sid = '%'
+        bb_sid = '%'
+        print(f"""fmp_sid - {fmp_sid}
+                   bb_sid - {bb_sid}""")
         command = command[3:]
     
     if 'phonenumber' in str(user_message):
@@ -165,45 +173,45 @@ def bot_responses(id,tname,input_text):
         
     if command in ['todayfmp','yesterdayfmp','weekfmp','lastweekfmp','seasonfmp']:
         timerange = command[:-3]
-        return SQLCodes.memberfmp(timerange,g,sid,ss,access)
+        return SQLCodes.memberfmp(timerange,g,fmp_sid,fmp_ss,access)
         
     if command == 'fmstatus':
         return SQLCodes.fmstatus(g,access)
         
     if command == 'bblist':
-        return SQLCodes.bblist(d,g,sid,access)
+        return SQLCodes.bblist(d,g,bb_sid,access)
     
     if command == 'bbstatus':
-            return SQLCodes.bbstatus(g, d, sid, access)
+            return SQLCodes.bbstatus(g, d, bb_sid, access)
     
     if command == 'bbactive':
-        return SQLCodes.bbactive(g, d, sid, access)
+        return SQLCodes.bbactive(g, d, bb_sid, access)
         
     if command == 'bbinactive':
-            return SQLCodes.bbinactive(g, d, sid, access)
+            return SQLCodes.bbinactive(g, d, bb_sid, access)
         
     if command == 'newbblist':
-        return SQLCodes.newbblist(d,g,sid,access)
+        return SQLCodes.newbblist(d,g,bb_sid,access)
     
     if command == 'newbbstatus':
-            return SQLCodes.newbbstatus(g, d, sid, access)
+            return SQLCodes.newbbstatus(g, d, bb_sid, access)
         
     if (command.startswith('newbtm') or command.startswith('newbbt') or command.startswith('newgyjnbbt')) and command.endswith('list'):
         q = command.removesuffix('list')
-        return SQLCodes.newbbtlist(q,d,g,sid,access)
+        return SQLCodes.newbbtlist(q,d,g,bb_sid,access)
         
     if (command.startswith('newbtm') or command.startswith('newbbt') or command.startswith('newgyjnbbt')) and command.endswith('status'):
         q,i = command.split('status')
-        return SQLCodes.newbbtstatus(q,g,d,sid,access)
+        return SQLCodes.newbbtstatus(q,g,d,bb_sid,access)
         
     
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('list'):
         q = command.removesuffix('list')
-        return SQLCodes.bbtlist(q,d,g,sid,access)
+        return SQLCodes.bbtlist(q,d,g,bb_sid,access)
         
     if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('status'):
         q,i = command.split('status')
-        return SQLCodes.bbtstatus(q,g,d,sid,access)
+        return SQLCodes.bbtstatus(q,g,d,bb_sid,access)
         
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
         q = command.split('active')
@@ -252,9 +260,9 @@ def bot_responses(id,tname,input_text):
                 # If the rest of the string is a Y value, return X and Y
                 if timerange in ['today', 'yesterday', 'week', 'lastweek', 'season']:
                     if task in ['youth','dept','tgw','member']:
-                        return SQLCodes.deptfmp(task,timerange,d,sid,ss,access)
+                        return SQLCodes.deptfmp(task,timerange,d,fmp_sid,fmp_ss,access)
                     if task in ['gyjn','oev','iev','edu','sv']:
-                        return SQLCodes.taskfmp(task,timerange,d,sid,ss,access)    
+                        return SQLCodes.taskfmp(task,timerange,d,fmp_sid,fmp_ss,access)    
         
         if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('status'):
             q,i = command.split('status')
@@ -267,9 +275,9 @@ def bot_responses(id,tname,input_text):
         if command == 'oldbbactive':
             return SQLCodes.oldbbactive(d)
         if command == 'deptbbactive':
-            return SQLCodes.deptbbactive(d, sid, access)
+            return SQLCodes.deptbbactive(d, bb_sid, access)
         if command == 'deptbbinactive':
-            return SQLCodes.deptbbinactive(d, sid, access)
+            return SQLCodes.deptbbinactive(d, bb_sid, access)
         
         if command in ['youthmxpx','deptmxpx']:
             return SQLCodes.youthmxpx(d)
@@ -290,7 +298,7 @@ def bot_responses(id,tname,input_text):
             if command == 'bbtdeptold':
                 return SQLCodes.bbtdeptold()
             if command == 'bbtdept':
-                return SQLCodes.bbtdept(d,sid)
+                return SQLCodes.bbtdept(d,bb_sid)
             
             # if access in ('All','IT'):
             #     if command == 'bbtbtmstatus':

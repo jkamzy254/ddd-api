@@ -182,9 +182,9 @@ def teledata(id):
     conn.cursor().close()
     
     if len(da) == 0:
-        return "None/None/None/None/None/None/None/None"
+        return "None/None/None/None/None/None/None/None/None/None"
     else:
-        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}"
+        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}/{da.iloc[0,8]}/{da.iloc[0,9]}"
     
 def namedata(user_name):
     conn = odbc.connect(conn_str)
@@ -193,20 +193,20 @@ def namedata(user_name):
     conn.cursor().close()
     
     if len(da) == 0:
-        return "None/None/None/None/None/None/None/None"
+        return "None/None/None/None/None/None/None/None/None/None"
     else:
-        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}"
+        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}/{da.iloc[0,8]}/{da.iloc[0,9]}"
 
 def groupinfo(g):
     conn = odbc.connect(conn_str)
-    seasondata = f"SELECT Dept, SID, SeasonStart FROM CodeyTeleDataGroup('{g}')" # Replace the first 'All' with GROUP_IMWY to change M&W season back to M&W CT (Change also on teledata function!)
+    seasondata = f"SELECT Dept, FMP_SID, FMP_SeasonStart, BB_SID, BB_SeasonStart FROM CodeyTeleDataGroup('{g}')" # Replace the first 'All' with GROUP_IMWY to change M&W season back to M&W CT (Change also on teledata function!)
     dr = pd.read_sql(seasondata, conn)
     conn.cursor().close()
 
     if len(dr) == 0:
-        return "None/None/None"
+        return "None/None/None/None/None"
     else:
-        return f"{dr.iloc[0,0]}/{dr.iloc[0,1]}/{dr.iloc[0,2]}"
+        return f"{dr.iloc[0,0]}/{dr.iloc[0,1]}/{dr.iloc[0,2]}/{dr.iloc[0,3]}/{dr.iloc[0,4]}"
     
 
 def duplicate_check(ph):
@@ -248,7 +248,7 @@ def todayfish(g):
 
         fish = str()
         for r in range(len(dp)):
-            fish = f"{fish}🐟{r+1}.{dp.iloc[r,0]} - {dp.iloc[r,1]} ({dp.iloc[r,2]}) / {dp.iloc[r,4]} ({dp.iloc[r,5]}) — [{dp.iloc[r,7]}]n"
+            fish = f"{fish}🐟{r+1}.{dp.iloc[r,0]} - {dp.iloc[r,1]} ({dp.iloc[r,2]}) / {dp.iloc[r,4]} ({dp.iloc[r,5]}) — [{dp.iloc[r,7]}]\n"
         fish = f"🐠<b><u>{g} Fish Today</u></b>🐡\n\n<pre>{fish.replace('/  () ','')}</pre>\\n<b>{g} Points: {pts}</b>"
         return fish
         
@@ -276,8 +276,8 @@ def weekfish(g):
         
         fish = str()
         for r in range(len(dp)):
-            fish = fish + '<pre>🐟' + str(r+1) + '. ' + str(dp.iloc[r,0]) + ' - ' + str(dp.iloc[r,1]) + ' (' + str(dp.iloc[r,2]) + ') / ' + str(dp.iloc[r,4]) + ' (' + str(dp.iloc[r,5]) + ') — [' + str(dp.iloc[r,7]) + ']' + '</pre>\n'
-        fish = '🐠<b><u>' + str(g) + ' Fish This Week</u></b>🐡\n\n' + fish.replace('/  () ','') + '\n' + '<b>' + str(g) + ' Points: ' + pts + '</b>'
+            fish = fish + '🐟' + str(r+1) + '. ' + str(dp.iloc[r,0]) + ' - ' + str(dp.iloc[r,1]) + ' (' + str(dp.iloc[r,2]) + ') / ' + str(dp.iloc[r,4]) + ' (' + str(dp.iloc[r,5]) + ') — [' + str(dp.iloc[r,7]) + ']' + '\n'
+        fish = '🐠<b><u>' + str(g) + ' Fish This Week</u></b>🐡\n\n<pre>' + fish.replace('/  () ','') + '</pre>\n' + '<b>' + str(g) + ' Points: ' + pts + '</b>'
         return fish
 
 

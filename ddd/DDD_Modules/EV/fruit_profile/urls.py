@@ -18,4 +18,8 @@ urlpatterns = [
  
 	path('getBBSummary/', v.FMPGetFPBBSummaryViewSet.as_view()),
 	path('getBBHistory/', v.FMPGetFPBBHistoryViewSet.as_view()),
+ 
+	path('updateCT/', v.FMPSeasonUpdateLogViewSet.as_view()),
+	path('updateSchedule/', v.FMPCTScheduleUpdateLogViewSet.as_view()),
+
 ]

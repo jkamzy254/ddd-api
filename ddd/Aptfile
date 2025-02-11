@@ -1,2 +1,2 @@
-msodbcsql18 unixodbc unixodbc-dev freetds-dev
+unixodbc unixodbc-dev freetds-dev
 libsqliteodbc

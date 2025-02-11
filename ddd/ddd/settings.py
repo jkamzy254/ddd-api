@@ -146,7 +146,7 @@ DATABASES = {
         'PORT': os.environ.get('DBPORT'),
 
         'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
+            'driver': 'ODBC Driver 18 for SQL Server',
         },
     },
 }

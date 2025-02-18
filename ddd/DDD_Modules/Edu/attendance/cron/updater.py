@@ -7,5 +7,5 @@ def start():
 	scheduler.add_job(edu_set_absent, 'cron', hour=1)
 	scheduler.add_job(edu_update_expected, 'cron', hour=1)
 	scheduler.add_job(edu_update_actual, 'cron', hour=1)
-	scheduler.add_job(print_awesome, 'cron', hour=21, minute=3)
+	scheduler.add_job(print_awesome, 'cron', hour=21, minute=6)
 	scheduler.start()

@@ -12,3 +12,16 @@ def edu_set_absent():
     
     with connection.cursor() as cursor:
         cursor.execute("EXEC spEducation_UpdateNullToAbsent")
+
+def edu_update_expected():
+    
+    with connection.cursor() as cursor:
+        cursor.execute("EXEC spEducation_UpdateExpectedAttendance")
+
+def edu_update_actual():
+    
+    with connection.cursor() as cursor:
+        cursor.execute("EXEC spEducation_UpdateActualAttendance")
+
+def print_awesome():
+    print("You are awesome Kamau")

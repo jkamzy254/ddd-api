@@ -418,12 +418,7 @@ async def issue_webhook(request):
         action = data.get('webhookEvent', 'Unknown event')
         issue_json = json.dumps(issue, indent=2).replace("'","''")
         
-        print("issue_id")
-        print(issue_id)
-        print("issue_json")
-        print(issue_json)
-        print("action")
-        print(action)
+        print(sender_id)
         
         rec = await sync_to_async(update_issue)()   
     

@@ -412,7 +412,7 @@ async def issue_webhook(request):
     
     if request.method == 'POST':
         data = json.loads(request.body)
-        issue = data.get("issue", {}).get("key", "")
+        issue = data.get("issue", {})
         issue_key = issue.get("key", "")
         sender_id = data.get("issue", {}).get("fields", "").get("customfield_10073", "")
         action = data.get('webhookEvent', 'Unknown event')

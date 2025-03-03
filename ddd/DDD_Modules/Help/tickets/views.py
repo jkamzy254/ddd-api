@@ -416,7 +416,7 @@ async def issue_webhook(request):
         issue_id = issue.get("id", "")
         sender_id = data.get("issue", {}).get("fields", "").get("customfield_10073", "")
         action = data.get('webhookEvent', 'Unknown event')
-        issue_json = json.dumps(issue, indent=2)
+        issue_json = json.dumps(issue, indent=2).replace("'","''")
         
         print("issue_id")
         print(issue_id)

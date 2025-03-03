@@ -400,7 +400,7 @@ def issue_webhook(request):
 async def issue_webhook(request):
     def update_issue():
         with connection.cursor() as cursor:
-            cursor.execute(f"EXEC spJiraSaveIssue  @IssueKey={issue_key}, @IssueData='{issue_json}'")
+            cursor.execute(f"EXEC spJiraSaveIssue  @IssueKey={issue_key}, @IssueData='{issue_json}', @IssueAction='{action}'")
             recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         return recs
         
@@ -417,6 +417,13 @@ async def issue_webhook(request):
         sender_id = data.get("issue", {}).get("fields", "").get("customfield_10073", "")
         action = data.get('webhookEvent', 'Unknown event')
         issue_json = json.dumps(issue, indent=2)
+        
+        print("issue_key")
+        print(issue_key)
+        print("issue_json")
+        print(issue_json)
+        print("action")
+        print(action)
         
         rec = await sync_to_async(update_issue)()   
     

@@ -384,23 +384,11 @@ class GetMyIssuesViewSet(APIView):
 # Django View to get an issue by its ID
 
 @csrf_exempt
-def issue_webhook(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        issue_key = data.get("issue", {}).get("key", "")
-        action = data.get("webhookEvent", "")
-
-        print(f"Jira Issue {issue_key} {action}")
-        return JsonResponse({"message": "Webhook received"}, status=200)
-
-    return JsonResponse({"error": "Invalid request"}, status=400)
-
-@csrf_exempt
 @async_to_sync
 async def issue_webhook(request):
     def update_issue():
         with connection.cursor() as cursor:
-            cursor.execute(f"EXEC spJiraSaveIssue  @IssueKey={issue_id}, @IssueData='{issue_json}', @IssueAction='{action}'")
+            cursor.execute(f"EXEC spJiraSaveIssue  @IssueKey={issue_id}, @IssueData='{issue_json}', @IssueAction='{action}', @IssueAction='{action}'")
             recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
         return recs
         

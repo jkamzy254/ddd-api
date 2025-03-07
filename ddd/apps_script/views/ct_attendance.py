@@ -22,13 +22,9 @@ class GetMemberViewSet(APIView):
         
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"""Select M.UID, PREFERRED_NAME as 'Name', Case
-                            When PID = 140 Then 'JDSN'
-                            When PID = 160 Then 'GSN'
-                            Else ''
-                        End As Pos 
-                    From MemberData M
+                cursor.execute(f"""Select M.UID, PREFERRED_NAME as 'Name', Role, NumRole From MemberData M
                     LEFT JOIN (SELECT * FROM TGWPositionLog WHERE EndDate IS NULL) T ON T.UID = M.UID
+                    LEFT JOIN (SELECT * FROM CTTGWLogTable WHERE EndDate IS NULL) C ON C.UID = M.UID
                     Where BBT = 1 And Username = '{username}' And Password = '{password}' AND M.UID IN (
                         Select UID From TGWPositionLog WHERE TID = 11 AND (PID >= 140)
                     )""")
@@ -47,7 +43,7 @@ class CTGetAttendanceSummaryViewSet(APIView):
         uid = request.GET.get("UID")
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"spCTGetAttendanceSummary {uid}")
+                cursor.execute(f"EXEC spCTGetAttendanceSummary {uid}")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

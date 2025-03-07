@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     # 'rest_framework_simplejwt',
     # 'dj_rq',
     'rest_framework_nested',
+    'webpush',
     'ddd',
     'api',
     'DDD_Modules.members',

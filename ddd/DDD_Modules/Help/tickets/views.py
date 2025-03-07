@@ -1,29 +1,24 @@
 from django.shortcuts import render
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, render
-from rest_framework.decorators import api_view
+from django.views.decorators.csrf import csrf_exempt
 
-    
+from asgiref.sync import async_to_sync, sync_to_async
+
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework.viewsets import ViewSet, ModelViewSet
-from rest_framework.filters import SearchFilter, OrderingFilter
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.pagination import PageNumberPagination
-from django.db.models import Q
 from django.db import connection
-import datetime, json, pandas as pd
 from azure.storage.blob import BlobServiceClient
 import os
 from dotenv import load_dotenv, find_dotenv
-import base64
-import requests
 from jira import JIRA, JIRAError
 from jira.resources import Issue
 from ddd.utils import decode_jwt
+
+import datetime, json, pandas as pd
 
 load_dotenv(find_dotenv())
 
@@ -368,19 +363,70 @@ class GetMyIssuesViewSet(APIView):
         try:
             token = decode_jwt(request)   
             issues = []
+            fields = "summary,status,assignee,customfield_10114,customfield_10073, issuetype, created, updated, description, attachment, comment"  # Limit fields to only required ones
+            issue_ids = []
             with connection.cursor() as cursor:
                 cursor.execute("SELECT * FROM JiraTicket WHERE SenderId = '{0}'".format(token['UID']))
                 issuerecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 for rec in issuerecs:
-                    issue = jira.issue(rec['JiraID'])
-                    # Issue._parse_raw(issue)
-            
-                    issues.append(issue.raw)  
+                    issue_ids.append(str(rec['JiraID']))
+                    
+                jql_query = 'key in ({})'.format(','.join(issue_ids))
+                issues = jira.search_issues(jql_query, maxResults=len(issue_ids), json_result=True, fields=fields)
+                
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(issues, status=status.HTTP_200_OK)
+        
+
+# Django View to get an issue by its ID
+
+@csrf_exempt
+@async_to_sync
+async def issue_webhook(request):
+    def update_issue():
+        with connection.cursor() as cursor:
+            cursor.execute(f"EXEC spJiraSaveIssue  @IssueKey={issue_id}, @IssueData='{issue_json}', @IssueAction='{action}', @IssueAction='{action}'")
+            recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+        return recs
+        
+    # def delete_comment():
+    #     with connection.cursor() as cursor:
+    #         cursor.execute(f"""EXEC spJiraDeleteComment @CommentId='{comment_id}'""")
+    #         recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+    #     return recs
+    
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        issue = data.get("issue", {})
+        issue_id = issue.get("id", "")
+        sender_id = data.get("issue", {}).get("fields", "").get("customfield_10073", "")
+        action = data.get('webhookEvent', 'Unknown event')
+        issue_json = json.dumps(issue, indent=2).replace("'","''")
+        
+        print(sender_id)
+        
+        rec = await sync_to_async(update_issue)()   
+    
+        # if project_id == "10000" or project_id == "10003":
+        #     if event == "comment_created":
+        #         recs = await sync_to_async(create_comment)()
+                
+        #     elif event == "comment_deleted":
+        #         recs = await sync_to_async(delete_comment)()
+                
+
+                
+        #     formatted_text = process_data(recs,comment_author_name)
+            
+        #     await bot.send_message(chat_id=CHAT_ID, text=formatted_text, message_thread_id=MSG_THREAD_ID)
+        
+        return JsonResponse({'status': 'success'})
+
+    return JsonResponse({'status': 'failed'}, status=400)
+
 
 
 class GetGroupIssuesViewSet(APIView):

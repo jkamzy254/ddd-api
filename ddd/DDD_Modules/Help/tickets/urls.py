@@ -19,4 +19,6 @@ urlpatterns = [
 	path('getMyIssues/', v.GetMyIssuesViewSet.as_view()),
 	path('getGroupIssues/', v.GetGroupIssuesViewSet.as_view()),
  
+	path('issueWebhook/', v.issue_webhook, name='issue_webhook'),
+ 
 ]

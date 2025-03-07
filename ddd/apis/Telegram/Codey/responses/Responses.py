@@ -248,6 +248,9 @@ def bot_responses(id,tname,input_text):
         return SQLCodes.classes(g,d,access,'week')
     
     
+    if command.startswith('edu'):
+        day = command.removeprefix('edu')
+        return SQLCodes.edu(day, g, d, access)
     
     
     # Dept and above functions

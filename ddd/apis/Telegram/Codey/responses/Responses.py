@@ -250,7 +250,7 @@ def bot_responses(id,tname,input_text):
     
     if command.startswith('edu'):
         day = command.removeprefix('edu')
-        return SQLCodes.edu(day, g, d, access)
+        return SQLCodes.edu(day, g, d, access) if day != 'rev' else SQLCodes.edurev(g, d, access)
     
     
     # Dept and above functions

@@ -3810,6 +3810,7 @@ def classes(g, d, access, time):
 
 
 
+
 def edu(day, g, d, access):
                 
     g = g if access == 'Group' else '%'
@@ -3900,6 +3901,80 @@ def edu(day, g, d, access):
         total = f'Total[{at}|{on}|{rp}|{ab}]'
     
     summary = f"<b><u>{grpdept} {days[day][2]}</u></b>\n\n<pre>     {columns}\n\n{group}{dept}{region}{total}</pre>"
+    summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
+    summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
+    return summary
+
+
+
+
+def edurev(g, d, access):
+                
+    g = g if access == 'Group' else '%'
+    d = d.capitalize().replace('d','D')
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    else:
+        grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+        
+    print(f"edu parameters:   g = '{g}'          d = '{d}'          access = '{access}'")
+    
+    conn = odbc.connect(conn_str)
+    edu_group  = f"SELECT Grp, RevS, RevNS FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+    edu_dept   = f"SELECT Dept, SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
+    edu_region = f"SELECT Region, SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Region"
+    edu_youth  = f"SELECT SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+    
+    print(edu_group)
+    
+    dg = pd.read_sql(edu_group, conn)
+    dd = pd.read_sql(edu_dept, conn)
+    dr = pd.read_sql(edu_region, conn)
+    dy = pd.read_sql(edu_youth, conn)
+
+    dg.columns = ['Grp','RevS','RevNS']
+    dd.columns = ['Dept','RevS','RevNS']
+    dr.columns = ['Region','RevS','RevNS']
+    dy.columns = ['RevS','RevNS']
+    dd.replace(r' Dept',r'', regex = True, inplace = True)
+    
+    conn.cursor().close()
+          
+    group = str()    
+    for r in range(len(dg)):
+        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        rs  = ' '*(2-len(str(dg.loc[r,'RevS']))) + str(dg.loc[r,'RevS'])
+        rn  = ' '*(2-len(str(dg.loc[r,'RevNS']))) + str(dg.loc[r,'RevNS'])
+        group = f'{group}{grp}[{rs}|{rn}]\n'
+    group = group + '\n'
+            
+    dept = str()  
+    if access != 'Group':
+        for r in range(len(dd)):
+            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            rs  = ' '*(2-len(str(dd.loc[r,'RevS']))) + str(dd.loc[r,'RevS'])
+            rn  = ' '*(2-len(str(dd.loc[r,'RevNS']))) + str(dd.loc[r,'RevNS'])
+            dept = f'{dept}{dpt}[{rs}|{rn}]\n'
+        dept = dept + '\n'
+    
+    region = str()
+    if d.endswith('D[0-9]%'):    
+        for r in range(len(dr)):
+            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+            rs  = ' '*(2-len(str(dr.loc[r,'RevS']))) + str(dr.loc[r,'RevS'])
+            rn  = ' '*(2-len(str(dr.loc[r,'RevNS']))) + str(dr.loc[r,'RevNS'])
+            region = f'{region}{reg}[{rs}|{rn}]\n'
+        region = region + '\n'
+    
+    total = str()
+    if d == '_D[0-9]%':
+        rs  = ' '*(2-len(str(dy.loc[0,'RevS']))) + str(dy.loc[0,'RevS'])
+        rn  = ' '*(2-len(str(dy.loc[0,'RevNS']))) + str(dy.loc[0,'RevNS'])
+        total = f'Total[{rs}|{rn}]'
+    
+    summary = f"<b><u>{grpdept} Revelation Speech Summary (Mon → Sun) </u></b>\n\n<pre>     [ S|NS]\n\n{group}{dept}{region}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary

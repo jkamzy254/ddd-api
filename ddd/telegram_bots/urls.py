@@ -4,6 +4,7 @@ from django.views.generic.base import TemplateView
 from django.urls import path
 import debug_toolbar
 
+from .views import ddd_ticket as tkt
 from .views import jira_update as jira
 from .views import google_forms_to_notion as gfn
 

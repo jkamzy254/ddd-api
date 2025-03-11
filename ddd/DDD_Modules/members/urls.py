@@ -9,6 +9,10 @@ import debug_toolbar
 
 urlpatterns = [
 	path('login/', views.LoginView.as_view()),
+	path('storeFCMToken/', views.UserStoreFCMTokenViewSet.as_view()),
+	path('sendFCMNotification/', views.UserSendFCMNotificationViewSet.as_view()),
+ 
+ 
 	path('memberlist/', views.UserMembersViewSet.as_view()),
 	path('groups/', views.GetGroupViewSet.as_view()),
 	path('depts/', views.GetDeptViewSet.as_view()),

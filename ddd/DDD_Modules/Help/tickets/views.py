@@ -16,11 +16,19 @@ import os
 from dotenv import load_dotenv, find_dotenv
 from jira import JIRA, JIRAError
 from jira.resources import Issue
-from ddd.utils import decode_jwt
+from ddd.utils import decode_jwt, send_push_notification
+
+from telegram import Bot
+from telegram.request import HTTPXRequest
 
 import datetime, json, pandas as pd
 
 load_dotenv(find_dotenv())
+
+trequest = HTTPXRequest(connection_pool_size=20)
+bot = Bot(token=os.environ.get('TICKET_BOT_TOKEN'), request=trequest)
+CHAT_ID = os.environ.get('TELEGRAM_JIRA_CHAT_ID')
+MSG_THREAD_ID = os.environ.get('TELEGRAM_JIRA_MSG_THREAD_ID')
 
 # Create your views here.
 
@@ -406,7 +414,11 @@ async def issue_webhook(request):
         action = data.get('webhookEvent', 'Unknown event')
         issue_json = json.dumps(issue, indent=2).replace("'","''")
         
-        print(sender_id)
+        message_title = 'DDD Ticket Update'
+        if action == 'jira:issue_updated':
+            message_body = 'Your ticket has a new update. Please check at your own convenience'
+
+        result = send_push_notification(sender_id, message_title, message_body) 
         
         rec = await sync_to_async(update_issue)()   
     

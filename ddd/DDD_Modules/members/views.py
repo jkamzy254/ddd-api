@@ -1,11 +1,12 @@
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from rest_framework.decorators import api_view
 from ddd.utils import encode_jwt
 from rest_framework_simplejwt.tokens import RefreshToken
 from jwt.algorithms import get_default_algorithms
+from django.views.decorators.csrf import csrf_exempt
 
-from ddd.utils import encode_jwt, decode_jwt
+from ddd.utils import encode_jwt, decode_jwt, send_push_notification
 
 from .serializers import MemberSerializer
     
@@ -26,6 +27,13 @@ from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.db import connection
 import jwt, datetime, json, pandas as pd
+import base64
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv())
+
+import os
+
+
 
 # Create your views here.
 class LoginView(APIView):
@@ -34,8 +42,6 @@ class LoginView(APIView):
         get_default_algorithms()
         username = request.data['username']
         password = request.data['password']
-        print(username)
-        print(password)
         wlid = []
         conn = connection.cursor();
         
@@ -52,11 +58,9 @@ class LoginView(APIView):
             pid = pd.DataFrame(cursor.fetchall())
             pid.columns = [i[0] for i in cursor.description]
             pid = pid[pid['MemberID']==user.uid]
-            print( pid['WLID'].values[0])
         for i in wl:
             wlid.append(i.title)
         member = Member.objects.filter(id = user.id).first()
-        print(member.internal_position)
         if member.internal_position == 1 or (member.membergroup == 'Department' and member.tgw and member.condition == 'Active') or 'All' in wlid:
             wlid.append('Leader')
         if int(member.internal_position) < 2 or 'All' in wlid:
@@ -219,3 +223,39 @@ class UserGetFishersViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(recs, status=status.HTTP_200_OK)
+    
+class UserStoreFCMTokenViewSet(APIView):
+    def post(self, request):
+        get_default_algorithms()
+        token = request.data['token']
+        print(token)
+
+        auth_token = decode_jwt(request)   
+        user = Member.objects.filter(uid=auth_token['UID']).first()
+        
+        if user is None:
+            raise AuthenticationFailed('User not found!')
+        try:
+            # user = Memberdata.objects.filter(id = payload['ID']).first()
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spUserPushNotificationStoreFCMToken @UID = %s, @Token = %s", [auth_token['UID'], token])
+            return JsonResponse({'status': 'success', 'message': 'Token stored successfully'})
+        except User.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'User not found'}, status=404)
+
+class UserSendFCMNotificationViewSet(APIView):
+    def post(self, request): 
+        data = request.data   
+        message_title = data.get('title')
+        message_body = data.get('body')
+
+        try:
+            user = decode_jwt(request)  # Extract user UID
+            uid = user['UID']
+
+            result = send_push_notification(uid, message_title, message_body) 
+
+            return JsonResponse({'status': 'success', 'message': 'Notification sent', 'result': result})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)

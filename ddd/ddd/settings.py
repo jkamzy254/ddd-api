@@ -102,6 +102,8 @@ MIDDLEWARE = [
 CORS_ORIGIN_WHITELIST = (
     'http://localhost:4200',
     'http://127.0.0.1:4200',
+    'http://localhost:4202',
+    'http://127.0.0.1:4202',
     'http://127.0.0.1:8000',
     'https://dddmelb84.atlassian.net', #Jira URL
     'https://ang-dj.herokuapp.com', #Django backend

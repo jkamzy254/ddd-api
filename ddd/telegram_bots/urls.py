@@ -14,6 +14,4 @@ urlpatterns = [
 	# path('jira_webhook/', jira.JiraWebHookViewSet.as_view()),
 	path('jira_webhook/', jira.jira_webhook, name='jira_webhook'),
 	path('av_form_webhook/', gfn.av_form_webhook, name='av_form_webhook'),
- 
- 
 ]

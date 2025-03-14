@@ -16,7 +16,6 @@ load_dotenv(find_dotenv())
 import os
 
 firebase_creds = os.environ.get('FIREBASE_CREDENTIALS')
-print("FIREBASE CREDENTIALS: ", firebase_creds)
 
 FIREBASE_CREDENTIALS = json.loads(firebase_creds)
 

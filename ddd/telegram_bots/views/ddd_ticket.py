@@ -25,7 +25,7 @@ MSG_THREAD_ID = os.environ.get('TELEGRAM_TICKET_MSG_THREAD_ID')
 
 @csrf_exempt
 @async_to_sync
-async def issue_webhook(request):
+async def ticket_webhook(request):
     def update_issue(uid):
         with connection.cursor() as cursor:
             cursor.execute(

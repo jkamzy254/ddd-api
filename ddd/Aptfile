@@ -1,2 +1,4 @@
 unixodbc unixodbc-dev freetds-dev
 libsqliteodbc
+https://packages.microsoft.com/ubuntu/20.04/prod/msodbcsql18_18.2.1.1-1_amd64.deb
+https://packages.microsoft.com/ubuntu/20.04/prod/mssql-tools18_18.2.1.1-1_amd64.deb

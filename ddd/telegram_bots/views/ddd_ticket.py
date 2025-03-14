@@ -1,3 +1,4 @@
+import textwrap
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from telegram import Bot
@@ -7,6 +8,7 @@ import requests
 import datetime
 from django.db import connection
 from asgiref.sync import async_to_sync, sync_to_async
+from ddd.utils import send_push_notification
 
 
 from apis.Telegram.Jira.functions.jira_comment_functions import process_data
@@ -16,88 +18,73 @@ import os
 load_dotenv(find_dotenv())
 
 trequest = HTTPXRequest(connection_pool_size=20)
-bot = Bot(token=os.environ.get('AV_BOT_TOKEN'), request=trequest)
-CHAT_ID = os.environ.get('TELEGRAM_AV_CHAT_ID')
-MSG_THREAD_ID = os.environ.get('TELEGRAM_AV_MSG_THREAD_ID')
+bot = Bot(token=os.environ.get('JIRA_BOT_TOKEN'), request=trequest)
+CHAT_ID = os.environ.get('IT_DEPT_CHAT_ID')
+MSG_THREAD_ID = os.environ.get('TELEGRAM_TICKET_MSG_THREAD_ID')
+
 
 @csrf_exempt
 @async_to_sync
-async def av_form_webhook(request):
+async def issue_webhook(request):
+    def update_issue(uid):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "EXEC spJiraSaveIssue @IssueKey=%s, @IssueData=%s, @IssueAction=%s",
+                [issue_id, issue_json, action]
+            )
+            cursor.execute("SELECT ID, UID, Group_IMWY, MemebrGroup, Name FROM MemberData WHERE userId = %s", [uid])
+            recs = cursor.fetchone()
+            if recs:
+                rec = dict(zip([column[0] for column in cursor.description], recs))
+            else:
+                rec = None
+        return rec
+        
+    # def delete_comment():
+    #     with connection.cursor() as cursor:
+    #         cursor.execute(f"""EXEC spJiraDeleteComment @CommentId='{comment_id}'""")
+    #         recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+    #     return recs
+    
     if request.method == 'POST':
-        req = json.loads(request.body)
-        print(req)
+        data = json.loads(request.body)
+        issue = data.get("issue", {})
+        issue_id = issue.get("id", "")
+        issue_key = issue.get("key", "")
+        fields = data.get("issue", {}).get("fields", "")
+        sender_id = fields.get("customfield_10073", "")
+        description = fields.get("description", "")
+        created = fields.get("created", "")
+        title = fields.get("summary", "")
+        action = data.get('webhookEvent', 'Unknown event')
+        issue_json = json.dumps(issue, indent=2).replace("'","''")
         
-        print(f"Chat ID: {os.environ.get('TELEGRAM_AV_CHAT_ID')}, Thread: {os.environ.get('TELEGRAM_AV_MSG_THREAD_ID')}")
+        message_title = 'DDD Ticket Update'
+        if action == 'jira:issue_updated':
+            message_body = 'Your ticket has a new update. Please check at your own convenience'
+
         
-        def create_page(data: dict):
-            headers = {
-                "Authorization": "Bearer " + os.environ.get('NOTION_TOKEN'),
-                "Content-Type": "application/json",
-                "Notion-Version": "2022-06-28",
-            }
+        rec = await sync_to_async(update_issue)(sender_id)   
+        msg = textwrap.dedent(f"""
+        🎤AV EQ Request Form🎤
+
+        * Department: {rec['Group_IMWY']}
+        * Group: {rec['MemebrGroup']}
+        * Contact person: {rec['Name']}
+        * Ticket Date: {created}
+        * Title: {title}
+        - 
+        ...............................................
+        Operation Checklist: 
+        {description}
+
+        Issue Link: https://dddmelb84.atlassian.net/browse/DTT-{issue_key}
+        Please check all issues assigned to you as first priority ‼️
+        """)
+    
             
-            create_url = "https://api.notion.com/v1/pages"
-
-            payload = {"parent": {"database_id": os.environ.get('NOTION_DB_ID')}, "properties": data}
-
-            res = requests.post(create_url, headers=headers, json=payload)
-            # print(res.status_code)
-            return res.status_code
+        await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID)
         
-        async def send_telegram_msg():
-            msg = f"""
-            🎤AV EQ Request Form🎤
+        return JsonResponse({'status': 'success'})
 
-            * Department/Group: {req['borrower_dept']}
-            * Contact person: {req['borrower_name']}
-            * Event: {req['event']}
-
-            * Date of request: {req['claim_date']}
-            * Date of event: {req['claim_date']}
-            * Event start time: {req['start_time']}
-            * Event End Time (return time): {req['end_time']}
-            * Location: {req['claim_location']}
-            * Attendees(#): 
-            * Equipment required: {req['item']}
-            - 
-            ...............................................
-            Operation Checklist: 
-            (✔️Please tick below)
-
-            {'✅Canva' if req['slides_needed'] == 'Canva' else '▫️Canva'}
-            {'✅PPT (no animation)' if req['slides_needed'] == 'PPT (no animation)' else '▫️PPT (no animation)'}
-            {'✅PPT (with animation)' if req['slides_needed'] == 'PPT (with animation)' else '▫️PPT (with animation)'}
-            {'✅Videos' if req['need_bgm'] == 'Yes' else '▫️Videos'}
-            {'✅BGM' if req['need_bgm'] == 'Yes' else '▫️BGM'}
-            {'✅External link (e.g. Kahoot, Menti etc.): '+req['ext_link'] if req['ext_link'] != '' and req['ext_link'] != 'No' else '▫️External link (e.g. Kahoot, Menti etc.)'}
-            {'✅Zoom required' if req['zoom_required'] == 'Yes' else '▫️Zoom required'}
-            ▫️Recording required
-
-            All materials must be sent at least a day prior to the event ‼️
-            """
-            
-
-            await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID)
-            return JsonResponse({'status': 'success'})
-        
-        start_time = req["claim_date"]+"T"+req["start_time"]+":00+10:00"
-        end_time = req["claim_date"]+"T"+req["end_time"]+":00+10:00"
-
-        data = {
-            "Name": {"title": [{"text": {"content": req["borrower_dept"]+": "+req["borrower_name"]}}]},
-            "Item to Borrow": {"rich_text": [{"text": {"content": "Request for "+req["item"]}}]},
-            "Borrow Period": {"date": {"start":start_time, "end": end_time}}
-        }
-        notion_res = create_page(data)
-        print(notion_res)
-        if notion_res == 200:
-            telegram_res = await send_telegram_msg()
-            
-            if telegram_res.status_code == 200:
-                return JsonResponse({'status': 'success'})
-            return JsonResponse({'status': 'failed for Telegram'}, status=400)
-        
-        return JsonResponse({'status': 'failed for Notion'}, status=400)
-
-
-
+    return JsonResponse({'status': 'failed'}, status=400)

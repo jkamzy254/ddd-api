@@ -13,5 +13,6 @@ urlpatterns = [
     #New BBT Data
 	# path('jira_webhook/', jira.JiraWebHookViewSet.as_view()),
 	path('jira_webhook/', jira.jira_webhook, name='jira_webhook'),
+	path('ddd_ticket/', tkt.ddd_ticket, name='ddd_ticket'),
 	path('av_form_webhook/', gfn.av_form_webhook, name='av_form_webhook'),
 ]

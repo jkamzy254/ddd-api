@@ -107,6 +107,7 @@ CORS_ORIGIN_WHITELIST = (
     'http://127.0.0.1:8000',
     'https://dddmelb84.atlassian.net', #Jira URL
     'https://ang-dj.herokuapp.com', #Django backend
+    'https://dj-ang-cbc8313b3d0f.herokuapp.com', #Django backend 2
     'https://ddd-ticket-trial-6cb8f882f1d8.herokuapp.com', #Ticket Module Testing Site
     'https://ddd-edu-trial-8ac6a6509c36.herokuapp.com', #Edu Module Testing Site
     'https://cadillac-dpi-vr-bd6205ea960b.herokuapp.com', #Main (production) Site
@@ -149,7 +150,7 @@ DATABASES = {
         'PORT': os.environ.get('DBPORT'),
 
         'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
+            'driver': 'ODBC Driver 18 for SQL Server',
         },
     },
 }

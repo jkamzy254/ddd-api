@@ -26,13 +26,13 @@ MSG_THREAD_ID = os.environ.get('TELEGRAM_TICKET_MSG_THREAD_ID')
 @csrf_exempt
 @async_to_sync
 async def ticket_webhook(request):
-    def update_issue(uid):
+    def update_issue():
         with connection.cursor() as cursor:
             cursor.execute(
-                "EXEC spJiraSaveIssue @IssueKey=%s, @IssueData=%s, @IssueAction=%s",
-                [issue_id, issue_json, action]
+                "EXEC spJiraSaveIssue @IssueKey=%s, @IssueData=%s, @IssueAction=%s, @SenderID=%s",
+                [issue_id, issue_json, action, sender_id]
             )
-            cursor.execute("SELECT ID, UID, Group_IMWY, MemebrGroup, Name FROM MemberData WHERE userId = %s", [uid])
+            cursor.execute("SELECT ID, UID, Group_IMWY, MemebrGroup, Name FROM MemberData WHERE UID = %s", [sender_id])
             recs = cursor.fetchone()
             if recs:
                 rec = dict(zip([column[0] for column in cursor.description], recs))
@@ -65,7 +65,7 @@ async def ticket_webhook(request):
             message_body = 'Your ticket has a new update. Please check at your own convenience'
 
         
-        rec = await sync_to_async(update_issue)(sender_id)   
+        rec = await sync_to_async(update_issue)()   
         msg = textwrap.dedent(f"""
         🎤AV EQ Request Form🎤
 

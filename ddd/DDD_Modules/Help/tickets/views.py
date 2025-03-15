@@ -381,54 +381,6 @@ class GetMyIssuesViewSet(APIView):
         return Response(issues, status=status.HTTP_200_OK)
         
 
-# Django View to get an issue by its ID
-
-@csrf_exempt
-@async_to_sync
-async def issue_webhook(request):
-    def update_issue():
-        with connection.cursor() as cursor:
-            cursor.execute(f"EXEC spJiraSaveIssue  @IssueKey={issue_id}, @IssueData='{issue_json}', @IssueAction='{action}', @IssueAction='{action}'")
-            recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-        return recs
-        
-    # def delete_comment():
-    #     with connection.cursor() as cursor:
-    #         cursor.execute(f"""EXEC spJiraDeleteComment @CommentId='{comment_id}'""")
-    #         recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-    #     return recs
-    
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        print(data)
-        issue = data.get("issue", {})
-        issue_id = issue.get("id", "")
-        sender_id = data.get("issue", {}).get("fields", "").get("customfield_10073", "")
-        action = data.get('webhookEvent', 'Unknown event')
-        issue_json = json.dumps(issue, indent=2).replace("'","''")
-        
-        print(sender_id)
-        
-        rec = await sync_to_async(update_issue)()   
-    
-        # if project_id == "10000" or project_id == "10003":
-        #     if event == "comment_created":
-        #         recs = await sync_to_async(create_comment)()
-                
-        #     elif event == "comment_deleted":
-        #         recs = await sync_to_async(delete_comment)()
-                
-
-                
-        #     formatted_text = process_data(recs,comment_author_name)
-            
-        #     await bot.send_message(chat_id=CHAT_ID, text=formatted_text, message_thread_id=MSG_THREAD_ID)
-        
-        return JsonResponse({'status': 'success'})
-
-    return JsonResponse({'status': 'failed'}, status=400)
-
-
 
 class GetGroupIssuesViewSet(APIView):
     def get(self, request):

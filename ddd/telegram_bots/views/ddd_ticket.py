@@ -70,7 +70,7 @@ async def ticket_webhook(request):
         🔧 DDD CORRECTION TICKET 🌐
 
         * Department: {rec['Group_IMWY']}
-        * Group: {rec['MemebrGroup']}
+        * Group: {rec['MemberGroup']}
         * Contact person: {rec['Name']}
         * Ticket Date: {created}
         * Title: {title}

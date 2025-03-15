@@ -400,6 +400,7 @@ async def issue_webhook(request):
     
     if request.method == 'POST':
         data = json.loads(request.body)
+        print(data)
         issue = data.get("issue", {})
         issue_id = issue.get("id", "")
         sender_id = data.get("issue", {}).get("fields", "").get("customfield_10073", "")

@@ -51,7 +51,6 @@ async def ticket_webhook(request):
     
     if request.method == 'POST':
         data = json.loads(request.body)
-        print(data)
         issue = data.get("issue", {})
         issue_id = issue.get("id", "")
         issue_key = issue.get("key", "")
@@ -78,9 +77,9 @@ async def ticket_webhook(request):
         username = user_info.username  # This is None if the user has no username
 
         if username:
-            assignee = f"@{username}"
+                assignee = f"@{username}"
         else:
-            assignee = f"[Check Here](tg://user?id={rec['TelId']})".format(username)
+            assignee = f"[Check Here](tg://user?id={rec['TelId']})"
             
         msg = textwrap.dedent(f"""
         🔧 DDD CORRECTION TICKET 🌐
@@ -99,8 +98,10 @@ async def ticket_webhook(request):
         Assignee: {assignee}
         Please check all issues assigned to you as first priority ‼️
         """)
-    
-            
+        
+        # Escape markdown special characters if needed
+        msg = msg.replace("_", "\\_").replace("*", "\\*").replace("[", "\\[").replace("]", "\\]").replace("(", "\\(").replace(")", "\\)")
+
         await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID, parse_mode="Markdown")
         
         return JsonResponse({'status': 'success'})

@@ -32,7 +32,10 @@ async def ticket_webhook(request):
                 "EXEC spJiraSaveIssue @IssueKey=%s, @IssueData=%s, @IssueAction=%s, @SenderID=%s",
                 [issue_id, issue_json, action, sender_id]
             )
-            cursor.execute("SELECT ID, UID, Group_IMWY, MemberGroup, Name FROM MemberData WHERE UID = %s", [sender_id])
+            cursor.execute(
+                "SELECT ID, UID, Group_IMWY, MemberGroup, Name, (Select TelID From TelegramID Where UID = M.UID) TelId FROM MemberData M WHERE UID = %s", 
+                [sender_id]
+            )
             recs = cursor.fetchone()
             if recs:
                 rec = dict(zip([column[0] for column in cursor.description], recs))
@@ -48,7 +51,6 @@ async def ticket_webhook(request):
     
     if request.method == 'POST':
         data = json.loads(request.body)
-        print(data)
         issue = data.get("issue", {})
         issue_id = issue.get("id", "")
         issue_key = issue.get("key", "")
@@ -66,6 +68,14 @@ async def ticket_webhook(request):
 
         
         rec = await sync_to_async(update_issue)()   
+        user_info = await bot.get_chat(rec['TelId'])
+        username = user_info.username  # This is None if the user has no username
+
+        if username:
+            assignee = f"@{username}"
+        else:
+            assignee = f"[Check Here](tg://user?id={rec['TelId']})".format(username)
+            
         msg = textwrap.dedent(f"""
         🔧 DDD CORRECTION TICKET 🌐
 
@@ -79,12 +89,13 @@ async def ticket_webhook(request):
         Operation Checklist: 
         {description}
 
-        Issue Link: https://dddmelb84.atlassian.net/browse/DTT-{issue_key}
+        Issue Link: https://dddmelb84.atlassian.net/browse/{issue_key}
+        Assignee: {assignee}
         Please check all issues assigned to you as first priority ‼️
         """)
     
             
-        await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID)
+        await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID, parse_mode="Markdown")
         
         return JsonResponse({'status': 'success'})
 

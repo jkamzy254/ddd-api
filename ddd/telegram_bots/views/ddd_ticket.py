@@ -65,6 +65,11 @@ async def ticket_webhook(request):
         message_title = 'DDD Ticket Update'
         if action == 'jira:issue_updated':
             message_body = 'Your ticket has a new update. Please check at your own convenience'
+            
+        dt = datetime.strptime(created[:19], "%Y-%m-%dT%H:%M:%S")
+
+        # Format the date as '15th Mar, 2025'
+        formatted_date = dt.strftime("%d %b, %Y")
 
         
         rec = await sync_to_async(update_issue)()   
@@ -82,7 +87,7 @@ async def ticket_webhook(request):
         * Department: {rec['Group_IMWY']}
         * Group: {rec['MemberGroup']}
         * Contact person: {rec['Name']}
-        * Ticket Date: {created}
+        * Ticket Date: {formatted_date}
         * Title: {title}
         - 
         ...............................................

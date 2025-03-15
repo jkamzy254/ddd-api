@@ -67,7 +67,7 @@ async def ticket_webhook(request):
         
         rec = await sync_to_async(update_issue)()   
         msg = textwrap.dedent(f"""
-        🔧DDD CORRECTION ISSUE🌐
+        🔧 DDD CORRECTION TICKET 🌐
 
         * Department: {rec['Group_IMWY']}
         * Group: {rec['MemebrGroup']}

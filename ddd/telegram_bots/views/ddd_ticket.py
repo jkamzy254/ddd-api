@@ -32,7 +32,7 @@ async def ticket_webhook(request):
                 "EXEC spJiraSaveIssue @IssueKey=%s, @IssueData=%s, @IssueAction=%s, @SenderID=%s",
                 [issue_id, issue_json, action, sender_id]
             )
-            cursor.execute("SELECT ID, UID, Group_IMWY, MemebrGroup, Name FROM MemberData WHERE UID = %s", [sender_id])
+            cursor.execute("SELECT ID, UID, Group_IMWY, MemberGroup, Name FROM MemberData WHERE UID = %s", [sender_id])
             recs = cursor.fetchone()
             if recs:
                 rec = dict(zip([column[0] for column in cursor.description], recs))
@@ -67,7 +67,7 @@ async def ticket_webhook(request):
         
         rec = await sync_to_async(update_issue)()   
         msg = textwrap.dedent(f"""
-        🎤AV EQ Request Form🎤
+        🔧DDD CORRECTION ISSUE🌐
 
         * Department: {rec['Group_IMWY']}
         * Group: {rec['MemebrGroup']}

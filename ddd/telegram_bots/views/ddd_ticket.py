@@ -66,7 +66,7 @@ async def ticket_webhook(request):
         if action == 'jira:issue_updated':
             message_body = 'Your ticket has a new update. Please check at your own convenience'
             
-        dt = datetime.strptime(created[:19], "%Y-%m-%dT%H:%M:%S")
+        dt = datetime.datetime.strptime(created[:19], "%Y-%m-%dT%H:%M:%S")
 
         # Format the date as '15th Mar, 2025'
         formatted_date = dt.strftime("%d %b, %Y")

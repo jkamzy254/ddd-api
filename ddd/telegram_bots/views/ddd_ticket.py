@@ -51,6 +51,7 @@ async def ticket_webhook(request):
     
     if request.method == 'POST':
         data = json.loads(request.body)
+        print(data)
         issue = data.get("issue", {})
         issue_id = issue.get("id", "")
         issue_key = issue.get("key", "")

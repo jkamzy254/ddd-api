@@ -38,7 +38,7 @@ async def ticket_webhook(request):
                 added_by = dict(zip([column[0] for column in cursor.description], creator))
             else:
                 added_by = None
-            cursor.execute("SELECT TelID FROM TelegramID WHERE UID = %s", [assigned])
+            cursor.execute("SELECT TelID FROM TelegramID WHERE UID = %s", [assigned,])
             assigned_to = cursor.fetchone()
             if assigned_to:
                 assigned = dict(zip([column[0] for column in cursor.description], assigned_to))

@@ -107,7 +107,7 @@ async def ticket_webhook(request):
         Description: 
         {escape_markdown_v2(description)}
 
-        Issue Link: {escape_markdown_v2(f"https://dddmelb84.atlassian.net/browse/{issue_key}")}
+        Issue Link: {escape_markdown_v2(f"https://dddmelb84\\.atlassian\\.net/browse/{issue_key}")}
         Assignee: {escape_markdown_v2(assignee)}
         Please check all issues assigned to you as first priority ‼️
         """)

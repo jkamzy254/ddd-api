@@ -96,13 +96,13 @@ async def ticket_webhook(request):
         msg = textwrap.dedent(f"""
         🔧 DDD CORRECTION TICKET 🌐
 
-        * Department: {escape_markdown_v2(sender['Group_IMWY'])}
-        * Group: {escape_markdown_v2(sender['MemberGroup'])}
-        * Created By: {escape_markdown_v2(sender['Name'])}
-        * Ticket Date: {escape_markdown_v2(formatted_date)}
-        * Title: {escape_markdown_v2(title)}
-        * Attachments: {escape_markdown_v2(str(len(attachment)))}
-        - 
+        \\* Department: {escape_markdown_v2(sender['Group_IMWY'])}
+        \\* Group: {escape_markdown_v2(sender['MemberGroup'])}
+        \\* Created By: {escape_markdown_v2(sender['Name'])}
+        \\* Ticket Date: {escape_markdown_v2(formatted_date)}
+        \\* Title: {escape_markdown_v2(title)}
+        \\* Attachments: {escape_markdown_v2(str(len(attachment)))}
+        \\- 
         ...............................................
         Description: 
         {escape_markdown_v2(description)}
@@ -111,7 +111,7 @@ async def ticket_webhook(request):
         Assignee: {escape_markdown_v2(assignee)}
         Please check all issues assigned to you as first priority ‼️
         """)
-        
+                
         print(msg)
 
         await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID, parse_mode="MarkdownV2")

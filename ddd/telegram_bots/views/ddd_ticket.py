@@ -4,7 +4,7 @@ from django.views.decorators.csrf import csrf_exempt
 from telegram import Bot
 from telegram.request import HTTPXRequest
 import json
-import requests
+import re
 import datetime
 from django.db import connection
 from asgiref.sync import async_to_sync, sync_to_async
@@ -88,27 +88,29 @@ async def ticket_webhook(request):
         else:
             assignee = f"[Check Here](tg://user?id={str(assigned_to)})"
             
+        def escape_markdown_v2(text):
+            reserved_chars = r'\_*[]()~`>#+-=|{}.!'
+            return re.sub(f'([{re.escape(reserved_chars)}])', r'\\\1', text)
+
+        # Escape all dynamic parts of the message
         msg = textwrap.dedent(f"""
         🔧 DDD CORRECTION TICKET 🌐
 
-        * Department: {sender['Group_IMWY']}
-        * Group: {sender['MemberGroup']}
-        * Created By: {sender['Name']}
-        * Ticket Date: {formatted_date}
-        * Title: {title}
-        * Attachments: {len(attachment)}
+        * Department: {escape_markdown_v2(sender['Group_IMWY'])}
+        * Group: {escape_markdown_v2(sender['MemberGroup'])}
+        * Created By: {escape_markdown_v2(sender['Name'])}
+        * Ticket Date: {escape_markdown_v2(formatted_date)}
+        * Title: {escape_markdown_v2(title)}
+        * Attachments: {escape_markdown_v2(str(len(attachment)))}
         - 
         ...............................................
         Description: 
-        {description}
+        {escape_markdown_v2(description)}
 
-        Issue Link: https://dddmelb84.atlassian.net/browse/{issue_key}
-        Assignee: {assignee}
+        Issue Link: {escape_markdown_v2(f"https://dddmelb84.atlassian.net/browse/{issue_key}")}
+        Assignee: {escape_markdown_v2(assignee)}
         Please check all issues assigned to you as first priority ‼️
         """)
-        
-        # Escape markdown special characters if needed
-        msg = msg.replace("_", "\\_").replace("*", "\\*").replace("[", "\\[").replace("]", "\\]").replace("(", "\\(").replace(")", "\\)")
         
         print(msg)
 

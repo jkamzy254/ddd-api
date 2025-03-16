@@ -112,7 +112,7 @@ async def ticket_webhook(request):
         
         print(msg)
 
-        await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID, parse_mode="Markdown")
+        await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID, parse_mode="MarkdownV2")
         
         return JsonResponse({'status': 'success'})
 

@@ -38,22 +38,16 @@ async def ticket_webhook(request):
                 added_by = dict(zip([column[0] for column in cursor.description], creator))
             else:
                 added_by = None
-            cursor.execute("SELECT TelID FROM TelegramID WHERE UID = %s", [assigned,])
+            cursor.execute("SELECT TelID FROM TelegramID WHERE UID = (Select UID From JiraUserTable Where JiraID = %s)", [assigned])
             assigned_to = cursor.fetchone()
             if assigned_to:
-                assigned = dict(zip([column[0] for column in cursor.description], assigned_to))
+                assign = dict(zip([column[0] for column in cursor.description], assigned_to))
             else:
-                assigned = None
+                assign = None
         return {
             "added_by": added_by,
-            "assigned": assigned,
+            "assigned": assign,
         }
-        
-    # def delete_comment():
-    #     with connection.cursor() as cursor:
-    #         cursor.execute(f"""EXEC spJiraDeleteComment @CommentId='{comment_id}'""")
-    #         recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-    #     return recs
     
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -61,8 +55,8 @@ async def ticket_webhook(request):
         issue_id = issue.get("id", "")
         issue_key = issue.get("key", "")
         fields = data.get("issue", {}).get("fields", "")
-        assigned = fields.get("assignee", {}).get("accoundId", "")
         sender_id = fields.get("customfield_10073", "")
+        assigned = fields.get("assignee", {}).get("accountId", "")
         description = fields.get("description", "")
         created = fields.get("created", "")
         title = fields.get("summary", "")
@@ -84,13 +78,13 @@ async def ticket_webhook(request):
         sender = resp['added_by'] 
         assigned_to = resp['assigned']
         
-        user_info = await bot.get_chat(assigned_to['TelId'])
+        user_info = await bot.get_chat(assigned_to['TelID'])
         username = user_info.username  # This is None if the user has no username
 
         if username:
                 assignee = f"@{username}"
         else:
-            assignee = f"[Check Here](tg://user?id={assigned_to['TelId']})"
+            assignee = f"[Check Here](tg://user?id={assigned_to['TelID']})"
             
         msg = textwrap.dedent(f"""
         🔧 DDD CORRECTION TICKET 🌐
@@ -103,7 +97,7 @@ async def ticket_webhook(request):
         * Attachments: {len(attachment)}
         - 
         ...............................................
-        Operation Checklist: 
+        Description: 
         {description}
 
         Issue Link: https://dddmelb84.atlassian.net/browse/{issue_key}
@@ -113,6 +107,8 @@ async def ticket_webhook(request):
         
         # Escape markdown special characters if needed
         msg = msg.replace("_", "\\_").replace("*", "\\*").replace("[", "\\[").replace("]", "\\]").replace("(", "\\(").replace(")", "\\)")
+        
+        print(msg)
 
         await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID, parse_mode="Markdown")
         

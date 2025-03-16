@@ -32,16 +32,22 @@ async def ticket_webhook(request):
                 "EXEC spJiraSaveIssue @IssueKey=%s, @IssueData=%s, @IssueAction=%s, @SenderID=%s",
                 [issue_id, issue_json, action, sender_id]
             )
-            cursor.execute(
-                "SELECT ID, UID, Group_IMWY, MemberGroup, Name, (Select TelID From TelegramID Where UID = M.UID) TelId FROM MemberData M WHERE UID = %s", 
-                [sender_id]
-            )
-            recs = cursor.fetchone()
-            if recs:
-                rec = dict(zip([column[0] for column in cursor.description], recs))
+            cursor.execute("SELECT ID, UID, Group_IMWY, MemberGroup, Name, (Select TelID From TelegramID Where UID = M.UID) TelId FROM MemberData M WHERE UID = %s", [sender_id])
+            creator = cursor.fetchone()
+            if creator:
+                added_by = dict(zip([column[0] for column in cursor.description], creator))
             else:
-                rec = None
-        return rec
+                added_by = None
+            cursor.execute("SELECT TelID FROM TelegramID WHERE UID = %s", [assigned])
+            assigned_to = cursor.fetchone()
+            if assigned_to:
+                assigned = dict(zip([column[0] for column in cursor.description], assigned_to))
+            else:
+                assigned = None
+        return {
+            "added_by": added_by,
+            "assigned": assigned,
+        }
         
     # def delete_comment():
     #     with connection.cursor() as cursor:
@@ -55,10 +61,12 @@ async def ticket_webhook(request):
         issue_id = issue.get("id", "")
         issue_key = issue.get("key", "")
         fields = data.get("issue", {}).get("fields", "")
+        assigned = fields.get("assignee", {}).get("accoundId", "")
         sender_id = fields.get("customfield_10073", "")
         description = fields.get("description", "")
         created = fields.get("created", "")
         title = fields.get("summary", "")
+        attachment = fields.get("attachment", "")
         action = data.get('webhookEvent', 'Unknown event')
         issue_json = json.dumps(issue, indent=2).replace("'","''")
         
@@ -72,23 +80,27 @@ async def ticket_webhook(request):
         formatted_date = dt.strftime("%d %b, %Y")
 
         
-        rec = await sync_to_async(update_issue)()   
-        user_info = await bot.get_chat(rec['TelId'])
+        resp = await sync_to_async(update_issue)()   
+        sender = resp['added_by'] 
+        assigned_to = resp['assigned']
+        
+        user_info = await bot.get_chat(assigned_to['TelId'])
         username = user_info.username  # This is None if the user has no username
 
         if username:
                 assignee = f"@{username}"
         else:
-            assignee = f"[Check Here](tg://user?id={rec['TelId']})"
+            assignee = f"[Check Here](tg://user?id={assigned_to['TelId']})"
             
         msg = textwrap.dedent(f"""
         🔧 DDD CORRECTION TICKET 🌐
 
-        * Department: {rec['Group_IMWY']}
-        * Group: {rec['MemberGroup']}
-        * Contact person: {rec['Name']}
+        * Department: {sender['Group_IMWY']}
+        * Group: {sender['MemberGroup']}
+        * Created By: {sender['Name']}
         * Ticket Date: {formatted_date}
         * Title: {title}
+        * Attachments: {len(attachment)}
         - 
         ...............................................
         Operation Checklist: 

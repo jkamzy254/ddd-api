@@ -46,7 +46,7 @@ async def ticket_webhook(request):
                 assign = None
         return {
             "added_by": added_by,
-            "assigned": assign,
+            "assigned": assign['TelID'],
         }
     
     if request.method == 'POST':
@@ -77,14 +77,16 @@ async def ticket_webhook(request):
         resp = await sync_to_async(update_issue)()   
         sender = resp['added_by'] 
         assigned_to = resp['assigned']
+        print("Assigned To: ", assigned_to)
         
-        user_info = await bot.get_chat(assigned_to['TelID'])
+        user_info = await bot.get_chat(str(assigned_to))
+        print(user_info)
         username = user_info.username  # This is None if the user has no username
 
         if username:
                 assignee = f"@{username}"
         else:
-            assignee = f"[Check Here](tg://user?id={assigned_to['TelID']})"
+            assignee = f"[Check Here](tg://user?id={str(assigned_to)})"
             
         msg = textwrap.dedent(f"""
         🔧 DDD CORRECTION TICKET 🌐

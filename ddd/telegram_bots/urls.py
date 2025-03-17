@@ -6,6 +6,7 @@ import debug_toolbar
 
 from .views import ddd_ticket as tkt
 from .views import jira_update as jira
+from .views import ddd_ticket as tkt
 from .views import google_forms_to_notion as gfn
 
 
@@ -13,6 +14,6 @@ urlpatterns = [
     #New BBT Data
 	# path('jira_webhook/', jira.JiraWebHookViewSet.as_view()),
 	path('jira_webhook/', jira.jira_webhook, name='jira_webhook'),
-	path('ddd_ticket/', tkt.ddd_ticket, name='ddd_ticket'),
+	path('ddd_ticket/', tkt.ticket_webhook, name='ddd_ticket'),
 	path('av_form_webhook/', gfn.av_form_webhook, name='av_form_webhook'),
 ]

@@ -21,7 +21,7 @@ from ddd.utils import decode_jwt
 from telegram import Bot
 from telegram.request import HTTPXRequest
 
-import datetime, json, pandas as pd
+import datetime, json, random, pandas as pd
 
 load_dotenv(find_dotenv())
 
@@ -50,13 +50,19 @@ class AddTicketViewSet(APIView):
         def create_jira_issue(project_key, summary, description, issue_type_id, uploads=None, urls=None):
             jira = get_jira_client()
             
+            
+            user_list = ["5fc6aa25facfd6007632ccfa", "5f9020eff162650070c78aa8"]
+            random_user = random.choice(user_list)
+
+            
             # Define issue details
             issue_dict = {
                 'project': {'key':project_key},
                 'summary': summary,
                 'description': description,
                 'issuetype': {'id': issue_type_id},
-                'customfield_10073': token['UID']
+                'customfield_10073': token['UID'],
+                'assignee': {'accountId': random_user}
             }
             if len(urls) > 0:
                 issue_dict['customfield_10114'] = urls
@@ -388,8 +394,6 @@ class GetMyIssuesViewSet(APIView):
 
         return Response(issues, status=status.HTTP_200_OK)
         
-
-# Django View to get an issue by its ID
 
 
 class GetGroupIssuesViewSet(APIView):

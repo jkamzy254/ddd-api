@@ -3803,3 +3803,178 @@ def classes(g, d, access, time):
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
+
+
+
+
+
+
+
+
+def edu(day, g, d, access):
+                
+    g = g if access == 'Group' else '%'
+    d = d.capitalize().replace('d','D')
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    else:
+        grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+    
+    days = {'fri': ['FriAtt, FriOnl, FriRep, FriAbs',
+                    'SUM(FriAtt), SUM(FriOnl), SUM(FriRep), SUM(FriAbs)',
+                    'Friday Education Attendance Summary'],
+            'sun': ['SunAtt, SunOnl, SunRep, SunAbs',
+                    'SUM(SunAtt), SUM(SunOnl), SUM(SunRep), SUM(SunAbs)',
+                    'Sunday Education Attendance Summary'],
+            'mon': ['MonAtt, MonOnl, MonRep, MonAbs',
+                    'SUM(MonAtt), SUM(MonOnl), SUM(MonRep), SUM(MonAbs)',
+                    'Monday Education Attendance Summary'],
+            'cubs': ['Cubs1R, Cubs1NR, Cubs2R, Cubs2NR',
+                     'SUM(Cubs1R), SUM(Cubs1NR), SUM(Cubs2R), SUM(Cubs2NR)',
+                    'CUBS Reading Summary']}
+    
+    columns = '[1R|1N|2R|2N]' if day == 'cubs' else '[AT|OL|RP|AB]'
+    
+    print(f"edu parameters:   day = '{day}'       g = '{g}'          d = '{d}'          access = '{access}'")
+    
+    conn = odbc.connect(conn_str)
+    edu_group  = f"SELECT Grp, {days[day][0]} FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+    edu_dept   = f"SELECT Dept, {days[day][1]} FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
+    edu_region = f"SELECT Region, {days[day][1]} FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Region"
+    edu_youth  = f"SELECT {days[day][1]} FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+    
+    print(edu_group)
+    
+    dg = pd.read_sql(edu_group, conn)
+    dd = pd.read_sql(edu_dept, conn)
+    dr = pd.read_sql(edu_region, conn)
+    dy = pd.read_sql(edu_youth, conn)
+
+    dg.columns = ['Grp','Att','Onl','Rep','Abs']
+    dd.columns = ['Dept','Att','Onl','Rep','Abs']
+    dr.columns = ['Region','Att','Onl','Rep','Abs']
+    dy.columns = ['Att','Onl','Rep','Abs']
+    dd.replace(r' Dept',r'', regex = True, inplace = True)
+    
+    conn.cursor().close()
+          
+    group = str()    
+    for r in range(len(dg)):
+        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        at  = ' '*(2-len(str(dg.loc[r,'Att']))) + str(dg.loc[r,'Att'])
+        on  = ' '*(2-len(str(dg.loc[r,'Onl']))) + str(dg.loc[r,'Onl'])
+        rp  = ' '*(2-len(str(dg.loc[r,'Rep']))) + str(dg.loc[r,'Rep'])
+        ab  = ' '*(2-len(str(dg.loc[r,'Abs']))) + str(dg.loc[r,'Abs'])
+        group = f'{group}{grp}[{at}|{on}|{rp}|{ab}]\n'
+    group = group + '\n'
+            
+    dept = str()  
+    if access != 'Group':
+        for r in range(len(dd)):
+            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            at  = ' '*(2-len(str(dd.loc[r,'Att']))) + str(dd.loc[r,'Att'])
+            on  = ' '*(2-len(str(dd.loc[r,'Onl']))) + str(dd.loc[r,'Onl'])
+            rp  = ' '*(2-len(str(dd.loc[r,'Rep']))) + str(dd.loc[r,'Rep'])
+            ab  = ' '*(2-len(str(dd.loc[r,'Abs']))) + str(dd.loc[r,'Abs'])
+            dept = f'{dept}{dpt}[{at}|{on}|{rp}|{ab}]\n'
+        dept = dept + '\n'
+    
+    region = str()
+    if d.endswith('D[0-9]%'):    
+        for r in range(len(dr)):
+            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+            at  = ' '*(2-len(str(dr.loc[r,'Att']))) + str(dr.loc[r,'Att'])
+            on  = ' '*(2-len(str(dr.loc[r,'Onl']))) + str(dr.loc[r,'Onl'])
+            rp  = ' '*(2-len(str(dr.loc[r,'Rep']))) + str(dr.loc[r,'Rep'])
+            ab  = ' '*(2-len(str(dr.loc[r,'Abs']))) + str(dr.loc[r,'Abs'])
+            region = f'{region}{reg}[{at}|{on}|{rp}|{ab}]\n'
+        region = region + '\n'
+    
+    total = str()
+    if d == '_D[0-9]%':
+        at  = ' '*(2-len(str(dy.loc[0,'Att']))) + str(dy.loc[0,'Att'])
+        on  = ' '*(2-len(str(dy.loc[0,'Onl']))) + str(dy.loc[0,'Onl'])
+        rp  = ' '*(2-len(str(dy.loc[0,'Rep']))) + str(dy.loc[0,'Rep'])
+        ab  = ' '*(2-len(str(dy.loc[0,'Abs']))) + str(dy.loc[0,'Abs'])
+        total = f'Total[{at}|{on}|{rp}|{ab}]'
+    
+    summary = f"<b><u>{grpdept} {days[day][2]}</u></b>\n\n<pre>     {columns}\n\n{group}{dept}{region}{total}</pre>"
+    summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
+    summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
+    return summary
+
+
+
+
+def edurev(g, d, access):
+                
+    g = g if access == 'Group' else '%'
+    d = d.capitalize().replace('d','D')
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    else:
+        grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+        
+    print(f"edu parameters:   g = '{g}'          d = '{d}'          access = '{access}'")
+    
+    conn = odbc.connect(conn_str)
+    edu_group  = f"SELECT Grp, RevS, RevNS FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+    edu_dept   = f"SELECT Dept, SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
+    edu_region = f"SELECT Region, SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Region"
+    edu_youth  = f"SELECT SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+    
+    print(edu_group)
+    
+    dg = pd.read_sql(edu_group, conn)
+    dd = pd.read_sql(edu_dept, conn)
+    dr = pd.read_sql(edu_region, conn)
+    dy = pd.read_sql(edu_youth, conn)
+
+    dg.columns = ['Grp','RevS','RevNS']
+    dd.columns = ['Dept','RevS','RevNS']
+    dr.columns = ['Region','RevS','RevNS']
+    dy.columns = ['RevS','RevNS']
+    dd.replace(r' Dept',r'', regex = True, inplace = True)
+    
+    conn.cursor().close()
+          
+    group = str()    
+    for r in range(len(dg)):
+        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        rs  = ' '*(2-len(str(dg.loc[r,'RevS']))) + str(dg.loc[r,'RevS'])
+        rn  = ' '*(2-len(str(dg.loc[r,'RevNS']))) + str(dg.loc[r,'RevNS'])
+        group = f'{group}{grp}[{rs}|{rn}]\n'
+    group = group + '\n'
+            
+    dept = str()  
+    if access != 'Group':
+        for r in range(len(dd)):
+            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            rs  = ' '*(2-len(str(dd.loc[r,'RevS']))) + str(dd.loc[r,'RevS'])
+            rn  = ' '*(2-len(str(dd.loc[r,'RevNS']))) + str(dd.loc[r,'RevNS'])
+            dept = f'{dept}{dpt}[{rs}|{rn}]\n'
+        dept = dept + '\n'
+    
+    region = str()
+    if d.endswith('D[0-9]%'):    
+        for r in range(len(dr)):
+            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+            rs  = ' '*(2-len(str(dr.loc[r,'RevS']))) + str(dr.loc[r,'RevS'])
+            rn  = ' '*(2-len(str(dr.loc[r,'RevNS']))) + str(dr.loc[r,'RevNS'])
+            region = f'{region}{reg}[{rs}|{rn}]\n'
+        region = region + '\n'
+    
+    total = str()
+    if d == '_D[0-9]%':
+        rs  = ' '*(2-len(str(dy.loc[0,'RevS']))) + str(dy.loc[0,'RevS'])
+        rn  = ' '*(2-len(str(dy.loc[0,'RevNS']))) + str(dy.loc[0,'RevNS'])
+        total = f'Total[{rs}|{rn}]'
+    
+    summary = f"<b><u>{grpdept} Revelation Speech Summary (Mon → Sun) </u></b>\n\n<pre>     [ S|NS]\n\n{group}{dept}{region}{total}</pre>"
+    summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
+    summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
+    return summary

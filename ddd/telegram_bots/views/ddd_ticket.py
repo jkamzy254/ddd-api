@@ -96,7 +96,7 @@ async def ticket_webhook(request):
             return escape_markdown(text, version=2)
         
         msg = textwrap.dedent(f"""
-            🔧 *DDD CORRECTION TICKET* 🌐
+            🔧 **DDD CORRECTION TICKET** 🌐
 
             \* **Department:** {escape_markdown_v2(sender['Group_IMWY'])}
             \* **Group:** {escape_markdown_v2(sender['MemberGroup'])}

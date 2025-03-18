@@ -45,7 +45,9 @@ class GetMyIssuesViewSet(APIView):
                 query = "SELECT Issue FROM JiraTicket WHERE SenderId = %s"
                 cursor.execute(query, (token['UID'],))
                 issuerecs = [record[0] for record in cursor.fetchall()]
+                print(issuerecs)
                 for rec in issuerecs:
+                    print(rec)
                     issues.append(json.loads(rec))
                     
         except Exception as e:

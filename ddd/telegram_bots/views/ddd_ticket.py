@@ -2,6 +2,7 @@ import textwrap
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import telegram
+from telegram.helpers import escape_markdown
 from telegram import Bot
 from telegram.request import HTTPXRequest
 import json
@@ -91,7 +92,7 @@ async def ticket_webhook(request):
             assignee = f"[{first_name}](tg://user?id={assigned_to['TelID']})"
             
         def escape_markdown_v2(text):
-            return telegram.utils.helpers.escape_markdown(text, version=2)
+            return escape_markdown(text, version=2)
         
         msg = textwrap.dedent(f"""
             🔧 DDD CORRECTION TICKET 🌐

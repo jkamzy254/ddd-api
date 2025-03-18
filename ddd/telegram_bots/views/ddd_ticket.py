@@ -96,22 +96,22 @@ async def ticket_webhook(request):
             return escape_markdown(text, version=2)
         
         msg = textwrap.dedent(f"""
-            🔧 **DDD CORRECTION TICKET** 🌐
+            🔧 *DDD CORRECTION TICKET* 🌐
 
-            \* **Department:** {escape_markdown_v2(sender['Group_IMWY'])}
-            \* **Group:** {escape_markdown_v2(sender['MemberGroup'])}
-            \* **Created By:** {escape_markdown_v2(sender['Name'])}
-            \* **Ticket Date:** {escape_markdown_v2(formatted_date)}
-            \* **Title:** {escape_markdown_v2(title)}
-            \* **Attachments:** {escape_markdown_v2(str(len(attachment)))}
+            \* *Department:* {escape_markdown_v2(sender['Group_IMWY'])}
+            \* *Group:* {escape_markdown_v2(sender['MemberGroup'])}
+            \* *Created By:* {escape_markdown_v2(sender['Name'])}
+            \* *Ticket Date:* {escape_markdown_v2(formatted_date)}
+            \* *Title:* {escape_markdown_v2(title)}
+            \* *Attachments:* {escape_markdown_v2(str(len(attachment)))}
 
-            {escape_markdown_v2('...............................................')}
-            **Description:** 
+            *{escape_markdown_v2('...............................................')}*
+            *Description:* 
             {escape_markdown_v2(description)}
 
-            **Issue Link:** {escape_markdown_v2(f"https://dddmelb84.atlassian.net/browse/{issue_key}")}
-            **Assignee:** {assignee}
-            *Please check all issues assigned to you as first priority* ‼️
+            *Issue Link:* {escape_markdown_v2(f"https://dddmelb84.atlassian.net/browse/{issue_key}")}
+            *Assignee:* {assignee}
+            _Please check all issues assigned to you as first priority_ ‼️
             """)
 
         print(msg)

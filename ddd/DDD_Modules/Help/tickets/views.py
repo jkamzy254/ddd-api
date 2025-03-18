@@ -45,10 +45,9 @@ class GetMyIssuesViewSet(APIView):
                 query = "SELECT Issue FROM JiraTicket WHERE SenderId = %s"
                 cursor.execute(query, (token['UID'],))
                 issuerecs = [record[0] for record in cursor.fetchall()]
-                print(issuerecs)
                 for rec in issuerecs:
-                    print(rec)
-                    issues.append(json.loads(rec))
+                    if rec != None:
+                        issues.append(json.loads(rec))
                     
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
@@ -69,10 +68,11 @@ class GetGroupIssuesViewSet(APIView):
                 cursor.execute(query, (token['UID'],))
                 issuerecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 for rec in issuerecs:
-                    issue_raw = json.loads(rec['Issue'])
-                    issue_raw['Member'] = rec['Mname']
-            
-                    issues.append(issue_raw)  
+                    if rec['Issue'] != None:
+                        issue_raw = json.loads(rec['Issue'])
+                        issue_raw['Member'] = rec['Mname']
+                
+                        issues.append(issue_raw)  
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

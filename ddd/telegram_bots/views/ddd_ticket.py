@@ -118,7 +118,7 @@ async def ticket_webhook(request):
 
         #Add error handling as mentioned in the previous response.
         try:
-            await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID, parse_mode=telegram.ParseMode.MARKDOWN_V2)
+            await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID, parse_mode=ParseMode.MARKDOWN_V2)
         except telegram.error.TelegramError as e:
             print(f"Error sending message: {e}")
         

@@ -110,7 +110,7 @@ async def ticket_webhook(request):
             {escape_markdown_v2(description)}
 
             Issue Link: {escape_markdown_v2(f"https://dddmelb84.atlassian.net/browse/{issue_key}")}
-            Assignee: {escape_markdown_v2(assignee)}
+            Assignee: {assignee}
             Please check all issues assigned to you as first priority ‼️
             """)
 
@@ -118,7 +118,7 @@ async def ticket_webhook(request):
 
         #Add error handling as mentioned in the previous response.
         try:
-            await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID, parse_mode=ParseMode.MARKDOWN_V2)
+            await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID, parse_mode=ParseMode.MARKDOWN)
         except telegram.error.TelegramError as e:
             print(f"Error sending message: {e}")
         

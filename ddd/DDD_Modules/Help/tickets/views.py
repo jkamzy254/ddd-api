@@ -29,6 +29,55 @@ def get_jira_client():
     jira = JIRA(options=jira_options, basic_auth=(os.environ.get('JIRA_USERNAME'), os.environ.get('TICKET_TOKEN')))
     return jira
 
+# Django View to get an issue by its ID
+class GetMyIssuesViewSet(APIView):
+    def get(self, request):
+        jira = get_jira_client()
+        
+        
+        try:
+            token = decode_jwt(request)   
+            issues = []
+            fields = "summary,status,assignee,customfield_10114,customfield_10073, issuetype, created, updated, description, attachment, comment"  # Limit fields to only required ones
+            issue_ids = []
+            with connection.cursor() as cursor:
+                query = "SELECT Issue FROM JiraTicket WHERE SenderId = %s"
+                cursor.execute(query, (token['UID'],))
+                issuerecs = [record[0] for record in cursor.fetchall()]
+                for rec in issuerecs:
+                    if rec != None:
+                        issues.append(json.loads(rec))
+                    
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(issues, status=status.HTTP_200_OK)
+
+class GetGroupIssuesViewSet(APIView):
+    def get(self, request):
+        jira = get_jira_client()
+        
+        try:
+            token = decode_jwt(request)   
+            issues = []
+            with connection.cursor() as cursor:
+                
+                query = "SELECT M.Name 'Mname', J.Issue FROM JiraTicket J LEFT JOIN MemberData M ON M.UID = J.SenderId WHERE M.MemberGroup = (Select MemberGroup From MemberData WHERE UID = %s)"
+                cursor.execute(query, (token['UID'],))
+                issuerecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                for rec in issuerecs:
+                    if rec['Issue'] != None:
+                        issue_raw = json.loads(rec['Issue'])
+                        issue_raw['Member'] = rec['Mname']
+                
+                        issues.append(issue_raw)  
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(issues, status=status.HTTP_200_OK)
+    
 class AddTicketViewSet(APIView):
     
     def post(self, request):
@@ -359,54 +408,3 @@ class DeleteCommentViewSet(APIView):
         
         
         
-
-# Django View to get an issue by its ID
-class GetMyIssuesViewSet(APIView):
-    def get(self, request):
-        jira = get_jira_client()
-        
-        
-        try:
-            token = decode_jwt(request)   
-            issues = []
-            fields = "summary,status,assignee,customfield_10114,customfield_10073, issuetype, created, updated, description, attachment, comment"  # Limit fields to only required ones
-            issue_ids = []
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM JiraTicket WHERE SenderId = '{0}'".format(token['UID']))
-                issuerecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                for rec in issuerecs:
-                    issue_ids.append(str(rec['JiraID']))
-                    
-                jql_query = 'key in ({})'.format(','.join(issue_ids))
-                issues = jira.search_issues(jql_query, maxResults=len(issue_ids), json_result=True, fields=fields)
-                
-        except Exception as e:
-            # Handle exceptions here, e.g., logging or returning an error response
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response(issues, status=status.HTTP_200_OK)
-        
-
-
-class GetGroupIssuesViewSet(APIView):
-    def get(self, request):
-        jira = get_jira_client()
-        
-        try:
-            token = decode_jwt(request)   
-            issues = []
-            with connection.cursor() as cursor:
-                cursor.execute("""SELECT M.Name 'Mname', J.* FROM JiraTicket J LEFT JOIN MemberData M ON M.UID = J.SenderId 
-                                WHERE M.MemberGroup = (Select MemberGroup From MemberData WHERE UID = '{0}')""".format(token['UID']))
-                issuerecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                for rec in issuerecs:
-                    issue = jira.issue(rec['JiraID'])
-                    issue_raw = issue.raw
-                    issue_raw['Member'] = rec['Mname']
-            
-                    issues.append(issue_raw)  
-        except Exception as e:
-            # Handle exceptions here, e.g., logging or returning an error response
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response(issues, status=status.HTTP_200_OK)

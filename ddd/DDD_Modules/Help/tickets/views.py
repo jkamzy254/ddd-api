@@ -1,11 +1,3 @@
-from django.shortcuts import render
-from django.http import Http404, JsonResponse
-from django.shortcuts import get_object_or_404, render
-from django.views.decorators.csrf import csrf_exempt
-
-from asgiref.sync import async_to_sync, sync_to_async
-
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework import status
@@ -27,7 +19,7 @@ load_dotenv(find_dotenv())
 
 trequest = HTTPXRequest(connection_pool_size=20)
 bot = Bot(token=os.environ.get('TICKET_BOT_TOKEN'), request=trequest)
-CHAT_ID = os.environ.get('TELEGRAM_JIRA_CHAT_ID')
+CHAT_ID = os.environ.get('IT_DEPT_CHAT_ID')
 MSG_THREAD_ID = os.environ.get('TELEGRAM_JIRA_MSG_THREAD_ID')
 
 # Create your views here.

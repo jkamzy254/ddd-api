@@ -1,6 +1,7 @@
 import textwrap
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+import telegram
 from telegram import Bot
 from telegram.request import HTTPXRequest
 import json
@@ -46,7 +47,7 @@ async def ticket_webhook(request):
                 assign = None
         return {
             "added_by": added_by,
-            "assigned": assign['TelID'],
+            "assigned": assign,
         }
     
     if request.method == 'POST':
@@ -77,44 +78,47 @@ async def ticket_webhook(request):
         resp = await sync_to_async(update_issue)()   
         sender = resp['added_by'] 
         assigned_to = resp['assigned']
-        print("Assigned To: ", assigned_to)
+        print("Assigned To: ", assigned_to['TelID'])
         
-        user_info = await bot.get_chat(str(assigned_to))
+        user_info = await bot.get_chat(assigned_to['TelID'])
         print(user_info)
-        username = user_info.username  # This is None if the user has no username
+        username = user_info.username
+        first_name = user_info.first_name  # This is None if the user has no username
 
         if username:
                 assignee = f"@{username}"
         else:
-            assignee = f"[Check Here](tg://user?id={str(assigned_to)})"
+            assignee = f"[{first_name}](tg://user?id={assigned_to['TelID']})"
             
         def escape_markdown_v2(text):
-            reserved_chars = r'\_*[]()~`>#+-=|{}.!'
-            return re.sub(f'([{re.escape(reserved_chars)}])', r'\\\1', text)
+            return telegram.utils.helpers.escape_markdown(text, version=2)
+        
+        msg = textwrap.dedent(f"""
+            🔧 DDD CORRECTION TICKET 🌐
 
-        # Escape all dynamic parts of the message
-        # msg = textwrap.dedent(f"""
-        # 🔧 DDD CORRECTION TICKET 🌐
+            * Department: {escape_markdown_v2(sender['Group_IMWY'])}
+            * Group: {escape_markdown_v2(sender['MemberGroup'])}
+            * Created By: {escape_markdown_v2(sender['Name'])}
+            * Ticket Date: {escape_markdown_v2(formatted_date)}
+            * Title: {escape_markdown_v2(title)}
+            * Attachments: {escape_markdown_v2(str(len(attachment)))}
 
-        # \\* Department: {escape_markdown_v2(sender['Group_IMWY'])}
-        # \\* Group: {escape_markdown_v2(sender['MemberGroup'])}
-        # \\* Created By: {escape_markdown_v2(sender['Name'])}
-        # \\* Ticket Date: {escape_markdown_v2(formatted_date)}
-        # \\* Title: {escape_markdown_v2(title)}
-        # \\* Attachments: {escape_markdown_v2(str(len(attachment)))}
-        # \\- 
-        # ...............................................
-        # Description: 
-        # {escape_markdown_v2(description)}
+            ...............................................
+            Description: 
+            {escape_markdown_v2(description)}
 
-        # Issue Link: {escape_markdown_v2(f"https://dddmelb84\\.atlassian\\.net/browse/{issue_key}")}
-        # Assignee: {escape_markdown_v2(assignee)}
-        # Please check all issues assigned to you as first priority ‼️
-        # """)
-                
-        # print(msg)
+            Issue Link: {escape_markdown_v2(f"https://dddmelb84.atlassian.net/browse/{issue_key}")}
+            Assignee: {escape_markdown_v2(assignee)}
+            Please check all issues assigned to you as first priority ‼️
+            """)
 
-        # await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID, parse_mode="MarkdownV2")
+        print(msg)
+
+        #Add error handling as mentioned in the previous response.
+        try:
+            await bot.send_message(chat_id=CHAT_ID, text=msg, message_thread_id=MSG_THREAD_ID, parse_mode=telegram.ParseMode.MARKDOWN_V2)
+        except telegram.error.TelegramError as e:
+            print(f"Error sending message: {e}")
         
         return JsonResponse({'status': 'success'})
 

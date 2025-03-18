@@ -105,7 +105,7 @@ async def ticket_webhook(request):
             * Title: {escape_markdown_v2(title)}
             * Attachments: {escape_markdown_v2(str(len(attachment)))}
 
-            ...............................................
+            {escape_markdown_v2('...............................................')}
             Description: 
             {escape_markdown_v2(description)}
 

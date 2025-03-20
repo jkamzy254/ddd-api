@@ -83,7 +83,7 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT, handle_message))
 
     # Run the bot until the user presses Ctrl-C
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    application.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
     return application
 

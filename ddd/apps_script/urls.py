@@ -31,5 +31,8 @@ urlpatterns = [
 	path('ctUpdateSchedule/', ca.CTUpdateScheduleViewSet.as_view()),
 	path('ctUpdateAttendance/', ca.CTUpdateAttendanceViewSet.as_view()),
 	path('ctUpdateStudentStatus/', ca.CTUpdateStudentStatusViewSet.as_view()),
+	path('ctSummaryGetAllDays/', ca.CTSummaryGetAllDaysViewSet.as_view()),
+	path('ctSummaryGetClass/', ca.CTSummaryGetClassViewSet.as_view()),
+	path('ctSummaryGetClassSummary/', ca.CTSummaryGetClassSummaryViewSet.as_view()),
  
 ]

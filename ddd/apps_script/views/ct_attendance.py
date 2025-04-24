@@ -162,7 +162,7 @@ class CTUpdateStudentStatusViewSet(APIView):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(f"""EXEC spCTUpdateStudentStatus
-                    @UID = '{rec.get('UID')}', @Registration = {rec.get('Registration')}, @Status = {rec.get('Status')}
+                    @UID = '{rec.get('UID')}', @Registration = {rec.get('Registration')}, @Status = {rec.get('Status')}, @StudName = {rec.get('StudName')}
                 """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
 

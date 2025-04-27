@@ -28,7 +28,7 @@ sgyes_msg = textwrap.dedent(f"""
 
     ✅ This group chat *is* a SuperGroup 🙂
 
-    _Please check all issues assigned to you as first priority_ ‼️
+    _{escape_markdown_v2("Fighting everyone!")}_ 
     """)
 
 sgno_msg = textwrap.dedent(f"""
@@ -37,11 +37,11 @@ sgno_msg = textwrap.dedent(f"""
     ⚠️ This group chat *IS NOT A* a SuperGroup‼️ 
     
     You can make this group chat into a SuperGroup 
-    {escape_markdown_v2('1.')} Adding new admin (If there is no admin other than the owner)
-    {escape_markdown_v2('12.')} Allowing the admin to add new admins
+    {escape_markdown_v2("1. Adding new admin (If there is no admin other than the owner)")}
+    {escape_markdown_v2("2. Allowing the admin to add new admins")}
     This will turn your group chat into a SuperGroup
     
-    _Please type {escape_markdown_v2("'@SGCheck84Bot check'")} on the chat to check again after following the steps_ 
+    _{escape_markdown_v2("Please type '@SGCheck84Bot check' on the chat to check again after following the step")}s_ 
     """)
 
 

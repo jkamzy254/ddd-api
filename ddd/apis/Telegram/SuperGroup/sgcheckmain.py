@@ -37,11 +37,11 @@ sgno_msg = textwrap.dedent(f"""
     ⚠️ This group chat *IS NOT A* a SuperGroup‼️ 
     
     You can make this group chat into a SuperGroup 
-    1. Adding new admin (If there's no admin other than the owner)
-    2. Allowing the admin to add new admins
+    {escape_markdown_v2('1.')} Adding new admin (If there is no admin other than the owner)
+    {escape_markdown_v2('12.')} Allowing the admin to add new admins
     This will turn your group chat into a SuperGroup
     
-    _Please type '@SGCheck84Bot check' on the chat to check again after following the steps_ 
+    _Please type {escape_markdown_v2("'@SGCheck84Bot check'")} on the chat to check again after following the steps_ 
     """)
 
 

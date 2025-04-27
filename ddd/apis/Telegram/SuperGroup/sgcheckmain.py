@@ -44,7 +44,6 @@ sgno_msg = textwrap.dedent(f"""
     _{escape_markdown_v2("Please type '/check' on the chat to check again after following the step")}s_ 
     """)
 
-
 async def bot_added_to_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
     member = update.my_chat_member 

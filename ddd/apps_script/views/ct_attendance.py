@@ -114,6 +114,18 @@ class CTGetAttendanceViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class CTGetStudHistoryViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get("UID")
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spCTGetStudHistory {uid}")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         
 class CTGetWeeklyScheduleViewSet(APIView):

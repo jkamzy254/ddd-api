@@ -47,7 +47,7 @@ sgno_msg = textwrap.dedent(f"""
 
 async def bot_added_to_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
-    member = update.chat_member
+    member = update.my_chat_member 
 
     # Check if the bot was added (status changes from 'kicked' to 'member' or 'administrator')
     if member.new_chat_member.user.id == context.bot.id:

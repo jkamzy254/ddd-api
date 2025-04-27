@@ -41,7 +41,7 @@ sgno_msg = textwrap.dedent(f"""
     {escape_markdown_v2("2. Allowing the admin to add new admins")}
     This will turn your group chat into a SuperGroup
     
-    _{escape_markdown_v2("Please type '@SGCheck84Bot check' on the chat to check again after following the step")}s_ 
+    _{escape_markdown_v2("Please type '/check' on the chat to check again after following the step")}s_ 
     """)
 
 

@@ -50,21 +50,45 @@ async def bot_added_to_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Check if the bot was added (status changes from 'kicked' to 'member' or 'administrator')
     if member.new_chat_member.user.id == context.bot.id:
+        try:
+            topics = await context.bot.get_forum_topic_list(chat_id=chat.id)
+            if topics and topics.topics:
+                # Pick the first open topic
+                first_topic = topics.topics[0]
+                thread_id = first_topic.message_thread_id
+            else:
+                thread_id = None  # fallback to general
+                
+        except Exception as e:
+            print(f"Couldn't fetch topics: {e}")
+            thread_id = None
         if chat.type == "supergroup":
-            await context.bot.send_message(chat_id=chat.id, text=sgyes_msg, parse_mode=ParseMode.MARKDOWN_V2)
+            await context.bot.send_message(chat_id=chat.id, text=sgyes_msg, parse_mode=ParseMode.MARKDOWN_V2, message_thread_id=thread_id)
             await context.bot.leave_chat(chat.id)
         else:
-            await context.bot.send_message(chat_id=chat.id, text=sgno_msg, parse_mode=ParseMode.MARKDOWN_V2)
+            await context.bot.send_message(chat_id=chat.id, text=sgno_msg, parse_mode=ParseMode.MARKDOWN_V2, message_thread_id=thread_id)
 
         # Leave after sending the message
 async def check_group_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = update.effective_chat
+    try:
+        topics = await context.bot.get_forum_topic_list(chat_id=chat.id)
+        if topics and topics.topics:
+            # Pick the first open topic
+            first_topic = topics.topics[0]
+            thread_id = first_topic.message_thread_id
+        else:
+            thread_id = None  # fallback to general
+            
+    except Exception as e:
+        print(f"Couldn't fetch topics: {e}")
+        thread_id = None
 
     if chat.type == "supergroup":
-        await context.bot.send_message(chat_id=chat.id, text=sgyes_msg, parse_mode=ParseMode.MARKDOWN_V2)
+        await context.bot.send_message(chat_id=chat.id, text=sgyes_msg, parse_mode=ParseMode.MARKDOWN_V2, message_thread_id=thread_id)
         await context.bot.leave_chat(chat.id)
     else:
-        await context.bot.send_message(chat_id=chat.id, text=sgno_msg, parse_mode=ParseMode.MARKDOWN_V2)
+        await context.bot.send_message(chat_id=chat.id, text=sgno_msg, parse_mode=ParseMode.MARKDOWN_V2, message_thread_id=thread_id)
 
 def main():
     token = os.environ.get('SG_BOT_TOKEN')

@@ -14,6 +14,7 @@ urlpatterns = [
 	path('getFruits/', g.FMPGetFruitsViewSet.as_view()),
 	path('groupPrevCt/', g.FMPStatusGrpPrevCTViewSet.as_view()),
 	path('getMemberRanks/', g.FMPRankingGetMembersViewSet.as_view()),
+	path('getActiveMembers/', g.FMPGetActiveMembersViewSet.as_view()),
  
     #Per individual
 	path('getIndFruits/', i.FMPGetFruitsViewSet.as_view()),

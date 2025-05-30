@@ -18,7 +18,7 @@ from jira import JIRA, JIRAError
 from jira.resources import Issue
 from ddd.utils import decode_jwt
 
-import datetime, json, pandas as pd
+import datetime, json, random, pandas as pd
 
 load_dotenv(find_dotenv())
 
@@ -29,6 +29,55 @@ def get_jira_client():
     jira = JIRA(options=jira_options, basic_auth=(os.environ.get('JIRA_USERNAME'), os.environ.get('TICKET_TOKEN')))
     return jira
 
+# Django View to get an issue by its ID
+class GetMyIssuesViewSet(APIView):
+    def get(self, request):
+        jira = get_jira_client()
+        
+        
+        try:
+            token = decode_jwt(request)   
+            issues = []
+            fields = "summary,status,assignee,customfield_10114,customfield_10073, issuetype, created, updated, description, attachment, comment"  # Limit fields to only required ones
+            issue_ids = []
+            with connection.cursor() as cursor:
+                query = "SELECT Issue FROM JiraTicket WHERE SenderId = %s"
+                cursor.execute(query, (token['UID'],))
+                issuerecs = [record[0] for record in cursor.fetchall()]
+                for rec in issuerecs:
+                    if rec != None:
+                        issues.append(json.loads(rec))
+                    
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(issues, status=status.HTTP_200_OK)
+
+class GetGroupIssuesViewSet(APIView):
+    def get(self, request):
+        jira = get_jira_client()
+        
+        try:
+            token = decode_jwt(request)   
+            issues = []
+            with connection.cursor() as cursor:
+                
+                query = "SELECT M.Name 'Mname', J.Issue FROM JiraTicket J LEFT JOIN MemberData M ON M.UID = J.SenderId WHERE M.MemberGroup = (Select MemberGroup From MemberData WHERE UID = %s)"
+                cursor.execute(query, (token['UID'],))
+                issuerecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                for rec in issuerecs:
+                    if rec['Issue'] != None:
+                        issue_raw = json.loads(rec['Issue'])
+                        issue_raw['Member'] = rec['Mname']
+                
+                        issues.append(issue_raw)  
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(issues, status=status.HTTP_200_OK)
+    
 class AddTicketViewSet(APIView):
     
     def post(self, request):
@@ -42,13 +91,19 @@ class AddTicketViewSet(APIView):
         def create_jira_issue(project_key, summary, description, issue_type_id, uploads=None, urls=None):
             jira = get_jira_client()
             
+            
+            user_list = ["5fc6aa25facfd6007632ccfa", "5f9020eff162650070c78aa8"]
+            random_user = random.choice(user_list)
+
+            
             # Define issue details
             issue_dict = {
                 'project': {'key':project_key},
                 'summary': summary,
                 'description': description,
                 'issuetype': {'id': issue_type_id},
-                'customfield_10073': token['UID']
+                'customfield_10073': token['UID'],
+                'assignee': {'accountId': random_user}
             }
             if len(urls) > 0:
                 issue_dict['customfield_10114'] = urls
@@ -353,101 +408,3 @@ class DeleteCommentViewSet(APIView):
         
         
         
-
-# Django View to get an issue by its ID
-class GetMyIssuesViewSet(APIView):
-    def get(self, request):
-        jira = get_jira_client()
-        
-        
-        try:
-            token = decode_jwt(request)   
-            issues = []
-            fields = "summary,status,assignee,customfield_10114,customfield_10073, issuetype, created, updated, description, attachment, comment"  # Limit fields to only required ones
-            issue_ids = []
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM JiraTicket WHERE SenderId = '{0}'".format(token['UID']))
-                issuerecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                for rec in issuerecs:
-                    issue_ids.append(str(rec['JiraID']))
-                    
-                jql_query = 'key in ({})'.format(','.join(issue_ids))
-                issues = jira.search_issues(jql_query, maxResults=len(issue_ids), json_result=True, fields=fields)
-                
-        except Exception as e:
-            # Handle exceptions here, e.g., logging or returning an error response
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response(issues, status=status.HTTP_200_OK)
-        
-
-# Django View to get an issue by its ID
-
-@csrf_exempt
-@async_to_sync
-async def issue_webhook(request):
-    def update_issue():
-        with connection.cursor() as cursor:
-            cursor.execute(f"EXEC spJiraSaveIssue  @IssueKey={issue_id}, @IssueData='{issue_json}', @IssueAction='{action}', @IssueAction='{action}'")
-            recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-        return recs
-        
-    # def delete_comment():
-    #     with connection.cursor() as cursor:
-    #         cursor.execute(f"""EXEC spJiraDeleteComment @CommentId='{comment_id}'""")
-    #         recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-    #     return recs
-    
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        issue = data.get("issue", {})
-        issue_id = issue.get("id", "")
-        sender_id = data.get("issue", {}).get("fields", "").get("customfield_10073", "")
-        action = data.get('webhookEvent', 'Unknown event')
-        issue_json = json.dumps(issue, indent=2).replace("'","''")
-        
-        print(sender_id)
-        
-        rec = await sync_to_async(update_issue)()   
-    
-        # if project_id == "10000" or project_id == "10003":
-        #     if event == "comment_created":
-        #         recs = await sync_to_async(create_comment)()
-                
-        #     elif event == "comment_deleted":
-        #         recs = await sync_to_async(delete_comment)()
-                
-
-                
-        #     formatted_text = process_data(recs,comment_author_name)
-            
-        #     await bot.send_message(chat_id=CHAT_ID, text=formatted_text, message_thread_id=MSG_THREAD_ID)
-        
-        return JsonResponse({'status': 'success'})
-
-    return JsonResponse({'status': 'failed'}, status=400)
-
-
-
-class GetGroupIssuesViewSet(APIView):
-    def get(self, request):
-        jira = get_jira_client()
-        
-        try:
-            token = decode_jwt(request)   
-            issues = []
-            with connection.cursor() as cursor:
-                cursor.execute("""SELECT M.Name 'Mname', J.* FROM JiraTicket J LEFT JOIN MemberData M ON M.UID = J.SenderId 
-                                WHERE M.MemberGroup = (Select MemberGroup From MemberData WHERE UID = '{0}')""".format(token['UID']))
-                issuerecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                for rec in issuerecs:
-                    issue = jira.issue(rec['JiraID'])
-                    issue_raw = issue.raw
-                    issue_raw['Member'] = rec['Mname']
-            
-                    issues.append(issue_raw)  
-        except Exception as e:
-            # Handle exceptions here, e.g., logging or returning an error response
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response(issues, status=status.HTTP_200_OK)

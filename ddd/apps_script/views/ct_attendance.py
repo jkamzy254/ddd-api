@@ -41,9 +41,10 @@ class GetMemberViewSet(APIView):
 class CTGetAttendanceSummaryViewSet(APIView):
     def get(self, request):
         uid = request.GET.get("UID")
+        period = request.GET.get("Period")
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"EXEC spCTGetAttendanceSummary {uid}")
+                cursor.execute(f"EXEC spCTGetAttendanceSummary @TGW = '{uid}', @Period = '{period}'")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)
@@ -64,12 +65,74 @@ class CTGetStudentListViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         
+class CTSummaryGetAllDaysViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get("UID")
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spCTSummaryGetAllDays {uid}")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class CTSummaryGetClassViewSet(APIView):
+    def get(self, request):
+        ctid = request.GET.get("CTID")
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spCTSummaryGetClass {ctid}")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        
+class CTSummaryGetClassSummaryViewSet(APIView):
+    def get(self, request):
+        ctid = request.GET.get("CTID")
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spCTSummaryGetClassSummary {ctid}")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        
 class CTGetAttendanceViewSet(APIView):
     def get(self, request):
         uid = request.GET.get("UID")
         try:
             with connection.cursor() as cursor:
                 cursor.execute(f"EXEC spCTGetStudentAttendance {uid}")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class CTGetStudHistoryViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get("UID")
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spCTGetStudHistory {uid}")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class CTGetStudentViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get("UID")
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spCTGetStudent {uid}")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)
@@ -123,7 +186,7 @@ class CTUpdateStudentStatusViewSet(APIView):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(f"""EXEC spCTUpdateStudentStatus
-                    @UID = '{rec.get('UID')}', @Registration = {rec.get('Registration')}, @Status = {rec.get('Status')}
+                    @UID = '{rec.get('UID')}', @Registration = {rec.get('Registration')}, @Status = {rec.get('Status')}, @StudName = '{rec.get('StudName').replace("'","''")}'
                 """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
 

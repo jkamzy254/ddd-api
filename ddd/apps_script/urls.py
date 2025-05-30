@@ -28,8 +28,13 @@ urlpatterns = [
 	path('ctGetWeeklySchedule/', ca.CTGetWeeklyScheduleViewSet.as_view()),
 	path('ctGetAttendance/', ca.CTGetAttendanceViewSet.as_view()),
 	path('ctGetAttendanceSummary/', ca.CTGetAttendanceSummaryViewSet.as_view()),
+	path('ctGetStudHistory/', ca.CTGetStudHistoryViewSet.as_view()),
+	path('ctGetStudent/', ca.CTGetStudentViewSet.as_view()),
 	path('ctUpdateSchedule/', ca.CTUpdateScheduleViewSet.as_view()),
 	path('ctUpdateAttendance/', ca.CTUpdateAttendanceViewSet.as_view()),
 	path('ctUpdateStudentStatus/', ca.CTUpdateStudentStatusViewSet.as_view()),
+	path('ctSummaryGetAllDays/', ca.CTSummaryGetAllDaysViewSet.as_view()),
+	path('ctSummaryGetClass/', ca.CTSummaryGetClassViewSet.as_view()),
+	path('ctSummaryGetClassSummary/', ca.CTSummaryGetClassSummaryViewSet.as_view()),
  
 ]

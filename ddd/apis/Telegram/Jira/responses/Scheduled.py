@@ -9,7 +9,7 @@ import os
 load_dotenv(find_dotenv())
 
 bot = Bot(token=os.environ.get('JIRA_BOT_TOKEN'))
-CHAT_ID = os.environ.get('TELEGRAM_JIRA_CHAT_ID')
+CHAT_ID = os.environ.get('IT_DEPT_CHAT_ID')
 MSG_THREAD_ID = os.environ.get('TELEGRAM_JIRA_MSG_THREAD_ID')
 
 

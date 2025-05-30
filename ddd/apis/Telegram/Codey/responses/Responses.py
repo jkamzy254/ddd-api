@@ -263,10 +263,7 @@ def bot_responses(id,tname,input_text):
         return SQLCodes.classes(g,d,access,'today')
     if command == 'classweek':
         return SQLCodes.classes(g,d,access,'week')
-    
-    
-    if command not in ('edutoday','eduyesterday','edulastweek','eduweek','eduseason') and command.startswith('edu'):
-    
+        
     if command not in ('edutoday','eduyesterday','edulastweek','eduweek','eduseason') and command.startswith('edu'):
         day = command.removeprefix('edu')
         return SQLCodes.edu(day, g, d, access) if day != 'rev' else SQLCodes.edurev(g, d, access)

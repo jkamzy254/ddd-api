@@ -150,6 +150,18 @@ def bot_responses(id,tname,input_text):
         print(f"""fmp_sid - {fmp_sid}
                    bb_sid - {bb_sid}""")
         command = command[3:]
+        
+    if command.startswith('sft'):
+        fmp_sid, bb_sid = SQLCodes.specifyct('sft').split('/')
+        print(f"""fmp_sid - {fmp_sid}
+                   bb_sid - {bb_sid}""")
+        command = command[3:]
+        
+    if command.startswith('phys'):
+        fmp_sid, bb_sid = SQLCodes.specifyct('phys').split('/')
+        print(f"""fmp_sid - {fmp_sid}
+                   bb_sid - {bb_sid}""")
+        command = command[4:]
     
     if 'phonenumber' in str(user_message):
         return "Sorry, 'phonenumber' is not a recognised command. However, to check if someone has been fished before, you may enter their phone number starting with '04' e.g. <pre>0412345678</pre> :)"
@@ -209,36 +221,41 @@ def bot_responses(id,tname,input_text):
         q = command.removesuffix('list')
         return SQLCodes.bbtlist(q,d,g,bb_sid,access)
         
-    if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('status'):
-        q,i = command.split('status')
-        return SQLCodes.bbtstatus(q,g,d,bb_sid,access)
+    if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')):
+        if command.endswith('status'):
+            q = command.removesuffix('status')
+            return SQLCodes.bbtstatus(q,g,d,bb_sid,access,False) # returns normal bbtstatus
+        if command.endswith('dept'):
+            q = command.removesuffix('dept')
+            return SQLCodes.bbtstatus(q,g,d,bb_sid,access,True) # returns bbtdept (bbtstatus but without group list)
+
         
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
         q = command.split('active')
-        return SQLCodes.bbtactive(q,g,d,access)
+        return SQLCodes.bbtactive(q, g, d, r, access)
     
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('inactive'):
         q,i = command.split('inactive')
-        return SQLCodes.bbtinactive(q,g,d,access)
+        return SQLCodes.bbtinactive(q, g, d, r, access)
     
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('status'):
         q,i = command.split('status') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
-        return SQLCodes.deptbbtstatus(q,d,access)
+        return SQLCodes.deptbbtstatus(q, d, r, access)
     
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
         if d == '_D[0-9]%' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('active') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
-        return SQLCodes.deptbbtactive(q,d,access)
+        return SQLCodes.deptbbtactive(q, d, r, access)
     
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('inactive'):
         if d == '_D[0-9]%' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('inactive') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
-        return SQLCodes.deptbbtinactive(q,d,access)
+        return SQLCodes.deptbbtinactive(q, d, r, access)
     
     
     
@@ -246,11 +263,12 @@ def bot_responses(id,tname,input_text):
         return SQLCodes.classes(g,d,access,'today')
     if command == 'classweek':
         return SQLCodes.classes(g,d,access,'week')
-    
-    
+        
     if command not in ('edutoday','eduyesterday','edulastweek','eduweek','eduseason') and command.startswith('edu'):
         day = command.removeprefix('edu')
         return SQLCodes.edu(day, g, d, access) if day != 'rev' else SQLCodes.edurev(g, d, access)
+    
+    
     
     
     # Dept and above functions
@@ -300,8 +318,8 @@ def bot_responses(id,tname,input_text):
                 return SQLCodes.deptphone(d)
             if command == 'bbtdeptold':
                 return SQLCodes.bbtdeptold()
-            if command == 'bbtdept':
-                return SQLCodes.bbtdept(d,bb_sid)
+            # if command == 'bbtdept':
+            #     return SQLCodes.bbtdept(d,bb_sid)
             
             # if access in ('All','IT'):
             #     if command == 'bbtbtmstatus':
@@ -351,7 +369,8 @@ def bot_responses(id,tname,input_text):
                 return 'Sorry, you cannot access this member ID'
         if command == 'lastseasonfmp':
             return SQLCodes.lastseasonfmp(g)
-        if command == 'test':
-            return 'test'
+        if command.startswith('telegramuser'):
+            name,id = command.removeprefix('telegramuser').split('[]')
+            return SQLCodes.test_function(name,id)
              
     return "Sorry, I don't recognise that command. Please type 'commands' for a list of commands"

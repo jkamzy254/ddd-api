@@ -170,7 +170,8 @@ def functionlog(uid, name, input_text, command):
     conn = odbc.connect(conn_str)
     input_text = input_text.replace("'","''")
     command = command.replace("'","''")
-    conn.cursor().execute(f"INSERT INTO CodeyFunctionLogs (UID, Name, CommandSent, FunctionName, TStamp) VALUES ('{uid}', '{name}', '{input_text}', '{command}', CONVERT(SmallDateTime, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time'))")
+    logSQL = f"INSERT INTO CodeyFunctionLogs (UID, Name, CommandSent, FunctionName, TStamp) VALUES ('{uid}', '{name}', '{input_text}', '{command}', CONVERT(SmallDateTime, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time'))"
+    conn.cursor().execute(logSQL)
     conn.commit()
     conn.cursor().close()
 
@@ -208,10 +209,24 @@ def groupinfo(g):
     else:
         return f"{dr.iloc[0,0]}/{dr.iloc[0,1]}/{dr.iloc[0,2]}/{dr.iloc[0,3]}/{dr.iloc[0,4]}"
     
+    
+def specifyct(ct):
+    conn = odbc.connect(conn_str)
+    if ct == 'sft':
+        sql = 'SELECT FMP_Online, BB_Online FROM PhysicalOnline'
+    if ct == 'phys':
+        sql = 'SELECT FMP_Physical, BB_Physical FROM PhysicalOnline'
+    ds = pd.read_sql(sql, conn)
+    if len(ds) == 0:
+        return "None/None"
+    else:
+        return f"{ds.iloc[0,0]}/{ds.iloc[0,1]}"
+    
 
 def duplicate_check(ph):
     conn = odbc.connect(conn_str)
     phonecheck = f"SELECT Locked FROM FruitData WHERE FishPhone = {ph} ORDER BY Locked DESC"
+    print(phonecheck)
     
     dp = pd.read_sql(phonecheck, conn)
     
@@ -1080,7 +1095,7 @@ def bbstatus(g, d, sid, access):
 
 
 
-def bbtstatus(q, g, d, sid, access):
+def bbtstatus(q, g, d, sid, access, bbtdept):
         
     name = 'BBTCode' if access == 'Group' else 'BBTGrp'
         
@@ -1103,7 +1118,7 @@ def bbtstatus(q, g, d, sid, access):
     bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBTStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} ORDER BY GID, {name}"
     bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} GROUP BY Grp, GID ORDER BY GID"
     bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} GROUP BY Dept, DID ORDER BY DID"
-    bb_region = f"SELECT District, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY District"
+    bb_region = f"SELECT District, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} GROUP BY District"
     bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query}"
     
     print(bb_group)
@@ -1124,7 +1139,7 @@ def bbtstatus(q, g, d, sid, access):
     conn.cursor().close()
 
     member = str()
-    if not d.endswith('D[0-9]%'):
+    if bbtdept is False and not d.endswith('D[0-9]%'):
         for r in range(len(dm)):
             bbt =   str(dm.loc[r,'BBT'][:5]) + ' '*(5-len(str(dm.loc[r,'BBT'][:5])))
             pn  = ' '*(3-len(str(dm.loc[r,'pNew']))) + str(dm.loc[r,'pNew'])
@@ -1139,20 +1154,21 @@ def bbtstatus(q, g, d, sid, access):
             member = f'{member}{bbt}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
         member = member + '\n'
             
-    group = str()    
-    for r in range(len(dg)):
-        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
-        pn  = ' '*(3-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
-        po  = ' '*(3-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
-        ba  = ' '*(3-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
-        ca  = ' '*(3-len(str(dg.loc[r,'cctA']))) + str(dg.loc[r,'cctA'])
-        bm  = ' '*(3-len(str(dg.loc[r,'bbME']))) + str(dg.loc[r,'bbME'])
-        ci  = ' '*(3-len(str(dg.loc[r,'cctI']))) + str(dg.loc[r,'cctI'])
-        pf  = ' '*(3-len(str(dg.loc[r,'pFA'])))  + str(dg.loc[r,'pFA'])
-        bf  = ' '*(3-len(str(dg.loc[r,'bbFA']))) + str(dg.loc[r,'bbFA'])
-        t   = ' '*(3-len(str(dg.loc[r,'Tot'])))  + str(dg.loc[r,'Tot'])
-        group = f'{group}{grp}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
-    group = group + '\n'
+    group = str()
+    if bbtdept is False:    
+        for r in range(len(dg)):
+            grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+            pn  = ' '*(3-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
+            po  = ' '*(3-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
+            ba  = ' '*(3-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
+            ca  = ' '*(3-len(str(dg.loc[r,'cctA']))) + str(dg.loc[r,'cctA'])
+            bm  = ' '*(3-len(str(dg.loc[r,'bbME']))) + str(dg.loc[r,'bbME'])
+            ci  = ' '*(3-len(str(dg.loc[r,'cctI']))) + str(dg.loc[r,'cctI'])
+            pf  = ' '*(3-len(str(dg.loc[r,'pFA'])))  + str(dg.loc[r,'pFA'])
+            bf  = ' '*(3-len(str(dg.loc[r,'bbFA']))) + str(dg.loc[r,'bbFA'])
+            t   = ' '*(3-len(str(dg.loc[r,'Tot'])))  + str(dg.loc[r,'Tot'])
+            group = f'{group}{grp}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
+        group = group + '\n'
             
     dept = str()  
     if access != 'Group':  
@@ -3803,6 +3819,7 @@ def classes(g, d, access, time):
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
+
 
 
 

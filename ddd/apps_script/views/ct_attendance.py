@@ -25,7 +25,7 @@ class GetMemberViewSet(APIView):
                 cursor.execute(f"""Select M.UID, PREFERRED_NAME as 'Name', Role, NumRole From MemberData M
                     LEFT JOIN (SELECT * FROM TGWPositionLog WHERE EndDate IS NULL) T ON T.UID = M.UID
                     LEFT JOIN (SELECT * FROM CTTGWLogTable WHERE EndDate IS NULL) C ON C.UID = M.UID
-                    Username = '{username}' And Password = '{password}' AND (
+                    Where Username = '{username}' And Password = '{password}' AND (
                             M.UID IN (Select UID From TGWPositionLog WHERE TID = 11 AND (PID >= 140))
                             Or 
                             M.UID IN (Select UID From CTTGWLogTable WHERE EndDate IS NULL)

@@ -38,6 +38,7 @@ urlpatterns = [
 	path('members/', include('DDD_Modules.members.urls')),
 	path('svc/', include('DDD_Modules.MT.svc.urls')),
 	path('edu/', include('DDD_Modules.Edu.attendance.urls')),
+	path('finance/', include('DDD_Modules.finance.urls')),
 	path('google_sheets/', include('google_sheets.urls')),
 	path('tg_bot/', include('telegram_bots.urls')),
 	path('apps_script/', include('apps_script.urls')),

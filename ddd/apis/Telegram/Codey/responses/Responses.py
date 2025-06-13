@@ -45,7 +45,7 @@ def bot_responses(id,tname,input_text):
 
     
     if access in ['All','IT']:
-        d = f'_D[0-9]%'
+        d = f'D[0-9]%'
         if '//r' in user_message.lower():
             try:
                 print('//r')
@@ -99,7 +99,7 @@ def bot_responses(id,tname,input_text):
         else:
             command = user_message
     
-    elif access in ['¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept']:
+    elif access in ['D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept']:
         d = access if access != 'Dept' else d
         allowed_groups = SQLCodes.deptgroup(d)
         if '/' in user_message:
@@ -173,7 +173,7 @@ def bot_responses(id,tname,input_text):
             return '<b><u>List of commands</u></b>\n<i>g = group number\nd = department\nT = today/yesterday/week/lastweek/season\n\n<b><u>FMP Fish Lists</u></b></i>\n<pre>🔹todayfish/g  🔹todaympfe/g\n🔹weekfish/g   🔹weekmpfe/g\n🔹seasonpick/g 🔹seasonfe/g\n🔹mxlist/g     🔹pxlist/g\n🔹fmlist/g</pre>\n\n<b><u><i>FMP Per Member</i></u></b>\n<pre>🔸Tfmp/g       🔸gyjnT\n🔸oevT         🔸ievT\n🔸eduT         🔸svT\n🔸fmstatus/g</pre>\n\n<b><u><i>FMP Per Group</i></u></b>\n<pre>🔺youthT       🔺tgwT\n🔺memberT      🔺deptfm\n♦️youthmxpx</pre>\n\n<b><u><i>BB Fruit Lists (Leaf Standard)</i></u></b>\n<pre>📙bbpick/g     📘bbfe/g\n📚bbstatus/g</pre>\n\n<b><u><i>BB Per Group (Leaf Standard)</i></u></b>\n<pre>🖥bbactive     🖥bbinactive\n🖥bbfull       🏛deptphone\n🌳tolfull      🌳tol</pre>\n\n<b><i><u>BB / Grp (BBT std)</u>   <u>BB Per BBT</u></i></b>\n<pre>📖bbtstatus    📖bbtstatus/d\n📖btm12status  📖btm12status/d\n📖btm13status  📖btm13status/d</pre>\n\n<b><i><u>All BB Students</u>         <u>Dept BB Students</u></i></b>\n<pre>📜bbtlist      📜bbtlist/d\n📜btm12list    📜btm12list/d\n📜btm13list    📜btm13list\n📜gyjnbbtlist  📜gyjnbbtlist/d</pre>\n\n<b><u><i>BB / Grp (BBT std)</i></u></b>\n<pre>🏛bbtdept</pre>\n\n<b><u><i>Member EV Summary</i></u></b>\n<pre>ev/id</pre>\n\n<b><u><i>Double Fish Check</i></u></b>\n<pre>📱04........</pre>'
         if access == 'All':
             return '<b><u>List of commands</u></b>\n<i>g = group number\nd = department\nT = today/yesterday/week/lastweek/season\n# = number</i>\n\n<b><u><i>FMP Per Member</i></u></b>\n<pre>🔸Tfmp/g       🔸gyjnT\n🔸oevT         🔸ievT\n🔸eduT         🔸svT\n🔸fmstatus/g</pre>\n\n<b><u><i>FMP Per Group</i></u></b>\n<pre>🔺youthT       🔺tgwT\n🔺memberT      🔺deptfm\n♦️youthmxpx</pre>\n\n<b><u><i>BB Per Group (Leaf Standard)</i></u></b>\n<pre>🖥bbactive     🖥bbinactive\n🖥bbfull       🏛deptphone\n🌳tolfull      🌳tol</pre>\n\n<b><i><u>BB / Grp (BBT std)</u>   <u>BB Per BBT</u></i></b>\n<pre>📖bbtstatus    📖bbtstatus/d\n📖btm#status   📖btm#status/d</pre>\n\n<b><u><i>BB / Grp (BBT std)</i></u></b>\n<pre>🏛bbtdept</pre>\n\n<b><u><i>Double Fish Check</i></u></b>\n<pre>📱04........</pre>'
-        if access in ['¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept']:
+        if access in ['D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept']:
             return f"<b><u>List of commands</u></b>\n<i>g = group number\nT = today/yesterday/week/lastweek/season\n# = number</i>\n\n<b><u><i>FMP Per Member</i></u></b>\n<pre>🔸Tfmp/g       🔸gyjnT\n🔸oevT         🔸ievT\n🔸eduT         🔸svT\n🔸fmstatus/g</pre>\n\n<b><u><i>FMP Per Group</i></u></b>\n<pre>🔺deptT        🔺tgwT\n🔺memberT      🔺deptfm\n♦️deptmxpx</pre>\n\n<b><u><i>BB Per Group (Leaf Standard)</i></u></b>\n<pre>🖥bbactive     🖥bbinactive\n🖥bbfull       🏛bbdept\n🌳tolfull</pre>\n\n<b><i><u>BB Per BBT</u></i></b>\n<pre>📖bbtstatus\n📖btm#status</pre>\n\n<b><u><i>Double Fish Check</i></u></b>\n<pre>📱04........</pre>"
         if access == 'Group':
             return "<b><u>List of commands</u></b>\n\n<i>❗️Note: Picking numbers are for physical CT only (Or in case of SFT, online CT only). To get all CT combined result, type 'all' before command, e.g. 'allseasonfmp', 'allbblist', etc.</i>\n\n<b><u><i>FMP Per Member</i></u></b>\n<pre>🔸todayfmp     🔸yesterdayfmp\n🔸weekfmp      🔸lastweekfmp\n🔸seasonfmp    🔸fmstatus</pre>\n\n<b><u><i>BB Fruits and BBT Students</i></u></b>\n<pre>🍎bblist     📋bbstatus\n🎓bbtlist    📋bbtstatus\n📖classtoday 📖classweek</pre>\n\n<b><u><i>Double Fish Check</i></u></b>\n<pre>📱[phonenumber]</pre>"
@@ -244,14 +244,14 @@ def bot_responses(id,tname,input_text):
         return SQLCodes.deptbbtstatus(q, d, r, access)
     
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
-        if d == '_D[0-9]%' and '/' in user_message:
+        if d == 'D[0-9]%' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('active') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
         return SQLCodes.deptbbtactive(q, d, r, access)
     
     if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('inactive'):
-        if d == '_D[0-9]%' and '/' in user_message:
+        if d == 'D[0-9]%' and '/' in user_message:
             i,d = user_message.split('/')
         q,i = command.split('inactive') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
@@ -263,7 +263,9 @@ def bot_responses(id,tname,input_text):
         return SQLCodes.classes(g,d,access,'today')
     if command == 'classweek':
         return SQLCodes.classes(g,d,access,'week')
-        
+    
+    
+    
     if command not in ('edutoday','eduyesterday','edulastweek','eduweek','eduseason') and command.startswith('edu'):
         day = command.removeprefix('edu')
         return SQLCodes.edu(day, g, d, access) if day != 'rev' else SQLCodes.edurev(g, d, access)
@@ -272,7 +274,7 @@ def bot_responses(id,tname,input_text):
     
     
     # Dept and above functions
-    if access in ['¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','Dept','SFT','M&W Dept','¹','²','All','IT']:
+    if access in ['D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','¹','²','All','IT']:
         
         for task in ['youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(task):
@@ -359,7 +361,7 @@ def bot_responses(id,tname,input_text):
             i,id = user_message.split('/')
             if access == 'IT':
                 return SQLCodes.ev(id)
-            if access in ['¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept']:
+            if access in ['D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept']:
                 idlist = SQLCodes.idlist('dept',d)
             if access == 'Group':
                 idlist = SQLCodes.idlist('group',g)

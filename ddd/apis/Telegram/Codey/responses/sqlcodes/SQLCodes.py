@@ -555,18 +555,18 @@ def deptfmp(task,timerange,d,sid,ss,access):
     conn = odbc.connect(conn_str)
     memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Grp, GID ORDER BY GID"
     deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept, DID ORDER BY DID"  
-    regionQ = f"SELECT District, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY District ORDER BY District"  
+    # regionQ = f"SELECT District, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY District ORDER BY District"  
     totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ}"
     print(memberQ)
 
     dm = pd.read_sql(memberQ, conn)
     dd = pd.read_sql(deptQ, conn)
-    dr = pd.read_sql(regionQ, conn)
+    # dr = pd.read_sql(regionQ, conn)
     dt = pd.read_sql(totalQ, conn)
 
     dm.columns = ['Grp','F','M','P','FE']
     dd.columns = ['Dept','F','M','P','FE']
-    dr.columns = ['Region','F','M','P','FE']
+    # dr.columns = ['Region','F','M','P','FE']
     dt.columns = ['F','M','P','FE']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
 
@@ -594,18 +594,18 @@ def deptfmp(task,timerange,d,sid,ss,access):
         dept = f'{dept}{dpt}[{f}|{m}|{p}|{fe}]\n'
     dept = dept + '\n'
     
-    region = str()
-    if d.endswith('D[0-9]%'):    
-        for r in range(len(dr)):
-            reg = str(dr.loc[r,'Region']) + '.'*(spc[0]-len(str(dr.loc[r,'Region'])))
-            f  = ' '*(spc[1]-len(str(dr.loc[r,'F'])))  + str(dr.loc[r,'F'])
-            m  = ' '*(spc[2]-len(str(dr.loc[r,'M'])))  + str(dr.loc[r,'M'])
-            p  = ' '*(spc[3]-len(str(dr.loc[r,'P'])))  + str(dr.loc[r,'P'])
-            fe = ' '*(spc[4]-len(str(dr.loc[r,'FE']))) + str(dr.loc[r,'FE'])
-            region = f'{region}{reg}[{f}|{m}|{p}|{fe}]\n'
-        region = region + '\n'
+    # region = str()
+    # if d.endswith('D[0-9]%'):    
+    #     for r in range(len(dr)):
+    #         reg = str(dr.loc[r,'Region']) + '.'*(spc[0]-len(str(dr.loc[r,'Region'])))
+    #         f  = ' '*(spc[1]-len(str(dr.loc[r,'F'])))  + str(dr.loc[r,'F'])
+    #         m  = ' '*(spc[2]-len(str(dr.loc[r,'M'])))  + str(dr.loc[r,'M'])
+    #         p  = ' '*(spc[3]-len(str(dr.loc[r,'P'])))  + str(dr.loc[r,'P'])
+    #         fe = ' '*(spc[4]-len(str(dr.loc[r,'FE']))) + str(dr.loc[r,'FE'])
+    #         region = f'{region}{reg}[{f}|{m}|{p}|{fe}]\n'
+    #     region = region + '\n'
 
-    if d == '_D[0-9]%':
+    if d == 'D[0-9]%':
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
         p  = ' '*(spc[3]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
@@ -614,9 +614,9 @@ def deptfmp(task,timerange,d,sid,ss,access):
     else:
         total = str()
         
-    depttitle = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 2')
+    depttitle = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 2')
 
-    fmp = f"<b><u>{depttitle}{tasktitle} FMPFE : {timetitle}</u></b>\n\n<pre>{spc[5]}\n\n{group}{dept}{region}{total}</pre>"
+    fmp = f"<b><u>{depttitle}{tasktitle} FMPFE : {timetitle}</u></b>\n\n<pre>{spc[5]}\n\n{group}{dept}{total}</pre>"
     fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
     fmp = re.sub(r'(\D)0([^.])',r'\1-\2',fmp)   # Replaces lone '0' with '-'
     return fmp
@@ -662,19 +662,19 @@ def taskfmp(task,timerange,d,sid,ss,access):
     baseQ   = f"{name}, F, M, P, FE FROM CodeyFMP('{sid}', ({s}), ({e})) s WHERE Dept LIKE '{d}'{taskquery}"
     memberQ = f"SELECT Grp, {baseQ} ORDER BY GID"
     deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM (SELECT Dept, DID, {baseQ})b GROUP BY Dept, DID ORDER BY DID"
-    regionQ = f"SELECT District, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM (SELECT District, {baseQ})b GROUP BY District ORDER BY District" 
+    # regionQ = f"SELECT District, SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM (SELECT District, {baseQ})b GROUP BY District ORDER BY District" 
     totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(P)P, SUM(FE)FE FROM CodeyFMP('{sid}', ({s}), ({e})) s WHERE Dept LIKE '{d}'{taskquery}"
     
     print(deptQ)
     
     dm = pd.read_sql(memberQ, conn)
     dd = pd.read_sql(deptQ, conn)
-    dr = pd.read_sql(regionQ, conn)
+    # dr = pd.read_sql(regionQ, conn)
     dt = pd.read_sql(totalQ, conn)
     
     dm.columns = ['Grp','Member','F','M','P','FE']
     dd.columns = ['Dept','F','M','P','FE']
-    dr.columns = ['Region','F','M','P','FE']
+    # dr.columns = ['Region','F','M','P','FE']
     dt.columns = ['F','M','P','FE']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
 
@@ -700,28 +700,28 @@ def taskfmp(task,timerange,d,sid,ss,access):
         dept = f'{dept}{dpt}[{f}|{m}|{p}|{fe}]\n'
     dept = dept + '\n'
 
-    region = str()
-    if d.endswith('D[0-9]%'):    
-        for r in range(len(dr)):
-            reg = str(dr.loc[r,'Region']) + ' '*(spc[0]-len(str(dr.loc[r,'Region'])))
-            f  = ' '*(spc[1]-len(str(dr.loc[r,'F'])))  + str(dr.loc[r,'F'])
-            m  = ' '*(spc[2]-len(str(dr.loc[r,'M'])))  + str(dr.loc[r,'M'])
-            p  = ' '*(spc[3]-len(str(dr.loc[r,'P'])))  + str(dr.loc[r,'P'])
-            fe = ' '*(spc[4]-len(str(dr.loc[r,'FE']))) + str(dr.loc[r,'FE'])
-            region = f'{region}{reg}[{f}|{m}|{p}|{fe}]\n'
-        region = region + '\n'
+    # region = str()
+    # if d.endswith('D[0-9]%'):    
+    #     for r in range(len(dr)):
+    #         reg = str(dr.loc[r,'Region']) + ' '*(spc[0]-len(str(dr.loc[r,'Region'])))
+    #         f  = ' '*(spc[1]-len(str(dr.loc[r,'F'])))  + str(dr.loc[r,'F'])
+    #         m  = ' '*(spc[2]-len(str(dr.loc[r,'M'])))  + str(dr.loc[r,'M'])
+    #         p  = ' '*(spc[3]-len(str(dr.loc[r,'P'])))  + str(dr.loc[r,'P'])
+    #         fe = ' '*(spc[4]-len(str(dr.loc[r,'FE']))) + str(dr.loc[r,'FE'])
+    #         region = f'{region}{reg}[{f}|{m}|{p}|{fe}]\n'
+    #     region = region + '\n'
     
     total = str()
-    if d == '_D[0-9]%':
+    if d == 'D[0-9]%':
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
         p  = ' '*(spc[3]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
         fe = ' '*(spc[4]-len(str(dt.loc[0,'FE']))) + str(dt.loc[0,'FE'])
         total = f'{spc[6]}[{f}|{m}|{p}|{fe}]\n'
         
-    depttitle = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 2')
+    depttitle = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 2')
 
-    fmp = f"<b><u>{depttitle}{tasktitle} FMPFE : {timetitle}</u></b>\n\n<pre>{spc[5]}\n\n{group}{dept}{region}{total}</pre>"
+    fmp = f"<b><u>{depttitle}{tasktitle} FMPFE : {timetitle}</u></b>\n\n<pre>{spc[5]}\n\n{group}{dept}{total}</pre>"
     fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
     fmp = re.sub(r'(\D)0([^.])',r'\1-\2',fmp)   # Replaces lone '0' with '-'
     return fmp
@@ -977,7 +977,7 @@ def bbstatus(g, d, sid, access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+        grpdept = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
         
     
     print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'")
@@ -986,7 +986,7 @@ def bbstatus(g, d, sid, access):
     bb_mem    = f"SELECT Dept, Grp, MemberCode, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID"
     bb_group  = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
     bb_dept   = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
-    bb_region = f"SELECT District, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY District"
+    # bb_region = f"SELECT District, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY District"
     bb_youth  = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
     
     print(bb_group)
@@ -994,13 +994,13 @@ def bbstatus(g, d, sid, access):
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
-    dr = pd.read_sql(bb_region, conn)
+    # dr = pd.read_sql(bb_region, conn)
     dy = pd.read_sql(bb_youth, conn)
 
     dm.columns = ['Dept','Grp','Member','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dg.columns = ['Grp','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dd.columns = ['Dept','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
-    dr.columns = ['Region','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
+    # dr.columns = ['Region','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dy.columns = ['pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
@@ -1054,24 +1054,24 @@ def bbstatus(g, d, sid, access):
             dept = f'{dept}{dpt}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
         dept = dept + '\n'
     
-    region = str()
-    if d.endswith('D[0-9]%'):    
-        for r in range(len(dr)):
-            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
-            pn  = ' '*(4-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
-            po  = ' '*(4-len(str(dr.loc[r,'pOld']))) + str(dr.loc[r,'pOld'])
-            ba  = ' '*(4-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
-            ca  = ' '*(4-len(str(dr.loc[r,'cctA']))) + str(dr.loc[r,'cctA'])
-            bm  = ' '*(4-len(str(dr.loc[r,'bbME']))) + str(dr.loc[r,'bbME'])
-            ci  = ' '*(4-len(str(dr.loc[r,'cctI']))) + str(dr.loc[r,'cctI'])
-            pf  = ' '*(4-len(str(dr.loc[r,'pFA'])))  + str(dr.loc[r,'pFA'])
-            bf  = ' '*(4-len(str(dr.loc[r,'bbFA']))) + str(dr.loc[r,'bbFA'])
-            t   = ' '*(5-len(str(dr.loc[r,'Tot'])))  + str(dr.loc[r,'Tot'])
-            region = f'{region}{reg}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
-        region = region + '\n'
+    # region = str()
+    # if d.endswith('D[0-9]%'):    
+    #     for r in range(len(dr)):
+    #         reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+    #         pn  = ' '*(4-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
+    #         po  = ' '*(4-len(str(dr.loc[r,'pOld']))) + str(dr.loc[r,'pOld'])
+    #         ba  = ' '*(4-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
+    #         ca  = ' '*(4-len(str(dr.loc[r,'cctA']))) + str(dr.loc[r,'cctA'])
+    #         bm  = ' '*(4-len(str(dr.loc[r,'bbME']))) + str(dr.loc[r,'bbME'])
+    #         ci  = ' '*(4-len(str(dr.loc[r,'cctI']))) + str(dr.loc[r,'cctI'])
+    #         pf  = ' '*(4-len(str(dr.loc[r,'pFA'])))  + str(dr.loc[r,'pFA'])
+    #         bf  = ' '*(4-len(str(dr.loc[r,'bbFA']))) + str(dr.loc[r,'bbFA'])
+    #         t   = ' '*(5-len(str(dr.loc[r,'Tot'])))  + str(dr.loc[r,'Tot'])
+    #         region = f'{region}{reg}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
+    #     region = region + '\n'
     
     total = str()
-    if d == '_D[0-9]%':
+    if d == 'D[0-9]%':
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(4-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -1083,7 +1083,7 @@ def bbstatus(g, d, sid, access):
         t   = ' '*(5-len(str(dy.loc[0,'Tot'])))  + str(dy.loc[0,'Tot'])
         total = f'Total[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]'
     
-    summary = f"<b><u>{grpdept} BB Status Summary</u></b>\n\n<pre>     [ NP | OP | AB | CA | ME | CI | FP | FA | TOT ]\n\n{member}{group}{dept}{region}{total}</pre>"
+    summary = f"<b><u>{grpdept} BB Status Summary</u></b>\n\n<pre>     [ NP | OP | AB | CA | ME | CI | FP | FA | TOT ]\n\n{member}{group}{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -1106,7 +1106,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+        grpdept = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
@@ -1118,7 +1118,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept):
     bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBTStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} ORDER BY GID, {name}"
     bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} GROUP BY Grp, GID ORDER BY GID"
     bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} GROUP BY Dept, DID ORDER BY DID"
-    bb_region = f"SELECT District, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} GROUP BY District"
+    # bb_region = f"SELECT District, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query} GROUP BY District"
     bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'{query}"
     
     print(bb_group)
@@ -1126,13 +1126,13 @@ def bbtstatus(q, g, d, sid, access, bbtdept):
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
-    dr = pd.read_sql(bb_region, conn)
+    # dr = pd.read_sql(bb_region, conn)
     dy = pd.read_sql(bb_youth, conn)
 
     dm.columns = ['Dept','Grp','BBT','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dg.columns = ['Grp','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dd.columns = ['Dept','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
-    dr.columns = ['Region','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
+    # dr.columns = ['Region','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dy.columns = ['pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
@@ -1186,24 +1186,24 @@ def bbtstatus(q, g, d, sid, access, bbtdept):
             dept = f'{dept}{dpt}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
         dept = dept + '\n'
 
-    region = str()
-    if d.endswith('D[0-9]%'):    
-        for r in range(len(dr)):
-            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
-            pn  = ' '*(3-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
-            po  = ' '*(3-len(str(dr.loc[r,'pOld']))) + str(dr.loc[r,'pOld'])
-            ba  = ' '*(3-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
-            ca  = ' '*(3-len(str(dr.loc[r,'cctA']))) + str(dr.loc[r,'cctA'])
-            bm  = ' '*(3-len(str(dr.loc[r,'bbME']))) + str(dr.loc[r,'bbME'])
-            ci  = ' '*(3-len(str(dr.loc[r,'cctI']))) + str(dr.loc[r,'cctI'])
-            pf  = ' '*(3-len(str(dr.loc[r,'pFA'])))  + str(dr.loc[r,'pFA'])
-            bf  = ' '*(3-len(str(dr.loc[r,'bbFA']))) + str(dr.loc[r,'bbFA'])
-            t   = ' '*(3-len(str(dr.loc[r,'Tot'])))  + str(dr.loc[r,'Tot'])
-            region = f'{region}{reg}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
-        region = region + '\n'
+    # region = str()
+    # if d.endswith('D[0-9]%'):    
+    #     for r in range(len(dr)):
+    #         reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+    #         pn  = ' '*(3-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
+    #         po  = ' '*(3-len(str(dr.loc[r,'pOld']))) + str(dr.loc[r,'pOld'])
+    #         ba  = ' '*(3-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
+    #         ca  = ' '*(3-len(str(dr.loc[r,'cctA']))) + str(dr.loc[r,'cctA'])
+    #         bm  = ' '*(3-len(str(dr.loc[r,'bbME']))) + str(dr.loc[r,'bbME'])
+    #         ci  = ' '*(3-len(str(dr.loc[r,'cctI']))) + str(dr.loc[r,'cctI'])
+    #         pf  = ' '*(3-len(str(dr.loc[r,'pFA'])))  + str(dr.loc[r,'pFA'])
+    #         bf  = ' '*(3-len(str(dr.loc[r,'bbFA']))) + str(dr.loc[r,'bbFA'])
+    #         t   = ' '*(3-len(str(dr.loc[r,'Tot'])))  + str(dr.loc[r,'Tot'])
+    #         region = f'{region}{reg}[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]\n'
+    #     region = region + '\n'
         
     total = str()
-    if d == '_D[0-9]%':
+    if d == 'D[0-9]%':
         pn  = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(3-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -1215,7 +1215,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept):
         t   = ' '*(3-len(str(dy.loc[0,'Tot'])))  + str(dy.loc[0,'Tot'])
         total = f'Total[{pn}|{po}|{ba}|{ca}|{bm}|{ci}|{pf}|{bf}|{t}]'
     
-    summary = f"<b><u>{grpdept} {bbttype} Status Summary</u></b>\n\n<pre>     [ NP| OP| AB| CA| ME| CI| FP| FA|TOT]\n\n{member}{group}{dept}{region}{total}</pre>"
+    summary = f"<b><u>{grpdept} {bbttype} Status Summary</u></b>\n\n<pre>     [ NP| OP| AB| CA| ME| CI| FP| FA|TOT]\n\n{member}{group}{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -1234,7 +1234,7 @@ def newbbstatus(g, d, sid, access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+        grpdept = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
         
     
     print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'")
@@ -1248,7 +1248,7 @@ def newbbstatus(g, d, sid, access):
     bb_mem    = f"SELECT {cols} FROM {table} WHERE {conditions} ORDER BY GID"
     bb_group  = f"SELECT Grp, {sums} FROM {table} WHERE {conditions} GROUP BY Grp, GID ORDER BY GID"
     bb_dept   = f"SELECT Dept, {sums} FROM {table} WHERE {conditions} GROUP BY Dept, DID ORDER BY DID"
-    bb_region = f"SELECT District, {sums} FROM {table} WHERE {conditions} GROUP BY District"
+    # bb_region = f"SELECT District, {sums} FROM {table} WHERE {conditions} GROUP BY District"
     bb_youth  = f"SELECT {sums} FROM {table} WHERE {conditions}"
     
     print(bb_group)
@@ -1256,13 +1256,13 @@ def newbbstatus(g, d, sid, access):
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
-    dr = pd.read_sql(bb_region, conn)
+    # dr = pd.read_sql(bb_region, conn)
     dy = pd.read_sql(bb_youth, conn)
 
     dm.columns = ['Dept','Grp','Member','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dg.columns = ['Grp','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dd.columns = ['Dept','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
-    dr.columns = ['Region','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
+    # dr.columns = ['Region','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dy.columns = ['pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
@@ -1325,27 +1325,27 @@ def newbbstatus(g, d, sid, access):
             dept = f'{dept}{dpt}[{pn}|{po}|{pf}|{fe}|{ba}|{c1}|{c2}|{ci}|{ub}|{bm}|{fa}|{t}]\n'
         dept = dept + '\n'
     
-    region = str()
-    if d.endswith('D[0-9]%'):    
-        for r in range(len(dr)):
-            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
-            pn  = ' '*(4-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
-            po  = ' '*(4-len(str(dr.loc[r,'pOld']))) + str(dr.loc[r,'pOld'])
-            pf  = ' '*(4-len(str(dr.loc[r,'pFA'])))  + str(dr.loc[r,'pFA'])
-            fe  = ' '*(4-len(str(dr.loc[r,'FE'])))   + str(dr.loc[r,'FE'])
-            ba  = ' '*(4-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
-            c1  = ' '*(4-len(str(dr.loc[r,'cct1']))) + str(dr.loc[r,'cct1'])
-            c2  = ' '*(4-len(str(dr.loc[r,'cct2']))) + str(dr.loc[r,'cct2'])
-            ci  = ' '*(4-len(str(dr.loc[r,'cctI']))) + str(dr.loc[r,'cctI'])
-            ub  = ' '*(4-len(str(dr.loc[r,'UBB'])))  + str(dr.loc[r,'UBB'])
-            bm  = ' '*(4-len(str(dr.loc[r,'bbME']))) + str(dr.loc[r,'bbME'])
-            fa  = ' '*(4-len(str(dr.loc[r,'bbFA']))) + str(dr.loc[r,'bbFA'])
-            t   = ' '*(5-len(str(dr.loc[r,'Tot'])))  + str(dr.loc[r,'Tot'])
-            region = f'{region}{reg}[{pn}|{po}|{pf}|{fe}|{ba}|{c1}|{c2}|{ci}|{ub}|{bm}|{fa}|{t}]\n'
-        region = region + '\n'
+    # region = str()
+    # if d.endswith('D[0-9]%'):    
+    #     for r in range(len(dr)):
+    #         reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+    #         pn  = ' '*(4-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
+    #         po  = ' '*(4-len(str(dr.loc[r,'pOld']))) + str(dr.loc[r,'pOld'])
+    #         pf  = ' '*(4-len(str(dr.loc[r,'pFA'])))  + str(dr.loc[r,'pFA'])
+    #         fe  = ' '*(4-len(str(dr.loc[r,'FE'])))   + str(dr.loc[r,'FE'])
+    #         ba  = ' '*(4-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
+    #         c1  = ' '*(4-len(str(dr.loc[r,'cct1']))) + str(dr.loc[r,'cct1'])
+    #         c2  = ' '*(4-len(str(dr.loc[r,'cct2']))) + str(dr.loc[r,'cct2'])
+    #         ci  = ' '*(4-len(str(dr.loc[r,'cctI']))) + str(dr.loc[r,'cctI'])
+    #         ub  = ' '*(4-len(str(dr.loc[r,'UBB'])))  + str(dr.loc[r,'UBB'])
+    #         bm  = ' '*(4-len(str(dr.loc[r,'bbME']))) + str(dr.loc[r,'bbME'])
+    #         fa  = ' '*(4-len(str(dr.loc[r,'bbFA']))) + str(dr.loc[r,'bbFA'])
+    #         t   = ' '*(5-len(str(dr.loc[r,'Tot'])))  + str(dr.loc[r,'Tot'])
+    #         region = f'{region}{reg}[{pn}|{po}|{pf}|{fe}|{ba}|{c1}|{c2}|{ci}|{ub}|{bm}|{fa}|{t}]\n'
+    #     region = region + '\n'
     
     total = str()
-    if d == '_D[0-9]%':
+    if d == 'D[0-9]%':
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         pf  = ' '*(4-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
@@ -1360,7 +1360,7 @@ def newbbstatus(g, d, sid, access):
         t   = ' '*(5-len(str(dy.loc[0,'Tot'])))  + str(dy.loc[0,'Tot'])
         total = f'Total[{pn}|{po}|{pf}|{fe}|{ba}|{c1}|{c2}|{ci}|{ub}|{bm}|{fa}|{t}]'
     
-    summary = f"<b><u>{grpdept} BB Status Summary</u></b>\n\n<pre>     [ NP | OP | FP | FE | AB | C1 | C2 | CI | UB | ME | FA | TOT ]\n\n{member}{group}{dept}{region}{total}</pre>"
+    summary = f"<b><u>{grpdept} BB Status Summary</u></b>\n\n<pre>     [ NP | OP | FP | FE | AB | C1 | C2 | CI | UB | ME | FA | TOT ]\n\n{member}{group}{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -1379,7 +1379,7 @@ def newbbtstatus(q, g, d, sid, access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+        grpdept = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
     
     i = q if q in ['newbbt','newgyjnbbt'] else 'newbtm'
     bbtvalues = {'newbbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
@@ -1396,7 +1396,7 @@ def newbbtstatus(q, g, d, sid, access):
     bb_mem = f"SELECT {cols} FROM {table} WHERE {conditions} ORDER BY GID, {name}"
     bb_group = f"SELECT Grp, {sums} FROM {table} WHERE {conditions} GROUP BY Grp, GID ORDER BY GID"
     bb_dept = f"SELECT Dept, {sums} FROM {table} WHERE {conditions} GROUP BY Dept, DID ORDER BY DID"
-    bb_region = f"SELECT District, {sums} FROM {table} WHERE {conditions} GROUP BY District"
+    # bb_region = f"SELECT District, {sums} FROM {table} WHERE {conditions} GROUP BY District"
     bb_youth = f"SELECT {sums} FROM {table} WHERE {conditions}"
     
     print(bb_group)
@@ -1404,13 +1404,13 @@ def newbbtstatus(q, g, d, sid, access):
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
-    dr = pd.read_sql(bb_region, conn)
+    # dr = pd.read_sql(bb_region, conn)
     dy = pd.read_sql(bb_youth, conn)
 
     dm.columns = ['Dept','Grp','Member','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dg.columns = ['Grp','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dd.columns = ['Dept','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
-    dr.columns = ['Region','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
+    # dr.columns = ['Region','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dy.columns = ['pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
@@ -1472,27 +1472,27 @@ def newbbtstatus(q, g, d, sid, access):
             dept = f'{dept}{dpt}[{pn}|{po}|{pf}|{fe}|{ba}|{c1}|{c2}|{ci}|{ub}|{bm}|{fa}|{t}]\n'
         dept = dept + '\n'
 
-    region = str()
-    if d.endswith('D[0-9]%'):    
-        for r in range(len(dr)):
-            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
-            pn  = ' '*(3-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
-            po  = ' '*(3-len(str(dr.loc[r,'pOld']))) + str(dr.loc[r,'pOld'])
-            pf  = ' '*(3-len(str(dr.loc[r,'pFA'])))  + str(dr.loc[r,'pFA'])
-            fe  = ' '*(3-len(str(dr.loc[r,'FE'])))   + str(dr.loc[r,'FE'])
-            ba  = ' '*(3-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
-            c1  = ' '*(3-len(str(dr.loc[r,'cct1']))) + str(dr.loc[r,'cct1'])
-            c2  = ' '*(3-len(str(dr.loc[r,'cct2']))) + str(dr.loc[r,'cct2'])
-            ci  = ' '*(3-len(str(dr.loc[r,'cctI']))) + str(dr.loc[r,'cctI'])
-            ub  = ' '*(3-len(str(dr.loc[r,'UBB'])))  + str(dr.loc[r,'UBB'])
-            bm  = ' '*(3-len(str(dr.loc[r,'bbME']))) + str(dr.loc[r,'bbME'])
-            fa  = ' '*(3-len(str(dr.loc[r,'bbFA']))) + str(dr.loc[r,'bbFA'])
-            t   = ' '*(3-len(str(dr.loc[r,'Tot'])))  + str(dr.loc[r,'Tot'])
-            region = f'{region}{reg}[{pn}|{po}|{pf}|{fe}|{ba}|{c1}|{c2}|{ci}|{ub}|{bm}|{fa}|{t}]\n'
-        region = region + '\n'
+    # region = str()
+    # if d.endswith('D[0-9]%'):    
+    #     for r in range(len(dr)):
+    #         reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+    #         pn  = ' '*(3-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
+    #         po  = ' '*(3-len(str(dr.loc[r,'pOld']))) + str(dr.loc[r,'pOld'])
+    #         pf  = ' '*(3-len(str(dr.loc[r,'pFA'])))  + str(dr.loc[r,'pFA'])
+    #         fe  = ' '*(3-len(str(dr.loc[r,'FE'])))   + str(dr.loc[r,'FE'])
+    #         ba  = ' '*(3-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
+    #         c1  = ' '*(3-len(str(dr.loc[r,'cct1']))) + str(dr.loc[r,'cct1'])
+    #         c2  = ' '*(3-len(str(dr.loc[r,'cct2']))) + str(dr.loc[r,'cct2'])
+    #         ci  = ' '*(3-len(str(dr.loc[r,'cctI']))) + str(dr.loc[r,'cctI'])
+    #         ub  = ' '*(3-len(str(dr.loc[r,'UBB'])))  + str(dr.loc[r,'UBB'])
+    #         bm  = ' '*(3-len(str(dr.loc[r,'bbME']))) + str(dr.loc[r,'bbME'])
+    #         fa  = ' '*(3-len(str(dr.loc[r,'bbFA']))) + str(dr.loc[r,'bbFA'])
+    #         t   = ' '*(3-len(str(dr.loc[r,'Tot'])))  + str(dr.loc[r,'Tot'])
+    #         region = f'{region}{reg}[{pn}|{po}|{pf}|{fe}|{ba}|{c1}|{c2}|{ci}|{ub}|{bm}|{fa}|{t}]\n'
+    #     region = region + '\n'
         
     total = str()
-    if d == '_D[0-9]%':
+    if d == 'D[0-9]%':
         pn  = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         pf  = ' '*(3-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
@@ -1507,7 +1507,7 @@ def newbbtstatus(q, g, d, sid, access):
         t   = ' '*(3-len(str(dy.loc[0,'Tot'])))  + str(dy.loc[0,'Tot'])
         total = f'Total[{pn}|{po}|{pf}|{fe}|{ba}|{c1}|{c2}|{ci}|{ub}|{bm}|{fa}|{t}]'
     
-    summary = f"<b><u>{grpdept} {bbttype} Status Summary</u></b>\n\n<pre>     [ NP| OP| FP| FE| AB| C1| C2| CI| UB| ME| FA|TOT]\n\n{member}{group}{dept}{region}{total}</pre>"
+    summary = f"<b><u>{grpdept} {bbttype} Status Summary</u></b>\n\n<pre>     [ NP| OP| FP| FE| AB| C1| C2| CI| UB| ME| FA|TOT]\n\n{member}{group}{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -1569,7 +1569,7 @@ def deptbbtstatus(q, d, r, access):
     else:
         youth = str()
     
-    summary = f"<b><u>{str(d).replace('_D[0-9]%','Youth')} {bbttype} Status Summary</u></b>\n\n<pre>   [ NP| OP| AB| CA| ME| CI| FP| FA|TOT]\n\n{dept}{youth}</pre>"
+    summary = f"<b><u>{str(d).replace('D[0-9]%','Youth')} {bbttype} Status Summary</u></b>\n\n<pre>   [ NP| OP| AB| CA| ME| CI| FP| FA|TOT]\n\n{dept}{youth}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -1588,7 +1588,7 @@ def bbtactive(q, g, d, r, access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('_D[0-9]%','Youth')
+        grpdept = str(d).replace('D[0-9]%','Youth')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
@@ -1709,7 +1709,7 @@ def deptbbtactive(q, d, r, access):
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('_D[0-9]%','Youth')} {bbttype} Active BB Status </u></b>\n\n<pre>Grp [ NP| AB| CA]\n\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('D[0-9]%','Youth')} {bbttype} Active BB Status </u></b>\n\n<pre>Grp [ NP| AB| CA]\n\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -1732,7 +1732,7 @@ def bbtinactive(q, g, d, r, access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('_D[0-9]%','Youth')
+        grpdept = str(d).replace('D[0-9]%','Youth')
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
@@ -1863,7 +1863,7 @@ def deptbbtinactive(q, d, r, access):
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('_D[0-9]%','Youth')} {bbttype} Inactive BB Status </u></b>\n\n<pre>Grp [ OP| ME| CI| FP| FA]\n\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('D[0-9]%','Youth')} {bbttype} Inactive BB Status </u></b>\n\n<pre>Grp [ OP| ME| CI| FP| FA]\n\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -1880,7 +1880,7 @@ def bblist(d,g,sid,access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('_D[0-9]%','Youth')
+        grpdept = str(d).replace('D[0-9]%','Youth')
     
     query = f"FROM CodeyBBList('{sid}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}') AND (L1D LIKE '{d}' OR L2D LIKE '{d}')"
     
@@ -2007,7 +2007,7 @@ def bbtlist(q,d,g,sid,access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('_D[0-9]%','Youth')
+        grpdept = str(d).replace('D[0-9]%','Youth')
     bbttype,query = bbtvalues[i]
     
     columns = "LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate"
@@ -2116,7 +2116,7 @@ def newbblist(d,g,sid,access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('_D[0-9]%','Youth')
+        grpdept = str(d).replace('D[0-9]%','Youth')
     
     cols = "LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints"
     view = f"CodeyBBListUBB('{sid}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID"
@@ -2154,7 +2154,7 @@ def newbblist(d,g,sid,access):
     if access == 'Group':
         pts = [dPN['Points'].sum(), dPO['Points'].sum(), dPF['Points'].sum(), dFE['Points'].sum(), dBA['Points'].sum(), dC1['Points'].sum(), dC2['Points'].sum(), dCI['Points'].sum(), dUB['Points'].sum(), dME['Points'].sum(), dFA['Points'].sum()]
         pt = 'Points'
-    elif d != '_D[0-9]%':
+    elif d != 'D[0-9]%':
         pts = [dPN['DPoints'].sum(), dPO['DPoints'].sum(), dPF['DPoints'].sum(), dFE['DPoints'].sum(), dBA['DPoints'].sum(), dC1['DPoints'].sum(), dC2['DPoints'].sum(), dCI['DPoints'].sum(), dUB['DPoints'].sum(), dME['DPoints'].sum(), dFA['DPoints'].sum()]
         pt = 'DPoints'
     else:
@@ -2166,7 +2166,7 @@ def newbblist(d,g,sid,access):
     else:
         pn = f"<i><b><u>New Picking ({pts[0]} Pt)</u></b></i>\n<pre>"
         for r in range(len(dPN)):
-            pn = f"{pn}💛{r+1}. [{dPN.loc[r,'LastClass']}] [{dPN.loc[r,pt] if d != '_D[0-9]%' else '1'}] {dPN.loc[r,'FruitName'][:8]} - {dPN.loc[r,'L1N']}{dPN.loc[r,'L2N']} - {(dPN.loc[r,'BBTN'])}\n"
+            pn = f"{pn}💛{r+1}. [{dPN.loc[r,'LastClass']}] [{dPN.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dPN.loc[r,'FruitName'][:8]} - {dPN.loc[r,'L1N']}{dPN.loc[r,'L2N']} - {(dPN.loc[r,'BBTN'])}\n"
         pn = pn + '</pre>\n'
         
         
@@ -2175,7 +2175,7 @@ def newbblist(d,g,sid,access):
     else:
         po = f"<i><b><u>Old Picking ({pts[1]} Pt)</u></b></i>\n<pre>"
         for r in range(len(dPO)):
-            po = f"{po}⛔️{r+1}. [{dPO.loc[r,'LastClass']}] [{dPO.loc[r,pt] if d != '_D[0-9]%' else '1'}] {dPO.loc[r,'FruitName'][:8]} - {dPO.loc[r,'L1N']}{dPO.loc[r,'L2N']} - {(dPO.loc[r,'BBTN'])}\n"
+            po = f"{po}⛔️{r+1}. [{dPO.loc[r,'LastClass']}] [{dPO.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dPO.loc[r,'FruitName'][:8]} - {dPO.loc[r,'L1N']}{dPO.loc[r,'L2N']} - {(dPO.loc[r,'BBTN'])}\n"
         po = po + '</pre>\n'
     
     
@@ -2184,7 +2184,7 @@ def newbblist(d,g,sid,access):
     else:
         pf = f"<i><b><u>Fallen Picking ({pts[2]} Pt)</u></b></i>\n<pre>"
         for r in range(len(dPF)):
-            pf = f"{pf}❌{r+1}. [{dPF.loc[r,'LastClass']}] [{dPF.loc[r,pt] if d != '_D[0-9]%' else '1'}] {dPF.loc[r,'FruitName'][:8]} - {dPF.loc[r,'L1N']}{dPF.loc[r,'L2N']} - {(dPF.loc[r,'BBTN'])}\n"
+            pf = f"{pf}❌{r+1}. [{dPF.loc[r,'LastClass']}] [{dPF.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dPF.loc[r,'FruitName'][:8]} - {dPF.loc[r,'L1N']}{dPF.loc[r,'L2N']} - {(dPF.loc[r,'BBTN'])}\n"
         pf = pf + '</pre>\n'
         
         
@@ -2193,7 +2193,7 @@ def newbblist(d,g,sid,access):
     else:
         fe = f"<i><b><u>First Education ({pts[3]} Pt)</u></b></i>\n<pre>"
         for r in range(len(dFE)):
-            fe = f"{fe}🔵{r+1}. [{dFE.loc[r,'LastClass']}] [{dFE.loc[r,pt] if d != '_D[0-9]%' else '1'}] {dFE.loc[r,'FruitName'][:8]} - {dFE.loc[r,'L1N']}{dFE.loc[r,'L2N']} - {(dFE.loc[r,'BBTN'])} - {(dFE.loc[r,'LastTopic'])} → [{(dFE.loc[r,'NextClassDate'])}]\n"
+            fe = f"{fe}🔵{r+1}. [{dFE.loc[r,'LastClass']}] [{dFE.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dFE.loc[r,'FruitName'][:8]} - {dFE.loc[r,'L1N']}{dFE.loc[r,'L2N']} - {(dFE.loc[r,'BBTN'])} - {(dFE.loc[r,'LastTopic'])} → [{(dFE.loc[r,'NextClassDate'])}]\n"
         fe = fe + '</pre>\n'
         
         
@@ -2202,7 +2202,7 @@ def newbblist(d,g,sid,access):
     else:
         ba = f"<i><b><u>Active BB ({pts[4]} Pt)</u></b></i>\n<pre>"
         for r in range(len(dBA)):
-            ba = f"{ba}🟢{r+1}. [{dBA.loc[r,'LastClass']}] [{dBA.loc[r,pt] if d != '_D[0-9]%' else '1'}] {dBA.loc[r,'FruitName'][:8]} - {dBA.loc[r,'L1N']}{dBA.loc[r,'L2N']} - {(dBA.loc[r,'BBTN'])} - {(dBA.loc[r,'LastTopic'])} → [{(dBA.loc[r,'NextClassDate'])}]\n"
+            ba = f"{ba}🟢{r+1}. [{dBA.loc[r,'LastClass']}] [{dBA.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dBA.loc[r,'FruitName'][:8]} - {dBA.loc[r,'L1N']}{dBA.loc[r,'L2N']} - {(dBA.loc[r,'BBTN'])} - {(dBA.loc[r,'LastTopic'])} → [{(dBA.loc[r,'NextClassDate'])}]\n"
         ba = ba + '</pre>\n'
         
         
@@ -2211,7 +2211,7 @@ def newbblist(d,g,sid,access):
     else:
         c1 = f"<i><b><u>Confirm Center (Before Deadline) ({pts[5]} Pt)</u></b></i>\n<pre>"
         for r in range(len(dC1)):
-            c1 = f"{c1}🌟{r+1}. [{dC1.loc[r,'LastClass']}] [{dC1.loc[r,pt] if d != '_D[0-9]%' else '1'}] {dC1.loc[r,'FruitName'][:8]} - {dC1.loc[r,'L1N']}{dC1.loc[r,'L2N']} - {(dC1.loc[r,'BBTN'])} - {(dC1.loc[r,'LastTopic'])} → [{(dC1.loc[r,'NextClassDate'])}]\n"
+            c1 = f"{c1}🌟{r+1}. [{dC1.loc[r,'LastClass']}] [{dC1.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dC1.loc[r,'FruitName'][:8]} - {dC1.loc[r,'L1N']}{dC1.loc[r,'L2N']} - {(dC1.loc[r,'BBTN'])} - {(dC1.loc[r,'LastTopic'])} → [{(dC1.loc[r,'NextClassDate'])}]\n"
         c1 = c1 + '</pre>\n'
         
         
@@ -2220,7 +2220,7 @@ def newbblist(d,g,sid,access):
     else:
         c2 = f"<i><b><u>Confirm Center (Late) ({pts[6]} Pt)</u></b></i>\n<pre>"
         for r in range(len(dC2)):
-            c2 = f"{c2}⭐️{r+1}. [{dC2.loc[r,'LastClass']}] [{dC2.loc[r,pt] if d != '_D[0-9]%' else '1'}] {dC2.loc[r,'FruitName'][:8]} - {dC2.loc[r,'L1N']}{dC2.loc[r,'L2N']} - {(dC2.loc[r,'BBTN'])} - {(dC2.loc[r,'LastTopic'])} → [{(dC2.loc[r,'NextClassDate'])}]\n"
+            c2 = f"{c2}⭐️{r+1}. [{dC2.loc[r,'LastClass']}] [{dC2.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dC2.loc[r,'FruitName'][:8]} - {dC2.loc[r,'L1N']}{dC2.loc[r,'L2N']} - {(dC2.loc[r,'BBTN'])} - {(dC2.loc[r,'LastTopic'])} → [{(dC2.loc[r,'NextClassDate'])}]\n"
         c2 = c2 + '</pre>\n'
         
         
@@ -2229,7 +2229,7 @@ def newbblist(d,g,sid,access):
     else:
         ci = f"<i><b><u>Confirm Center (Inactive) ({pts[7]} Pt)</u></b></i>\n<pre>"
         for r in range(len(dCI)):
-            ci = f"{ci}🌠{r+1}. [{dCI.loc[r,'LastClass']}] [{dCI.loc[r,pt] if d != '_D[0-9]%' else '1'}] {dCI.loc[r,'FruitName'][:8]} - {dCI.loc[r,'L1N']}{dCI.loc[r,'L2N']} - {(dCI.loc[r,'BBTN'])} - {(dCI.loc[r,'LastTopic'])} → [{(dCI.loc[r,'NextClassDate'])}]\n"
+            ci = f"{ci}🌠{r+1}. [{dCI.loc[r,'LastClass']}] [{dCI.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dCI.loc[r,'FruitName'][:8]} - {dCI.loc[r,'L1N']}{dCI.loc[r,'L2N']} - {(dCI.loc[r,'BBTN'])} - {(dCI.loc[r,'LastTopic'])} → [{(dCI.loc[r,'NextClassDate'])}]\n"
         ci = ci + '</pre>\n'
         
         
@@ -2238,7 +2238,7 @@ def newbblist(d,g,sid,access):
     else:
         ub = f"<i><b><u>One Class Per Week (UBB) ({pts[8]} Pt)</u></b></i>\n<pre>"
         for r in range(len(dUB)):
-            ub = f"{ub}🟠{r+1}. [{dUB.loc[r,'LastClass']}] [{dUB.loc[r,pt] if d != '_D[0-9]%' else '1'}] {dUB.loc[r,'FruitName'][:8]} - {dUB.loc[r,'L1N']}{dUB.loc[r,'L2N']} - {(dUB.loc[r,'BBTN'])} - {(dUB.loc[r,'LastTopic'])} → [{(dUB.loc[r,'NextClassDate'])}]\n"
+            ub = f"{ub}🟠{r+1}. [{dUB.loc[r,'LastClass']}] [{dUB.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dUB.loc[r,'FruitName'][:8]} - {dUB.loc[r,'L1N']}{dUB.loc[r,'L2N']} - {(dUB.loc[r,'BBTN'])} - {(dUB.loc[r,'LastTopic'])} → [{(dUB.loc[r,'NextClassDate'])}]\n"
         ub = ub + '</pre>\n'
         
         
@@ -2247,7 +2247,7 @@ def newbblist(d,g,sid,access):
     else:
         me = f"<i><b><u>Missed Education ({pts[9]} Pt)</u></b></i>\n<pre>"
         for r in range(len(dME)):
-            me = f"{me}🔴{r+1}. [{dME.loc[r,'LastClass']}] [{dME.loc[r,pt] if d != '_D[0-9]%' else '1'}] {dME.loc[r,'FruitName'][:8]} - {dME.loc[r,'L1N']}{dME.loc[r,'L2N']} - {(dME.loc[r,'BBTN'])} - {(dME.loc[r,'LastTopic'])} → [{(dME.loc[r,'NextClassDate'])}]\n"
+            me = f"{me}🔴{r+1}. [{dME.loc[r,'LastClass']}] [{dME.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dME.loc[r,'FruitName'][:8]} - {dME.loc[r,'L1N']}{dME.loc[r,'L2N']} - {(dME.loc[r,'BBTN'])} - {(dME.loc[r,'LastTopic'])} → [{(dME.loc[r,'NextClassDate'])}]\n"
         me = me + '</pre>\n' 
 
 
@@ -2256,7 +2256,7 @@ def newbblist(d,g,sid,access):
     else:
         fa = f"<i><b><u>Fallen BB ({pts[10]} Pt)</u></b></i>\n<pre>"
         for r in range(len(dFA)):
-            fa = f"{fa}⚫️{r+1}. [{dFA.loc[r,'LastClass']}] [{dFA.loc[r,pt] if d != '_D[0-9]%' else '1'}] {dFA.loc[r,'FruitName'][:8]} - {dFA.loc[r,'L1N']}{dFA.loc[r,'L2N']} - {(dFA.loc[r,'BBTN'])} - {(dFA.loc[r,'LastTopic'])} → [{(dFA.loc[r,'NextClassDate'])}]\n"
+            fa = f"{fa}⚫️{r+1}. [{dFA.loc[r,'LastClass']}] [{dFA.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dFA.loc[r,'FruitName'][:8]} - {dFA.loc[r,'L1N']}{dFA.loc[r,'L2N']} - {(dFA.loc[r,'BBTN'])} - {(dFA.loc[r,'LastTopic'])} → [{(dFA.loc[r,'NextClassDate'])}]\n"
         fa = fa + '</pre>\n'
         
     
@@ -2282,7 +2282,7 @@ def newbbtlist(q,d,g,sid,access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('_D[0-9]%','Youth')
+        grpdept = str(d).replace('D[0-9]%','Youth')
     bbttype,query = bbtvalues[i]
     
     cols = "LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints"
@@ -2522,7 +2522,7 @@ def bbtlistold(q,d):
             ic = f"{ic}⭐️{r+1}. {(dIC.loc[r,'BBTN'])[:8]} - {dIC.loc[r,'FruitName'][:8]} - {dIC.loc[r,'L1N'][:8]}{dIC.loc[r,'L2N'][:11]} ({dIC.loc[r,'L2G']})\n"
         ic = ic + '</pre>\n'
     
-    result = f"<b><u>📖{str(d).replace('_D[0-9]%','Youth')} {bbttype} Student List📖</u></b>\n\n<i>▫️Status▫️\n#. BBT - Fruit - Leaf1 / Leaf2</i>\n\n{np}{op}{ab}{im}{fa}{fp}{ac}{ic}"
+    result = f"<b><u>📖{str(d).replace('D[0-9]%','Youth')} {bbttype} Student List📖</u></b>\n\n<i>▫️Status▫️\n#. BBT - Fruit - Leaf1 / Leaf2</i>\n\n{np}{op}{ab}{im}{fa}{fp}{ac}{ic}"
     result = re.sub(r'\.0',r'',result)
     result = re.sub(r' \(\)',r'',result)
     result = re.sub(r'\((\d+)\)', r'(G\1)', result)
@@ -2679,7 +2679,7 @@ LEFT JOIN BBData bb ON bb.UID = b.UID
 def tol(d):
     conn = odbc.connect(conn_str)
     t = d if d != 'D[0-9]%' else 'Total'
-    header = f"🏛{str(d).replace('_D[0-9]%','Youth')} BB Status Classification🏛" if d != 'D[0-9]%' else '🌳Tree of Life🌳'
+    header = f"🏛{str(d).replace('D[0-9]%','Youth')} BB Status Classification🏛" if d != 'D[0-9]%' else '🌳Tree of Life🌳'
     bb_dept = f"""SELECT m.*, pNew, pOld, bbA, bbME, bbFA, pFA, cctA, cctI, cct, Total
 FROM (
 SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(cctA + cctI)cct, SUM(Tot)Total
@@ -2760,7 +2760,7 @@ FROM ScottStatusNumbers WHERE Dept LIKE 'D_'
         dept1 = f"{dept1}]\n"
         dept2 = f"{dept2}]\n"
         
-    result = f"<b><u>🏛{str(d).replace('_D[0-9]%','Youth')} BB Status Classification🏛</u></b>\n\n<pre>Dept[  D1 |  D2 |  D3 |  D4 ]\n\n{dept1}\n\nDept[  D5 |  D6 |  D7 |  D8 |Total]\n\n{dept2}</pre>"
+    result = f"<b><u>🏛{str(d).replace('D[0-9]%','Youth')} BB Status Classification🏛</u></b>\n\n<pre>Dept[  D1 |  D2 |  D3 |  D4 ]\n\n{dept1}\n\nDept[  D5 |  D6 |  D7 |  D8 |Total]\n\n{dept2}</pre>"
     result = re.sub(r'\|]',r']',result)  # Replaces '|]' with ']'
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
@@ -2771,7 +2771,7 @@ FROM ScottStatusNumbers WHERE Dept LIKE 'D_'
 
 def tolfull(d):
     
-    header = f"🌳{str(d).replace('_D[0-9]%','Youth')} Tree of Life🌳" if d != 'D[0-9]%' else '🌳TOL Full🌳'
+    header = f"🌳{str(d).replace('D[0-9]%','Youth')} Tree of Life🌳" if d != 'D[0-9]%' else '🌳TOL Full🌳'
     conn = odbc.connect(conn_str)
     
     bb_group = f"""SELECT s.Grp, NewM mNew, OldM mOld, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Tot bbTot
@@ -2870,7 +2870,7 @@ def bbactive(g, d, sid, access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+        grpdept = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
         
     
     print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'")
@@ -2879,7 +2879,7 @@ def bbactive(g, d, sid, access):
     bb_mem    = f"SELECT Dept, Grp, MemberCode, Total SP, pNew, bbA, cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID"
     bb_group  = f"SELECT Grp, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
     bb_dept   = f"SELECT Dept, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
-    bb_region = f"SELECT District, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY District"
+    # bb_region = f"SELECT District, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY District"
     bb_youth  = f"SELECT SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
     
     print(bb_group)
@@ -2887,13 +2887,13 @@ def bbactive(g, d, sid, access):
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
-    dr = pd.read_sql(bb_region, conn)
+    # dr = pd.read_sql(bb_region, conn)
     dy = pd.read_sql(bb_youth, conn)
 
     dm.columns = ['Dept','Grp','Member','SP','pNew','bbA','cctA']
     dg.columns = ['Grp','SP','pNew','bbA','cctA']
     dd.columns = ['Dept','SP','pNew','bbA','cctA']
-    dr.columns = ['Region','SP','pNew','bbA','cctA']
+    # dr.columns = ['Region','SP','pNew','bbA','cctA']
     dy.columns = ['SP','pNew','bbA','cctA']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
@@ -2932,26 +2932,26 @@ def bbactive(g, d, sid, access):
             dept = f'{dept}{dpt}[{sp}][{pn}|{ba}|{ca}]\n'
         dept = dept + '\n'
     
-    region = str()
-    if d.endswith('D[0-9]%'):    
-        for r in range(len(dr)):
-            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
-            sp  = ' '*(5-len(str(dr.loc[r,'SP'])))   + str(dr.loc[r,'SP'])
-            pn  = ' '*(5-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
-            ba  = ' '*(5-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
-            ca  = ' '*(4-len(str(dr.loc[r,'cctA']))) + str(dr.loc[r,'cctA'])
-            region = f'{region}{reg}[{sp}][{pn}|{ba}|{ca}]\n'
-        region = region + '\n'
+    # region = str()
+    # if d.endswith('D[0-9]%'):    
+    #     for r in range(len(dr)):
+    #         reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+    #         sp  = ' '*(5-len(str(dr.loc[r,'SP'])))   + str(dr.loc[r,'SP'])
+    #         pn  = ' '*(5-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
+    #         ba  = ' '*(5-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
+    #         ca  = ' '*(4-len(str(dr.loc[r,'cctA']))) + str(dr.loc[r,'cctA'])
+    #         region = f'{region}{reg}[{sp}][{pn}|{ba}|{ca}]\n'
+    #     region = region + '\n'
     
     total = str()
-    if d == '_D[0-9]%':
+    if d == 'D[0-9]%':
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba  = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
         ca  = ' '*(4-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
         total = f'Total[{sp}][{pn}|{ba}|{ca}]'
     
-    summary = f"<b><u>{grpdept} Active BB Status Summary</u></b>\n\n<pre>     [  SP ][  NP |  AB | CA ]\n\n{member}{group}{dept}{region}{total}</pre>"
+    summary = f"<b><u>{grpdept} Active BB Status Summary</u></b>\n\n<pre>     [  SP ][  NP |  AB | CA ]\n\n{member}{group}{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -3009,7 +3009,7 @@ def oldbbactive(d):
     else:
         youth = str()
     
-    result = f"""<b><u>{str(d).replace('_D[0-9]%','Youth')} Active BB Status </u></b>\n\n<pre>Grp [  SP ][  NP |  AB | CA ]\n\n{group}\n{dept}{youth}</pre>"""
+    result = f"""<b><u>{str(d).replace('D[0-9]%','Youth')} Active BB Status </u></b>\n\n<pre>Grp [  SP ][  NP |  AB | CA ]\n\n{group}\n{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
     return result
@@ -3022,22 +3022,22 @@ def deptbbactive(d, sid, access):
                 
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+    grpdept = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
         
     
     print(f"bbstatus parameters:          d = '{d}'          sid = {sid}          access = '{access}'")
     
     conn = odbc.connect(conn_str)
     bb_dept   = f"SELECT Dept, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' GROUP BY Dept, DID ORDER BY DID"
-    bb_region = f"SELECT District, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' GROUP BY District"
+    # bb_region = f"SELECT District, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' GROUP BY District"
     bb_youth  = f"SELECT SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}'"
     
     dd = pd.read_sql(bb_dept, conn)
-    dr = pd.read_sql(bb_region, conn)
+    # dr = pd.read_sql(bb_region, conn)
     dy = pd.read_sql(bb_youth, conn)
 
     dd.columns = ['Dept','SP','pNew','bbA','cctA']
-    dr.columns = ['Region','SP','pNew','bbA','cctA']
+    # dr.columns = ['Region','SP','pNew','bbA','cctA']
     dy.columns = ['SP','pNew','bbA','cctA']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
@@ -3054,26 +3054,26 @@ def deptbbactive(d, sid, access):
             dept = f'{dept}{dpt}[{sp}][{pn}|{ba}|{ca}]\n'
         dept = dept + '\n'
     
-    region = str()
-    if d.endswith('D[0-9]%'):    
-        for r in range(len(dr)):
-            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
-            sp  = ' '*(5-len(str(dr.loc[r,'SP'])))   + str(dr.loc[r,'SP'])
-            pn  = ' '*(5-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
-            ba  = ' '*(5-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
-            ca  = ' '*(4-len(str(dr.loc[r,'cctA']))) + str(dr.loc[r,'cctA'])
-            region = f'{region}{reg}[{sp}][{pn}|{ba}|{ca}]\n'
-        region = region + '\n'
+    # region = str()
+    # if d.endswith('D[0-9]%'):    
+    #     for r in range(len(dr)):
+    #         reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+    #         sp  = ' '*(5-len(str(dr.loc[r,'SP'])))   + str(dr.loc[r,'SP'])
+    #         pn  = ' '*(5-len(str(dr.loc[r,'pNew']))) + str(dr.loc[r,'pNew'])
+    #         ba  = ' '*(5-len(str(dr.loc[r,'bbA'])))  + str(dr.loc[r,'bbA'])
+    #         ca  = ' '*(4-len(str(dr.loc[r,'cctA']))) + str(dr.loc[r,'cctA'])
+    #         region = f'{region}{reg}[{sp}][{pn}|{ba}|{ca}]\n'
+    #     region = region + '\n'
     
     total = str()
-    if d == '_D[0-9]%':
+    if d == 'D[0-9]%':
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba  = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
         ca  = ' '*(4-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
         total = f'Total[{sp}][{pn}|{ba}|{ca}]'
     
-    summary = f"<b><u>{grpdept} Active BB Status Summary</u></b>\n\n<pre>     [  SP ][  NP |  AB | CA ]\n\n{dept}{region}{total}</pre>"
+    summary = f"<b><u>{grpdept} Active BB Status Summary</u></b>\n\n<pre>     [  SP ][  NP |  AB | CA ]\n\n{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -3091,7 +3091,7 @@ def bbinactive(g, d, sid, access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+        grpdept = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
         
     
     print(f"bbinactive parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'")
@@ -3100,7 +3100,7 @@ def bbinactive(g, d, sid, access):
     bb_mem    = f"SELECT Dept, Grp, MemberCode, pOld, bbME, cctI, pFA, bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID"
     bb_group  = f"SELECT Grp, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
     bb_dept   = f"SELECT Dept, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
-    bb_region = f"SELECT District, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY District"
+    # bb_region = f"SELECT District, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY District"
     bb_youth  = f"SELECT SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
     
     print(bb_group)
@@ -3108,13 +3108,13 @@ def bbinactive(g, d, sid, access):
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
-    dr = pd.read_sql(bb_region, conn)
+    # dr = pd.read_sql(bb_region, conn)
     dy = pd.read_sql(bb_youth, conn)
 
     dm.columns = ['Dept','Grp','Member','pOld','bbME','cctI','pFA','bbFA']
     dg.columns = ['Grp','pOld','bbME','cctI','pFA','bbFA']
     dd.columns = ['Dept','pOld','bbME','cctI','pFA','bbFA']
-    dr.columns = ['Region','pOld','bbME','cctI','pFA','bbFA']
+    # dr.columns = ['Region','pOld','bbME','cctI','pFA','bbFA']
     dy.columns = ['pOld','bbME','cctI','pFA','bbFA']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
@@ -3156,20 +3156,20 @@ def bbinactive(g, d, sid, access):
             dept = f'{dept}{dpt}[{po}|{bm}|{ci}||{pf}|{bf}]\n'
         dept = dept + '\n'
     
-    region = str()
-    if d.endswith('D[0-9]%'):    
-        for r in range(len(dr)):
-            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
-            po  = ' '*(4-len(str(dr.loc[r,'pOld']))) + str(dr.loc[r,'pOld'])
-            bm  = ' '*(4-len(str(dr.loc[r,'bbME']))) + str(dr.loc[r,'bbME'])
-            ci  = ' '*(4-len(str(dr.loc[r,'cctI']))) + str(dr.loc[r,'cctI'])
-            pf  = ' '*(4-len(str(dr.loc[r,'pFA'])))  + str(dr.loc[r,'pFA'])
-            bf  = ' '*(4-len(str(dr.loc[r,'bbFA']))) + str(dr.loc[r,'bbFA'])
-            region = f'{region}{reg}[{po}|{bm}|{ci}||{pf}|{bf}]\n'
-        region = region + '\n'
+    # region = str()
+    # if d.endswith('D[0-9]%'):    
+    #     for r in range(len(dr)):
+    #         reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+    #         po  = ' '*(4-len(str(dr.loc[r,'pOld']))) + str(dr.loc[r,'pOld'])
+    #         bm  = ' '*(4-len(str(dr.loc[r,'bbME']))) + str(dr.loc[r,'bbME'])
+    #         ci  = ' '*(4-len(str(dr.loc[r,'cctI']))) + str(dr.loc[r,'cctI'])
+    #         pf  = ' '*(4-len(str(dr.loc[r,'pFA'])))  + str(dr.loc[r,'pFA'])
+    #         bf  = ' '*(4-len(str(dr.loc[r,'bbFA']))) + str(dr.loc[r,'bbFA'])
+    #         region = f'{region}{reg}[{po}|{bm}|{ci}||{pf}|{bf}]\n'
+    #     region = region + '\n'
     
     total = str()
-    if d == '_D[0-9]%':
+    if d == 'D[0-9]%':
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         bm  = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         ci  = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -3177,7 +3177,7 @@ def bbinactive(g, d, sid, access):
         bf  = ' '*(4-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA'])
         total = f'Total[{po}|{bm}|{ci}||{pf}|{bf}]\n'
     
-    summary = f"<b><u>{grpdept} Inactive BB Status Summary</u></b>\n\n<pre>     [ OP | ME | CI || FP | FA ]\n\n{member}{group}{dept}{region}{total}</pre>"
+    summary = f"<b><u>{grpdept} Inactive BB Status Summary</u></b>\n\n<pre>     [ OP | ME | CI || FP | FA ]\n\n{member}{group}{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -3189,21 +3189,21 @@ def deptbbinactive(d, sid, access):
                 
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+    grpdept = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
         
     print(f"bbinactive parameters:          d = '{d}'          sid = {sid}          access = '{access}'")
     
     conn = odbc.connect(conn_str)
     bb_dept   = f"SELECT Dept, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' GROUP BY Dept, DID ORDER BY DID"
-    bb_region = f"SELECT District, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' GROUP BY District"
+    # bb_region = f"SELECT District, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}' GROUP BY District"
     bb_youth  = f"SELECT SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept LIKE '{d}'"
         
     dd = pd.read_sql(bb_dept, conn)
-    dr = pd.read_sql(bb_region, conn)
+    # dr = pd.read_sql(bb_region, conn)
     dy = pd.read_sql(bb_youth, conn)
 
     dd.columns = ['Dept','pOld','bbME','cctI','pFA','bbFA']
-    dr.columns = ['Region','pOld','bbME','cctI','pFA','bbFA']
+    # dr.columns = ['Region','pOld','bbME','cctI','pFA','bbFA']
     dy.columns = ['pOld','bbME','cctI','pFA','bbFA']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
@@ -3221,20 +3221,20 @@ def deptbbinactive(d, sid, access):
             dept = f'{dept}{dpt}[{po}|{bm}|{ci}||{pf}|{bf}]\n'
         dept = dept + '\n'
     
-    region = str()
-    if d.endswith('D[0-9]%'):    
-        for r in range(len(dr)):
-            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
-            po  = ' '*(4-len(str(dr.loc[r,'pOld']))) + str(dr.loc[r,'pOld'])
-            bm  = ' '*(4-len(str(dr.loc[r,'bbME']))) + str(dr.loc[r,'bbME'])
-            ci  = ' '*(4-len(str(dr.loc[r,'cctI']))) + str(dr.loc[r,'cctI'])
-            pf  = ' '*(4-len(str(dr.loc[r,'pFA'])))  + str(dr.loc[r,'pFA'])
-            bf  = ' '*(4-len(str(dr.loc[r,'bbFA']))) + str(dr.loc[r,'bbFA'])
-            region = f'{region}{reg}[{po}|{bm}|{ci}||{pf}|{bf}]\n'
-        region = region + '\n'
+    # region = str()
+    # if d.endswith('D[0-9]%'):    
+    #     for r in range(len(dr)):
+    #         reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+    #         po  = ' '*(4-len(str(dr.loc[r,'pOld']))) + str(dr.loc[r,'pOld'])
+    #         bm  = ' '*(4-len(str(dr.loc[r,'bbME']))) + str(dr.loc[r,'bbME'])
+    #         ci  = ' '*(4-len(str(dr.loc[r,'cctI']))) + str(dr.loc[r,'cctI'])
+    #         pf  = ' '*(4-len(str(dr.loc[r,'pFA'])))  + str(dr.loc[r,'pFA'])
+    #         bf  = ' '*(4-len(str(dr.loc[r,'bbFA']))) + str(dr.loc[r,'bbFA'])
+    #         region = f'{region}{reg}[{po}|{bm}|{ci}||{pf}|{bf}]\n'
+    #     region = region + '\n'
     
     total = str()
-    if d == '_D[0-9]%':
+    if d == 'D[0-9]%':
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         bm  = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         ci  = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -3242,7 +3242,7 @@ def deptbbinactive(d, sid, access):
         bf  = ' '*(4-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA'])
         total = f'Total[{po}|{bm}|{ci}||{pf}|{bf}]\n'
     
-    summary = f"<b><u>{grpdept} Inactive BB Status Summary</u></b>\n\n<pre>     [ OP | ME | CI || FP | FA ]\n\n{dept}{region}{total}</pre>"
+    summary = f"<b><u>{grpdept} Inactive BB Status Summary</u></b>\n\n<pre>     [ OP | ME | CI || FP | FA ]\n\n{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -3371,7 +3371,7 @@ def deptfm(d):
     else:
         total = str()
         
-    depttitle = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 2')
+    depttitle = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 2')
 
     fmp = f"<b><u>{depttitle} FM Status</u></b>\n\n<pre>Grp   [ NewM | OldM ]\n\n{group}\n{dept}{total}</pre>"
     fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
@@ -3387,7 +3387,7 @@ def deptfm(d):
 
 def bbfull(d):
     
-    header = f"🌳{str(d).replace('_D[0-9]%','Youth')} Tree of Life🌳"
+    header = f"🌳{str(d).replace('D[0-9]%','Youth')} Tree of Life🌳"
     conn = odbc.connect(conn_str)
     
     bb_group = f"""SELECT s.Grp, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Tot bbTot
@@ -3765,7 +3765,7 @@ def classes(g, d, access, time):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = str(d).replace('_D[0-9]%','Youth')
+        grpdept = str(d).replace('D[0-9]%','Youth')
     bbtgrp = 'BBT' if access == 'Group' else 'Grp'
     if time == 'today':
         timetitle = 'Today'
@@ -3837,7 +3837,7 @@ def edu(day, g, d, access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+        grpdept = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
     
     days = {'fri': ['FriAtt, FriOnl, FriRep, FriAbs',
                     'SUM(FriAtt), SUM(FriOnl), SUM(FriRep), SUM(FriAbs)',
@@ -3859,19 +3859,19 @@ def edu(day, g, d, access):
     conn = odbc.connect(conn_str)
     edu_group  = f"SELECT Grp, {days[day][0]} FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
     edu_dept   = f"SELECT Dept, {days[day][1]} FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
-    edu_region = f"SELECT Region, {days[day][1]} FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Region"
+    # edu_region = f"SELECT Region, {days[day][1]} FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Region"
     edu_youth  = f"SELECT {days[day][1]} FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
     
     print(edu_group)
     
     dg = pd.read_sql(edu_group, conn)
     dd = pd.read_sql(edu_dept, conn)
-    dr = pd.read_sql(edu_region, conn)
+    # dr = pd.read_sql(edu_region, conn)
     dy = pd.read_sql(edu_youth, conn)
 
     dg.columns = ['Grp','Att','Onl','Rep','Abs']
     dd.columns = ['Dept','Att','Onl','Rep','Abs']
-    dr.columns = ['Region','Att','Onl','Rep','Abs']
+    # dr.columns = ['Region','Att','Onl','Rep','Abs']
     dy.columns = ['Att','Onl','Rep','Abs']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
@@ -3898,26 +3898,26 @@ def edu(day, g, d, access):
             dept = f'{dept}{dpt}[{at}|{on}|{rp}|{ab}]\n'
         dept = dept + '\n'
     
-    region = str()
-    if d.endswith('D[0-9]%'):    
-        for r in range(len(dr)):
-            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
-            at  = ' '*(2-len(str(dr.loc[r,'Att']))) + str(dr.loc[r,'Att'])
-            on  = ' '*(2-len(str(dr.loc[r,'Onl']))) + str(dr.loc[r,'Onl'])
-            rp  = ' '*(2-len(str(dr.loc[r,'Rep']))) + str(dr.loc[r,'Rep'])
-            ab  = ' '*(2-len(str(dr.loc[r,'Abs']))) + str(dr.loc[r,'Abs'])
-            region = f'{region}{reg}[{at}|{on}|{rp}|{ab}]\n'
-        region = region + '\n'
+    # region = str()
+    # if d.endswith('D[0-9]%'):    
+    #     for r in range(len(dr)):
+    #         reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+    #         at  = ' '*(2-len(str(dr.loc[r,'Att']))) + str(dr.loc[r,'Att'])
+    #         on  = ' '*(2-len(str(dr.loc[r,'Onl']))) + str(dr.loc[r,'Onl'])
+    #         rp  = ' '*(2-len(str(dr.loc[r,'Rep']))) + str(dr.loc[r,'Rep'])
+    #         ab  = ' '*(2-len(str(dr.loc[r,'Abs']))) + str(dr.loc[r,'Abs'])
+    #         region = f'{region}{reg}[{at}|{on}|{rp}|{ab}]\n'
+    #     region = region + '\n'
     
     total = str()
-    if d == '_D[0-9]%':
+    if d == 'D[0-9]%':
         at  = ' '*(2-len(str(dy.loc[0,'Att']))) + str(dy.loc[0,'Att'])
         on  = ' '*(2-len(str(dy.loc[0,'Onl']))) + str(dy.loc[0,'Onl'])
         rp  = ' '*(2-len(str(dy.loc[0,'Rep']))) + str(dy.loc[0,'Rep'])
         ab  = ' '*(2-len(str(dy.loc[0,'Abs']))) + str(dy.loc[0,'Abs'])
         total = f'Total[{at}|{on}|{rp}|{ab}]'
     
-    summary = f"<b><u>{grpdept} {days[day][2]}</u></b>\n\n<pre>     {columns}\n\n{group}{dept}{region}{total}</pre>"
+    summary = f"<b><u>{grpdept} {days[day][2]}</u></b>\n\n<pre>     {columns}\n\n{group}{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -3934,26 +3934,26 @@ def edurev(g, d, access):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
-        grpdept = d.replace('_D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
+        grpdept = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
         
     print(f"edu parameters:   g = '{g}'          d = '{d}'          access = '{access}'")
     
     conn = odbc.connect(conn_str)
     edu_group  = f"SELECT Grp, RevS, RevNS FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
     edu_dept   = f"SELECT Dept, SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
-    edu_region = f"SELECT Region, SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Region"
+    # edu_region = f"SELECT Region, SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Region"
     edu_youth  = f"SELECT SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
     
     print(edu_group)
     
     dg = pd.read_sql(edu_group, conn)
     dd = pd.read_sql(edu_dept, conn)
-    dr = pd.read_sql(edu_region, conn)
+    # dr = pd.read_sql(edu_region, conn)
     dy = pd.read_sql(edu_youth, conn)
 
     dg.columns = ['Grp','RevS','RevNS']
     dd.columns = ['Dept','RevS','RevNS']
-    dr.columns = ['Region','RevS','RevNS']
+    # dr.columns = ['Region','RevS','RevNS']
     dy.columns = ['RevS','RevNS']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
@@ -3976,22 +3976,22 @@ def edurev(g, d, access):
             dept = f'{dept}{dpt}[{rs}|{rn}]\n'
         dept = dept + '\n'
     
-    region = str()
-    if d.endswith('D[0-9]%'):    
-        for r in range(len(dr)):
-            reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
-            rs  = ' '*(2-len(str(dr.loc[r,'RevS']))) + str(dr.loc[r,'RevS'])
-            rn  = ' '*(2-len(str(dr.loc[r,'RevNS']))) + str(dr.loc[r,'RevNS'])
-            region = f'{region}{reg}[{rs}|{rn}]\n'
-        region = region + '\n'
+    # region = str()
+    # if d.endswith('D[0-9]%'):    
+    #     for r in range(len(dr)):
+    #         reg =   str(dr.loc[r,'Region']) + ' '*(5-len(str(dr.loc[r,'Region'])))
+    #         rs  = ' '*(2-len(str(dr.loc[r,'RevS']))) + str(dr.loc[r,'RevS'])
+    #         rn  = ' '*(2-len(str(dr.loc[r,'RevNS']))) + str(dr.loc[r,'RevNS'])
+    #         region = f'{region}{reg}[{rs}|{rn}]\n'
+    #     region = region + '\n'
     
     total = str()
-    if d == '_D[0-9]%':
+    if d == 'D[0-9]%':
         rs  = ' '*(2-len(str(dy.loc[0,'RevS']))) + str(dy.loc[0,'RevS'])
         rn  = ' '*(2-len(str(dy.loc[0,'RevNS']))) + str(dy.loc[0,'RevNS'])
         total = f'Total[{rs}|{rn}]'
     
-    summary = f"<b><u>{grpdept} Revelation Speech Summary (Mon → Sun) </u></b>\n\n<pre>     [ S|NS]\n\n{group}{dept}{region}{total}</pre>"
+    summary = f"<b><u>{grpdept} Revelation Speech Summary (Mon → Sun) </u></b>\n\n<pre>     [ S|NS]\n\n{group}{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary

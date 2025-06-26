@@ -61,6 +61,7 @@ def bot_responses(id,tname,input_text):
             try:
                 print('//')
                 command,d = user_message.split('//')
+                d = d.capitalize() if d.startswith('d') else d
                 access = d
                 print(f"command = {command}, d = {d}, access = {access}")
             except ValueError:

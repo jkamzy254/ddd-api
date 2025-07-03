@@ -9,6 +9,8 @@ from rest_framework.views import APIView
 from django.db import connection
 
 def ct_add_classes():
-    
+    print("Printing Connection as Cursor for spCTScheduleAddClasses")
     with connection.cursor() as cursor:
         cursor.execute("EXEC spCTScheduleAddClasses")
+    print("Just ran Connection as Cursor for spCTScheduleAddClasses")
+        

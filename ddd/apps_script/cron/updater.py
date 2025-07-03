@@ -9,5 +9,6 @@ def start():
     scheduler = BackgroundScheduler(timezone=local_tz)
 
     scheduler.add_job(ct_add_classes, CronTrigger(hour=2, timezone=local_tz))
+    scheduler.add_job(ct_add_classes, CronTrigger(hour=10, minute=31, timezone=local_tz))
 
     scheduler.start()

@@ -10,6 +10,6 @@ def start():
 
     scheduler.add_job(svc_set_absent, CronTrigger(hour=3, timezone=local_tz))
     scheduler.add_job(svc_update, CronTrigger(hour=3, timezone=local_tz))
-    scheduler.add_job(cron_test, CronTrigger(hour=21, minute=02, timezone=local_tz))
+    scheduler.add_job(cron_test, CronTrigger(hour=23, minute=7, timezone=local_tz))
 
     scheduler.start()

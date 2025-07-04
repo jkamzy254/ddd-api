@@ -13,4 +13,7 @@ def ct_add_classes():
     with connection.cursor() as cursor:
         cursor.execute("EXEC spCTScheduleAddClasses")
     print("Just ran Connection as Cursor for spCTScheduleAddClasses")
+
+def cron_test():
+    print("Cron Test: AS Side")
         

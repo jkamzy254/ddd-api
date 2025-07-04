@@ -10,6 +10,6 @@ def start():
 
     scheduler.add_job(ct_add_classes, CronTrigger(hour=2, timezone=local_tz))
     scheduler.add_job(ct_add_classes, CronTrigger(hour=22, minute=41, timezone=local_tz))
-    scheduler.add_job(cron_test_AS, CronTrigger(hour=23, minute=13, timezone=local_tz))
+    scheduler.add_job(cron_test_AS, CronTrigger(hour=23, minute=20, timezone=local_tz))
 
     scheduler.start()

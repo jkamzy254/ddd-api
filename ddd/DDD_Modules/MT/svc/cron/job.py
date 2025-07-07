@@ -17,3 +17,6 @@ def svc_update():
     
     with connection.cursor() as cursor:
         cursor.execute("EXEC spService_UpdateServices")
+
+def cron_test():
+    print("Cron Test: MT Side")

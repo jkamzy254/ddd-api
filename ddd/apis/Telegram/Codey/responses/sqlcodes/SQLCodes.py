@@ -2677,45 +2677,45 @@ LEFT JOIN BBData bb ON bb.UID = b.UID
 
 
 
-def tol(d):
-    conn = odbc.connect(conn_str)
-    t = d if d != 'D[0-9]%' else 'Total'
-    header = f"🏛{str(d).replace('D[0-9]%','Youth')} BB Status Classification🏛" if d != 'D[0-9]%' else '🌳Tree of Life🌳'
-    bb_dept = f"""SELECT m.*, pNew, pOld, bbA, bbME, bbFA, pFA, cctA, cctI, cct, Total
-FROM (
-SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(cctA + cctI)cct, SUM(Tot)Total
-FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept
-UNION
-SELECT '{t}' Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(cctA + cctI)cct, SUM(Tot)Total
-FROM ScottStatusNumbers WHERE Dept LIKE '{d}'
-) s
-LEFT JOIN
-(SELECT Dept, SUM(NewM)mNew, SUM(OldM)mOld FROM ScottOldNewMGrp WHERE Dept LIKE '{d}' GROUP BY Dept
-UNION SELECT '{t}', SUM(NewM)mNew, SUM(OldM)mOld FROM ScottOldNewMGrp WHERE Dept LIKE '{d}') m
-ON m.Dept = s.Dept"""
+# def tol(d):
+#     conn = odbc.connect(conn_str)
+#     t = d if d != 'D[0-9]%' else 'Total'
+#     header = f"🏛{str(d).replace('D[0-9]%','Youth')} BB Status Classification🏛" if d != 'D[0-9]%' else '🌳Tree of Life🌳'
+#     bb_dept = f"""SELECT m.*, pNew, pOld, bbA, bbME, bbFA, pFA, cctA, cctI, cct, Total
+# FROM (
+# SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(cctA + cctI)cct, SUM(Tot)Total
+# FROM ScottStatusNumbers WHERE Dept LIKE '{d}' GROUP BY Dept
+# UNION
+# SELECT '{t}' Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(pFA)pFA, SUM(cctA)cctA, SUM(cctI)cctI, SUM(cctA + cctI)cct, SUM(Tot)Total
+# FROM ScottStatusNumbers WHERE Dept LIKE '{d}'
+# ) s
+# LEFT JOIN
+# (SELECT Dept, SUM(NewM)mNew, SUM(OldM)mOld FROM ScottOldNewMGrp WHERE Dept LIKE '{d}' GROUP BY Dept
+# UNION SELECT '{t}', SUM(NewM)mNew, SUM(OldM)mOld FROM ScottOldNewMGrp WHERE Dept LIKE '{d}') m
+# ON m.Dept = s.Dept"""
 
-    dd = pd.read_sql(bb_dept, conn)
-    conn.cursor().close()
-    dd = dd.transpose()
-    dd.reset_index(inplace=True)
+#     dd = pd.read_sql(bb_dept, conn)
+#     conn.cursor().close()
+#     dd = dd.transpose()
+#     dd.reset_index(inplace=True)
 
-    rowtitles = ['Dept','NM','OM','NP','OP','AB','ME','FA','FP','CA','CI','CT','Tot']
+#     rowtitles = ['Dept','NM','OM','NP','OP','AB','ME','FA','FP','CA','CI','CT','Tot']
 
-    dept = str()
-    for r in range(1,13):
-        dept = f"{dept}{rowtitles[r]}{' '*(5-len(rowtitles[r]))}["
-        for c in range(len(dd.columns)-1):
-            dept = f"{dept}{' '*(5-len(str(dd.loc[r,c])))}{dd.loc[r,c]}|"
-        dept = f"{dept}]\n"
+#     dept = str()
+#     for r in range(1,13):
+#         dept = f"{dept}{rowtitles[r]}{' '*(5-len(rowtitles[r]))}["
+#         for c in range(len(dd.columns)-1):
+#             dept = f"{dept}{' '*(5-len(str(dd.loc[r,c])))}{dd.loc[r,c]}|"
+#         dept = f"{dept}]\n"
     
-    title = f"[  {d} ]" if d != 'D[0-9]%' else '[  D1 |  D2 |  D3 |  D4 |  D5 |  D6 |  D7 |  D8 |  D9 |Total]'
+#     title = f"[  {d} ]" if d != 'D[0-9]%' else '[  D1 |  D2 |  D3 |  D4 |  D5 |  D6 |  D7 |  D8 |  D9 |Total]'
         
-    result = f"<b><u>{header}</u></b>\n\n<pre>Dept {title}\n\n{dept}</pre>"
-    result = re.sub(r'\|]',r']',result)  # Replaces '|]' with ']'
-    result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
-    result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
-    result = result.replace('\nTotal','\n\nTotal').replace('\nNP','\n\nNP') # Shifts bottom Title row down one line, then separates meetings from bb statuses
-    return result
+#     result = f"<b><u>{header}</u></b>\n\n<pre>Dept {title}\n\n{dept}</pre>"
+#     result = re.sub(r'\|]',r']',result)  # Replaces '|]' with ']'
+#     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
+#     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
+#     result = result.replace('\nTotal','\n\nTotal').replace('\nNP','\n\nNP') # Shifts bottom Title row down one line, then separates meetings from bb statuses
+#     return result
 
 
 
@@ -2770,94 +2770,94 @@ FROM ScottStatusNumbers WHERE Dept LIKE 'D_'
 
 
 
-def tolfull(d):
+# def tolfull(d):
     
-    header = f"🌳{str(d).replace('D[0-9]%','Youth')} Tree of Life🌳" if d != 'D[0-9]%' else '🌳TOL Full🌳'
-    conn = odbc.connect(conn_str)
+#     header = f"🌳{str(d).replace('D[0-9]%','Youth')} Tree of Life🌳" if d != 'D[0-9]%' else '🌳TOL Full🌳'
+#     conn = odbc.connect(conn_str)
     
-    bb_group = f"""SELECT s.Grp, NewM mNew, OldM mOld, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Tot bbTot
-FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
-WHERE s.Dept LIKE '{d}'"""
-    bb_dept = f"""SELECT s.Dept, SUM(NewM)mNew, SUM(OldM)mOld, SUM(pNew)pNew, SUM(pOld)pOld,SUM(bbA)bbA, SUM(cctA)cctA, 
-SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Tot)bbTot
-FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
-WHERE s.Dept LIKE '{d}'
-GROUP BY s.Dept"""
-    bb_youth = f"""SELECT SUM(NewM)mNew, SUM(OldM)mOld, SUM(pNew)pNew, SUM(pOld)pOld,SUM(bbA)bbA, SUM(cctA)cctA, 
-SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Tot)bbTot
-FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
-WHERE s.Dept LIKE '{d}'"""
+#     bb_group = f"""SELECT s.Grp, NewM mNew, OldM mOld, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Tot bbTot
+# FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
+# WHERE s.Dept LIKE '{d}'"""
+#     bb_dept = f"""SELECT s.Dept, SUM(NewM)mNew, SUM(OldM)mOld, SUM(pNew)pNew, SUM(pOld)pOld,SUM(bbA)bbA, SUM(cctA)cctA, 
+# SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Tot)bbTot
+# FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
+# WHERE s.Dept LIKE '{d}'
+# GROUP BY s.Dept"""
+#     bb_youth = f"""SELECT SUM(NewM)mNew, SUM(OldM)mOld, SUM(pNew)pNew, SUM(pOld)pOld,SUM(bbA)bbA, SUM(cctA)cctA, 
+# SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Tot)bbTot
+# FROM ScottStatusNumbers s LEFT JOIN ScottOldNewMGrp m ON s.Grp = m.Grp
+# WHERE s.Dept LIKE '{d}'"""
     
-    dg = pd.read_sql(bb_group, conn)
-    dd = pd.read_sql(bb_dept, conn)
-    dy = pd.read_sql(bb_youth, conn)
+#     dg = pd.read_sql(bb_group, conn)
+#     dd = pd.read_sql(bb_dept, conn)
+#     dy = pd.read_sql(bb_youth, conn)
 
-    dg.columns = ['Grp','mNew','mOld','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
-    dd.columns = ['Dept','mNew','mOld','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
-    dy.columns = ['mNew','mOld','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
+#     dg.columns = ['Grp','mNew','mOld','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
+#     dd.columns = ['Dept','mNew','mOld','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
+#     dy.columns = ['mNew','mOld','pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     
-    dd.replace(r' Dept',r'', regex = True, inplace = True)
+#     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.cursor().close()
+#     conn.cursor().close()
 
-    separator = '|'
+#     separator = '|'
     
-    group = str()
-    for r in range(len(dg)):
-        grp =    str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
-        mn  = ' '*(5-len(str(dg.loc[r,'mNew']))) + str(dg.loc[r,'mNew'])
-        mo  = ' '*(6-len(str(dg.loc[r,'mOld']))) + str(dg.loc[r,'mOld'])
-        pn  = ' '*(4-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
-        po  = ' '*(4-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
-        ba  = ' '*(5-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
-        ca  = ' '*(5-len(str(dg.loc[r,'cctA']))) + str(dg.loc[r,'cctA'])
-        bm  = ' '*(5-len(str(dg.loc[r,'bbME']))) + str(dg.loc[r,'bbME'])
-        ci  = ' '*(3-len(str(dg.loc[r,'cctI']))) + str(dg.loc[r,'cctI'])
-        pf  = ' '*(4-len(str(dg.loc[r,'pFA'])))  + str(dg.loc[r,'pFA'])
-        bf  = ' '*(4-len(str(dg.loc[r,'bbFA']))) + str(dg.loc[r,'bbFA'])
-        t   = ' '*(5-len(str(dg.loc[r,'Tot'])))  + str(dg.loc[r,'Tot'])
+#     group = str()
+#     for r in range(len(dg)):
+#         grp =    str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+#         mn  = ' '*(5-len(str(dg.loc[r,'mNew']))) + str(dg.loc[r,'mNew'])
+#         mo  = ' '*(6-len(str(dg.loc[r,'mOld']))) + str(dg.loc[r,'mOld'])
+#         pn  = ' '*(4-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
+#         po  = ' '*(4-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
+#         ba  = ' '*(5-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
+#         ca  = ' '*(5-len(str(dg.loc[r,'cctA']))) + str(dg.loc[r,'cctA'])
+#         bm  = ' '*(5-len(str(dg.loc[r,'bbME']))) + str(dg.loc[r,'bbME'])
+#         ci  = ' '*(3-len(str(dg.loc[r,'cctI']))) + str(dg.loc[r,'cctI'])
+#         pf  = ' '*(4-len(str(dg.loc[r,'pFA'])))  + str(dg.loc[r,'pFA'])
+#         bf  = ' '*(4-len(str(dg.loc[r,'bbFA']))) + str(dg.loc[r,'bbFA'])
+#         t   = ' '*(5-len(str(dg.loc[r,'Tot'])))  + str(dg.loc[r,'Tot'])
         
-        group = f'{group}{grp}[{mn}|{mo}]   [{pn}|{po}{separator}{ba}|{ca}]   [{bm}|{ci}{separator}{pf}|{bf}]   [{t}]\n'
+#         group = f'{group}{grp}[{mn}|{mo}]   [{pn}|{po}{separator}{ba}|{ca}]   [{bm}|{ci}{separator}{pf}|{bf}]   [{t}]\n'
     
-    dept = str()    
-    for r in range(len(dd)):
-        dpt = str(dd.loc[r,'Dept'])   + ' '*(5-len(str(dd.loc[r,'Dept'])))
-        mn  = ' '*(5-len(str(dd.loc[r,'mNew']))) + str(dd.loc[r,'mNew'])
-        mo  = ' '*(6-len(str(dd.loc[r,'mOld']))) + str(dd.loc[r,'mOld'])
-        pn  = ' '*(4-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
-        po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
-        ba  = ' '*(5-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
-        ca  = ' '*(5-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
-        bm  = ' '*(5-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
-        ci  = ' '*(3-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
-        pf  = ' '*(4-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
-        bf  = ' '*(4-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
-        t   = ' '*(5-len(str(dd.loc[r,'Tot'])))  + str(dd.loc[r,'Tot'])
+#     dept = str()    
+#     for r in range(len(dd)):
+#         dpt = str(dd.loc[r,'Dept'])   + ' '*(5-len(str(dd.loc[r,'Dept'])))
+#         mn  = ' '*(5-len(str(dd.loc[r,'mNew']))) + str(dd.loc[r,'mNew'])
+#         mo  = ' '*(6-len(str(dd.loc[r,'mOld']))) + str(dd.loc[r,'mOld'])
+#         pn  = ' '*(4-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
+#         po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
+#         ba  = ' '*(5-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
+#         ca  = ' '*(5-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
+#         bm  = ' '*(5-len(str(dd.loc[r,'bbME']))) + str(dd.loc[r,'bbME'])
+#         ci  = ' '*(3-len(str(dd.loc[r,'cctI']))) + str(dd.loc[r,'cctI'])
+#         pf  = ' '*(4-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
+#         bf  = ' '*(4-len(str(dd.loc[r,'bbFA']))) + str(dd.loc[r,'bbFA'])
+#         t   = ' '*(5-len(str(dd.loc[r,'Tot'])))  + str(dd.loc[r,'Tot'])
         
-        dept = f'{dept}{dpt}[{mn}|{mo}]   [{pn}|{po}{separator}{ba}|{ca}]   [{bm}|{ci}{separator}{pf}|{bf}]   [{t}]\n'
+#         dept = f'{dept}{dpt}[{mn}|{mo}]   [{pn}|{po}{separator}{ba}|{ca}]   [{bm}|{ci}{separator}{pf}|{bf}]   [{t}]\n'
             
-    if d.endswith('D[0-9]%'):
-        mn = ' '*(5-len(str(dy.loc[0,'mNew']))) + str(dy.loc[0,'mNew'])
-        mo = ' '*(6-len(str(dy.loc[0,'mOld']))) + str(dy.loc[0,'mOld'])
-        pn = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
-        po = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
-        ba = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
-        ca = ' '*(5-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
-        bm = ' '*(5-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
-        ci = ' '*(3-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
-        pf = ' '*(4-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
-        bf = ' '*(4-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA'])
-        t  = ' '*(5-len(str(dy.loc[0,'Tot'])))  + str(dy.loc[0,'Tot'])
+#     if d.endswith('D[0-9]%'):
+#         mn = ' '*(5-len(str(dy.loc[0,'mNew']))) + str(dy.loc[0,'mNew'])
+#         mo = ' '*(6-len(str(dy.loc[0,'mOld']))) + str(dy.loc[0,'mOld'])
+#         pn = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
+#         po = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
+#         ba = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
+#         ca = ' '*(5-len(str(dy.loc[0,'cctA']))) + str(dy.loc[0,'cctA'])
+#         bm = ' '*(5-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
+#         ci = ' '*(3-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
+#         pf = ' '*(4-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
+#         bf = ' '*(4-len(str(dy.loc[0,'bbFA']))) + str(dy.loc[0,'bbFA'])
+#         t  = ' '*(5-len(str(dy.loc[0,'Tot'])))  + str(dy.loc[0,'Tot'])
         
-        youth = f'\nTotal[{mn}|{mo}]   [{pn}|{po}{separator}{ba}|{ca}]   [{bm}|{ci}{separator}{pf}|{bf}]   [{t}]\n'
+#         youth = f'\nTotal[{mn}|{mo}]   [{pn}|{po}{separator}{ba}|{ca}]   [{bm}|{ci}{separator}{pf}|{bf}]   [{t}]\n'
 
-    else:
-        youth = str()
+#     else:
+#         youth = str()
     
-    result = f"""<b><u>{header}</u></b>\n\n<pre>Type [   MEETING  ]   [        ACTIVE       ]   [      INACTIVE     ]   [TOTAL]\n\nGrp  [  NM |  OM  ]   [ NP | OP {separator}  AB |  CA ]   [  ME | CI{separator} FP | FA ]   [TotBB]\n\n{group}\n{dept}{youth}</pre>"""
-    result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
-    result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
-    return result
+#     result = f"""<b><u>{header}</u></b>\n\n<pre>Type [   MEETING  ]   [        ACTIVE       ]   [      INACTIVE     ]   [TOTAL]\n\nGrp  [  NM |  OM  ]   [ NP | OP {separator}  AB |  CA ]   [  ME | CI{separator} FP | FA ]   [TotBB]\n\n{group}\n{dept}{youth}</pre>"""
+#     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
+#     result = re.sub(r'(\D)0([^.])',r'\1-\2',result)   # Replaces lone '0' with '-'
+#     return result
 
 
 

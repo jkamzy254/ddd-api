@@ -304,8 +304,8 @@ def bot_responses(id,tname,input_text):
         if command in ['youthmxpx','deptmxpx']:
             return SQLCodes.youthmxpx(d)
 
-        if command in ['tol','bbdept']:
-            return SQLCodes.tol(d)
+        # if command in ['tol','bbdept']:
+        #     return SQLCodes.tol(d)
         
         if command == 'deptfm':
             return SQLCodes.deptfm(d)

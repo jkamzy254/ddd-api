@@ -194,7 +194,7 @@ def bot_responses(id,tname,input_text):
     if command == 'bblist':
         return SQLCodes.bblist(d,g,bb_sid,access)
     
-    if command == 'bbstatus':
+    if command in ('bbstatus','bbfull'):
             return SQLCodes.bbstatus(g, d, bb_sid, access)
     
     if command == 'bbactive':
@@ -292,10 +292,8 @@ def bot_responses(id,tname,input_text):
             q,i = command.split('status')
             return SQLCodes.bbtstatus(q,d,access)
         
-        if command == 'tolfull':
-            return SQLCodes.tolfull(d)
-        if command == 'bbfull':
-            return SQLCodes.bbfull(d)
+        if command == 'youthfm':
+            return SQLCodes.youthfm(d)
         if command == 'oldbbactive':
             return SQLCodes.oldbbactive(d)
         if command == 'deptbbactive':
@@ -306,8 +304,8 @@ def bot_responses(id,tname,input_text):
         if command in ['youthmxpx','deptmxpx']:
             return SQLCodes.youthmxpx(d)
 
-        if command in ['tol','bbdept']:
-            return SQLCodes.tol(d)
+        # if command in ['tol','bbdept']:
+        #     return SQLCodes.tol(d)
         
         if command == 'deptfm':
             return SQLCodes.deptfm(d)

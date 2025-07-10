@@ -2,7 +2,7 @@ from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from pytz import timezone
-from .job import ct_add_classes, cron_test_AS
+from .job import ct_add_classes
 
 def start():
     local_tz = timezone('Australia/Melbourne')

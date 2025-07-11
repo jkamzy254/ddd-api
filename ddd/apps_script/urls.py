@@ -4,6 +4,7 @@ from django.urls import path, include, re_path
 from .views import closure_after_fortnight as caf
 from .views import bb_registration as br
 from .views import ct_attendance as ca
+from .views import edu_player as ep
 from django.views.generic.base import TemplateView
 
 from django.urls import path
@@ -36,5 +37,12 @@ urlpatterns = [
 	path('ctSummaryGetAllDays/', ca.CTSummaryGetAllDaysViewSet.as_view()),
 	path('ctSummaryGetClass/', ca.CTSummaryGetClassViewSet.as_view()),
 	path('ctSummaryGetClassSummary/', ca.CTSummaryGetClassSummaryViewSet.as_view()),
+ 
+	#Edu Player
+	path('eduGetMember/', ep.GetMemberViewSet.as_view()),
+	path('eduVideoGetLogs/', ep.EduVideoGetLogsViewSet.as_view()),   
+	path('eduVideoGetFaves/', ep.EduVideoGetFavesViewSet.as_view()),   
+	path('eduVideoUpdateLogs/', ep.EduVideoUpdateLogViewSet.as_view()),   
+	path('eduVideoUpdateFaves/', ep.EduVideoUpdateFavesViewSet.as_view()),   
  
 ]

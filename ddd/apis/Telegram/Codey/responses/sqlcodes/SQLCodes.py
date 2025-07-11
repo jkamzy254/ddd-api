@@ -22,6 +22,15 @@ conn_str = """
     Pwd={5};
 """.format(DRIVER,HOST,DBPORT,DB,DB_USER,PASS)
 
+def commands(access):
+    if access in ('IT','All'):
+        return '<b>🤖Using Codey🤖</b>\n____________________________________________________________________\n\n<u>📣General command structure📣</u>\n<b><i>&lt;CT&gt;</i></b><code>&lt;command&gt;</code><b><i>&lt;/g or //D&gt;</i></b>\n\n<u><b>👨‍🏫&lt;CT&gt;</b> = optional <b>codefix👩‍🏫</b></u>\n<i>▪️phys = physical CT (default if omitted)\n▪️sft = online CT\n▪️all = both physical + online</i>\n\n<u><b>👥&lt;/g or //D&gt;</b> = optional <b>suffix👥</b></u>\n<i>▪️/g = filters specific group (e.g. /G1, /EST2)\n▪️//D = filters specific department (e.g. //D1, //SFT, //InnerSFT)</i>\n____________________________________________________________________\n\n<b><i><u>📣Group FMP</u></i></b>\n\n<code>➡️&lt;timespan&gt;fmp\n\n&lt;timespan&gt;</code>\n<i>▪️today\n▪️yesterday\n▪️week\n▪️lastweek\n▪️season\n\ne.g. </i><code>todayfmp</code>\n____________________________________________________________________\n\n<b><u><i>📣Church FMP</i></u></b>\n\n<code>➡️&lt;Division or Task&gt;&lt;Timespan&gt;\n\n&lt;Division or Task&gt;</code>\n<i>▪️youth = all youth\n▪️tgw = all youth TGW only\n▪️member = all youth member only\n▪️gyjn/oev/iev/edu/sv = all youth specific task only\n▪️dept = department totals only\n\n💡Adding //SFT or //InnerSFT will replace youth groups with SFT groups\n\ne.g. </i><code>youthtoday</code>\n____________________________________________________________________\n\n<b><i><u>📣BB Commands</u></i></b>\n\n<code>➡️bb&lt;format&gt;\n\n&lt;format&gt;</code>\n<i>▪️status = table of status numbers per group\n▪️active = table: active statuses only\n▪️inactive = table: inactive statuses only\n▪️list = list of bb fruits\n\n💡Adding /g or //D will also show individual bbt result\n💡Make sure to filter bblist with /g or //D to reduce output\n\ne.g. </i><code>bblist//D1</code>\n____________________________________________________________________\n\n<b><i><u>📣BBT Commands</u></i></b>\n\n<code>➡️&lt;BbtType&gt;&lt;Format&gt;\n\n&lt;BbtType&gt;</code>\n<i>▪️bbt = all bbt + prebbt\n▪️gyjnbbt = all gyjns\n▪️btm# = all bbt/btm from specified btm number\n\ne.g.</i><code> bbtstatus</code>\n____________________________________________________________________\n\n<b><i><u>📣Other Commands</u></i></b>\n\n<code>➡️&lt;0411111111&gt;</code><i> = double fish check</i>'
+    if access in ['D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT']:
+        return f'<b>🤖Using Codey🤖</b>\n____________________________________________________________________\n\n<u>📣General command structure📣</u>\n<b><i>&lt;CT&gt;</i></b><code>&lt;command&gt;</code><b><i>&lt;/g&gt;</i></b>\n\n<u><b>👨‍🏫&lt;CT&gt;</b> = optional <b>codefix👩‍🏫</b></u>\n<i>▪️phys = physical CT (default if omitted)\n▪️sft = online CT\n▪️all = both physical + online</i>\n\n<u><b>👥&lt;/g&gt;</b> = optional <b>suffix👥</b></u>\n<i>▪️/g = filters specific group (e.g. /G1, /EST2)</i>\n____________________________________________________________________\n\n<b><i><u>📣Group FMP</u></i></b>\n\n<code>➡️&lt;timespan&gt;fmp\n\n&lt;timespan&gt;</code>\n<i>▪️today\n▪️yesterday\n▪️week\n▪️lastweek\n▪️season\n\ne.g. </i><code>todayfmp</code>\n____________________________________________________________________\n\n<b><u><i>📣Dept FMP</i></u></b>\n\n<code>➡️&lt;Division or Task&gt;&lt;Timespan&gt;\n\n&lt;Division or Task&gt;</code>\n<i>▪️dept = all dept\n▪️tgw = all dept TGW only\n▪️member = all dept member only\n▪️gyjn/oev/iev/edu/sv = all dept specific task only\n\n💡Adding //SFT or //InnerSFT will replace dept groups with SFT groups\n\ne.g. </i><code>depttoday</code>\n____________________________________________________________________\n\n<b><i><u>📣BB Commands</u></i></b>\n\n<code>➡️bb&lt;format&gt;\n\n&lt;format&gt;</code>\n<i>▪️status = table of status numbers per group\n▪️active = table: active statuses only\n▪️inactive = table: inactive statuses only\n▪️list = list of bb fruits\n\ne.g. </i><code>bblist/G1</code>\n____________________________________________________________________\n\n<b><i><u>📣BBT Commands</u></i></b>\n\n<code>➡️&lt;BbtType&gt;&lt;Format&gt;\n\n&lt;BbtType&gt;</code>\n<i>▪️bbt = all bbt + prebbt\n▪️gyjnbbt = all gyjns\n▪️btm# = all bbt/btm from specified btm number\n\ne.g.</i><code> bbtstatus</code>\n____________________________________________________________________\n\n<b><i><u>📣Other Commands</u></i></b>\n\n<code>➡️&lt;0411111111&gt;</code><i> = double fish check</i>'
+    if access == 'Group':
+        return f'<b>🤖Using Codey🤖</b>\n____________________________________________________________________\n\n<u>📣General command structure📣</u>\n<b><i>&lt;CT&gt;</i></b><code>&lt;command&gt;</code><b><i>&lt;/g&gt;</i></b>\n\n<u><b>👨‍🏫&lt;CT&gt;</b> = optional <b>codefix👩‍🏫</b></u>\n<i>▪️phys = physical CT (default if omitted)\n▪️sft = online CT\n▪️all = both physical + online</i>\n____________________________________________________________________\n\n<b><i><u>📣Group FMP</u></i></b>\n\n<code>➡️&lt;timespan&gt;fmp\n\n&lt;timespan&gt;</code>\n<i>▪️today\n▪️yesterday\n▪️week\n▪️lastweek\n▪️season\n\ne.g. </i><code>todayfmp</code>\n____________________________________________________________________\n\n<b><i><u>📣BB Commands</u></i></b>\n\n<code>➡️bb&lt;format&gt;\n\n&lt;format&gt;</code>\n<i>▪️status = table of status numbers per group\n▪️active = table: active statuses only\n▪️inactive = table: inactive statuses only\n▪️list = list of bb fruits\n\ne.g. </i><code>bblist/G1</code>\n____________________________________________________________________\n\n<b><i><u>📣BBT Commands</u></i></b>\n\n<code>➡️&lt;BbtType&gt;&lt;Format&gt;\n\n&lt;BbtType&gt;</code>\n<i>▪️bbt = all bbt + prebbt\n▪️btm# = all bbt/btm from specified btm number\n\ne.g.</i><code> bbtstatus</code>\n____________________________________________________________________\n\n<b><i><u>📣Other Commands</u></i></b>\n\n<code>➡️&lt;0411111111&gt;</code><i> = double fish check</i>'
+
+
 def reg_new_user_request(id,tname,user,pw):
     
     
@@ -1111,7 +1120,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept):
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
+                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
@@ -1384,7 +1393,7 @@ def newbbtstatus(q, g, d, sid, access):
     
     i = q if q in ['newbbt','newgyjnbbt'] else 'newbtm'
     bbtvalues = {'newbbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'newgyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
+                 'newgyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'newbtm'     : [q.upper().replace('NEW',''), f" AND BtmNo = '{q[6:]}'"]}
     bbttype,query = bbtvalues[i]
     
@@ -1524,7 +1533,7 @@ def deptbbtstatus(q, d, r, access):
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
+                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
@@ -1593,7 +1602,7 @@ def bbtactive(q, g, d, r, access):
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
+                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
@@ -1676,7 +1685,7 @@ def deptbbtactive(q, d, r, access):
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     
     bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
+                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
@@ -1737,7 +1746,7 @@ def bbtinactive(q, g, d, r, access):
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
+                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
@@ -1826,7 +1835,7 @@ def deptbbtinactive(q, d, r, access):
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
+                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
@@ -2001,7 +2010,7 @@ def bbtlist(q,d,g,sid,access):
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
+                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     g = '%' if access != 'Group' else g
     if access == 'Group':
@@ -2276,7 +2285,7 @@ def newbbtlist(q,d,g,sid,access):
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     i = q if q in ['newbbt','newgyjnbbt'] else 'btm'
     bbtvalues = {'newbbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'newgyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
+                 'newgyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'newbtm'     : [q.upper().replace('NEW',''), f" AND BtmNo = '{q[3:]}'"]}
     g = '%' if access != 'Group' else g
     if access == 'Group':
@@ -2436,7 +2445,7 @@ def bbtlistold(q,d):
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND t.Title = 'GYJN'"],
+                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
@@ -3391,57 +3400,6 @@ def fmstatus(d,g,ssnstart,access):
     
     
     
-
-
-
-
-
-def deptfm(d):
-           
-    conn = odbc.connect(conn_str)
-    
-    dm = pd.read_sql(f"SELECT Grp, NewM, OldM FROM ScottOldNewMGrp WHERE Dept LIKE '{d}'", conn)
-    dd = pd.read_sql(f"SELECT Dept, SUM(NewM)NewM, SUM(OldM)OldM FROM ScottOldNewMGrp WHERE Dept LIKE '{d}' GROUP BY Dept", conn)
-    dt = pd.read_sql(f"SELECT SUM(NewM)NewM, SUM(OldM)OldM FROM ScottOldNewMGrp WHERE Dept LIKE '{d}'", conn)
-
-    dm.columns = ['Grp','NewM','OldM']
-    dd.columns = ['Dept','NewM','OldM']
-    dt.columns = ['NewM','OldM']
-    dd.replace(r' Dept',r'', regex = True, inplace = True)
-
-    conn.cursor().close()
-
-    group = str()
-    for r in range(len(dm)):
-        grp = str(dm.loc[r,'Grp']) + ' '*(6-len(str(dm.loc[r,'Grp'])))
-        nm  = ' '*(6-len(str(dm.loc[r,'NewM'])))  + str(dm.loc[r,'NewM'])
-        om  = ' '*(6-len(str(dm.loc[r,'OldM'])))  + str(dm.loc[r,'OldM'])
-        group = f'{group}{grp}[{nm}|{om}]\n'
-
-    dept = str()    
-    for r in range(len(dd)):
-        dpt = str(dd.loc[r,'Dept']) + ' '*(6-len(str(dd.loc[r,'Dept'])))
-        nm  = ' '*(6-len(str(dd.loc[r,'NewM'])))  + str(dd.loc[r,'NewM'])
-        om  = ' '*(6-len(str(dd.loc[r,'OldM'])))  + str(dd.loc[r,'OldM'])
-        dept = f'{dept}{dpt}[{nm}|{om}]\n'
-
-    if d.endswith('D[0-9]%') :
-        nm  = ' '*(6-len(str(dt.loc[0,'NewM'])))  + str(dt.loc[0,'NewM'])
-        om  = ' '*(6-len(str(dt.loc[0,'OldM'])))  + str(dt.loc[0,'OldM'])
-        total = f'\nTotal [{nm}|{om}]'
-    else:
-        total = str()
-        
-    depttitle = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 2')
-
-    fmp = f"<b><u>{depttitle} FM Status</u></b>\n\n<pre>Grp   [ NewM | OldM ]\n\n{group}\n{dept}{total}</pre>"
-    fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
-    fmp = re.sub(r'(\D)0([^.])',r'\1-\2',fmp)   # Replaces lone '0' with '-'
-    return fmp
-
-
-
-
 
 
 

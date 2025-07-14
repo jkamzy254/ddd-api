@@ -176,7 +176,7 @@ class CTUpdateAttendanceViewSet(APIView):
                 cursor.execute(f"""EXEC spCTUpdateAttendance 
                     @UID = '{rec.get('UID')}', @Attendance = '{rec.get('Attendance')}', @ID = {rec.get('ID')}, @Reason = {"'"+rec.get('Reason').replace("'","''")+"'" if rec.get('Reason') else "NULL"}
                 """)
-                result = f"Update for CT Day {rec['Date']} done"
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:

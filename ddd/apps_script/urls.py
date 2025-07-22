@@ -40,7 +40,8 @@ urlpatterns = [
  
 	#Edu Player
 	path('eduGetMember/', ep.GetMemberViewSet.as_view()),
-	path('eduVideoGetLogs/', ep.EduVideoGetLogsViewSet.as_view()),   
+	path('eduVideoGetFolders/', ep.EduVideoGetFoldersViewSet.as_view()),  
+	path('eduVideoGetLogs/', ep.EduVideoGetLogsViewSet.as_view()),  
 	path('eduVideoGetFaves/', ep.EduVideoGetFavesViewSet.as_view()),   
 	path('eduVideoUpdateLogs/', ep.EduVideoUpdateLogViewSet.as_view()),   
 	path('eduVideoUpdateFaves/', ep.EduVideoUpdateFavesViewSet.as_view()),   

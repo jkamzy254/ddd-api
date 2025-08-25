@@ -5,6 +5,7 @@ from .views import closure_after_fortnight as caf
 from .views import bb_registration as br
 from .views import ct_attendance as ca
 from .views import edu_player as ep
+from .views import edu_dept_bbt as eb
 from django.views.generic.base import TemplateView
 
 from django.urls import path
@@ -45,5 +46,14 @@ urlpatterns = [
 	path('eduVideoGetFaves/', ep.EduVideoGetFavesViewSet.as_view()),   
 	path('eduVideoUpdateLogs/', ep.EduVideoUpdateLogViewSet.as_view()),   
 	path('eduVideoUpdateFaves/', ep.EduVideoUpdateFavesViewSet.as_view()),   
+ 
+	#Edu Dept BBT System
+	path('eduBBTGetMember/', eb.GetMemberViewSet.as_view()),
+	path('eduBBTGetBBTData/', eb.GetBBTDataViewSet.as_view()),
+	path('eduBBTGetCurrentCTData/', eb.GetCurrentCTDataViewSet.as_view()),  
+	path('eduBBTGetBB/', eb.GetBBViewSet.as_view()),  
+	# path('eduVideoGetFaves/', ep.EduVideoGetFavesViewSet.as_view()),   
+	# path('eduVideoUpdateLogs/', ep.EduVideoUpdateLogViewSet.as_view()),   
+	# path('eduVideoUpdateFaves/', ep.EduVideoUpdateFavesViewSet.as_view()),   
  
 ]

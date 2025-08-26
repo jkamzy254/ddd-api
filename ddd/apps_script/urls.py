@@ -51,6 +51,7 @@ urlpatterns = [
 	path('eduBBTGetMember/', eb.GetMemberViewSet.as_view()),
 	path('eduBBTGetBBTData/', eb.GetBBTDataViewSet.as_view()),
 	path('eduBBTGetCurrentCTData/', eb.GetCurrentCTDataViewSet.as_view()),  
+	path('eduBBTGetAllActiveCTData/', eb.GetAllActiveCTDataViewSet.as_view()),  
 	path('eduBBTGetBB/', eb.GetBBViewSet.as_view()),  
 	path('eduBBTGetCurrentCTs/', eb.GetCurrentCTsViewSet.as_view()),  
 	path('eduBBTTransferBBT/', eb.BBTransferBBTViewSet.as_view()),  

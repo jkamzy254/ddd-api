@@ -54,6 +54,7 @@ urlpatterns = [
 	path('eduBBTGetAllActiveCTData/', eb.GetAllActiveCTDataViewSet.as_view()),  
 	path('eduBBTGetBB/', eb.GetBBViewSet.as_view()),  
 	path('eduBBTGetCurrentCTs/', eb.GetCurrentCTsViewSet.as_view()),  
+	path('eduBBTGetBBTMasterList/', eb.GetBBTMasterListViewSet.as_view()),  
 	path('eduBBTTransferBBT/', eb.BBTransferBBTViewSet.as_view()),  
 	path('eduBBTUpdateStatus/', eb.UpdateBBTStatusViewSet.as_view()),  
 	path('eduBBTTransferCenter/', eb.BBTransferCenterViewSet.as_view()),    

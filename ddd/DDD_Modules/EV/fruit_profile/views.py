@@ -34,40 +34,6 @@ def get_jira_client():
     jira = JIRA(options=jira_options, basic_auth=(os.environ.get('JIRA_USERNAME'), os.environ.get('TICKET_TOKEN')))
     return jira
 
-class FMPUpdateFruitProfileViewSet(APIView):
-    def post(self, request):
-        form = request.data
-        token = decode_jwt(request)
-
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute(f"""
-                    EXEC spFMPUpdateMPForm
-                    @UID = '{form['uid']}',
-                    @Nationality = '{form['nationality']}',
-                    @DOB = '{form['dob']}',
-                    @Location = '{form['location']}',
-                    @Work = '{form['work']}',
-                    @Uni = '{form['uni']}',
-                    @Church = '{form['church']}',
-                    @Personality = '{form['personality']}',
-                    @Schedule = '{form['schedule']}',
-                    @Mental = '{form['mental']}',
-                    @Crypto = '{form['crypto']}',
-                    @Spirituality = '{form['spirituality']}',
-                    @BBTIntro = '{form['bbtintro']}',
-                    @PrefBBT = '{form['prefbbt']}',
-                    @PickingDateTime = '{form['pickingdatetime']}',
-                    @PickingLocation = '{form['pickinglocation']}',
-                    @ReporterID = '{token['UID']}'
-                """)
-                fp_rec = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-            return Response(fp_rec, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            print(str(e))
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 # Django View to get an issue by its ID
 class FMPGetFruitProfileViewSet(APIView):
     def get(self, request):
@@ -147,6 +113,68 @@ class FMPGetFPBBHistoryViewSet(APIView):
         
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class FMPUpdateFruitProfileViewSet(APIView):
+    def post(self, request):
+        form = request.data
+        token = decode_jwt(request)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"""
+                    EXEC spFMPUpdateMPForm
+                    @UID = '{form['uid']}',
+                    @Nationality = '{form['nationality']}',
+                    @DOB = '{form['dob']}',
+                    @Location = '{form['location']}',
+                    @Work = '{form['work']}',
+                    @Uni = '{form['uni']}',
+                    @Church = '{form['church']}',
+                    @Personality = '{form['personality']}',
+                    @Schedule = '{form['schedule']}',
+                    @Mental = '{form['mental']}',
+                    @Crypto = '{form['crypto']}',
+                    @Spirituality = '{form['spirituality']}',
+                    @BBTIntro = '{form['bbtintro']}',
+                    @PrefBBT = '{form['prefbbt']}',
+                    @PickingDateTime = '{form['pickingdatetime']}',
+                    @PickingLocation = '{form['pickinglocation']}',
+                    @ReporterID = '{token['UID']}'
+                """)
+                fp_rec = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(fp_rec, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(str(e))
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class FMPUpdateFruitDataViewSet(APIView):
+    def post(self, request):
+        form = request.data
+        token = decode_jwt(request)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"""
+                    EXEC spFMPUpdateFruitRecord
+                    @UID = '{form['uid']}',
+                    @FishName = '{form['name']}',
+                    @Nationality = '{form['nationality']}',
+                    @DOB = '{form['dob']}',
+                    @F_TIME = '{form['f_time']}',
+                    @Gender = '{form['gender']}',
+                    @Visa = '{form['visa']}',
+                    @Denomination = '{form['denomination']}',
+                    @Notes = '{form['notes']}',
+                    @Location = '{form['location']}',
+                    @ReporterID = '{token['UID']}'
+                """)
+                fp_rec = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(fp_rec, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(str(e))
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class FMPAssignBBTViewSet(APIView):

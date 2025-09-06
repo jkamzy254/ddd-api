@@ -168,6 +168,7 @@ class FMPUpdateFruitDataViewSet(APIView):
                     @Denomination = '{form['denomination']}',
                     @Notes = '{form['notes']}',
                     @Location = '{form['location']}',
+                    @PicID = '{form['picid']}',
                     @ReporterID = '{token['UID']}'
                 """)
                 fp_rec = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]

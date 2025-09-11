@@ -79,11 +79,7 @@ class GetCurrentCTsViewSet(APIView):
         print(request)
         try:
             with connection.cursor() as cursor:
-                cursor.execute("""SELECT 
-                    (SELECT DISTINCT BTMNo FROM BBTLog WHERE EndDate IS NULL AND Status In ('Learning','Probation') And BTMNo NOT LIKE '%W%' FOR JSON PATH) As BTMs,
-                    (SELECT * FROM EVSeason WHERE ClosingDate >= CAST((SELECT SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') AS DATE) FOR JSON PATH) As Seasons,
-                    (SELECT Grp FROM GroupInfo WHERE Dept = 'InnerSFT' FOR JSON PATH) As SFTs
-                """)
+                cursor.execute("EXEC spBBGetCurrentCTSummary")
                 ctrecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(ctrecs, status=status.HTTP_200_OK)

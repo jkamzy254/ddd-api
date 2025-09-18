@@ -181,13 +181,13 @@ class UpdateCCTEduViewSet(APIView):
         data =request.data
         uid = data.get('UID')
         ctcard = data.get('CTCard')
-        ctsched = data.get('CTShed')
+        ctsched = data.get('CTSched')
         proceed = data.get('Proceed')
 
         try:
             with connection.cursor() as cursor:
                 
-                cursor.execute(f"EXEC spBBUpdateCCTEdu @UID = {uid}, @CTCard = '{ctcard}', @CTShed = {ctsched}, @NotProceeding = {proceed}")
+                cursor.execute(f"EXEC spBBUpdateCCTEdu @UID = {uid}, @CTCard = '{ctcard}', @CTSched = {ctsched}, @NotProceeding = {proceed}")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 
             return Response(result, status=status.HTTP_200_OK)

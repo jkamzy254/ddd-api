@@ -22,14 +22,7 @@ class GetMemberViewSet(APIView):
         
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"""Select M.UID, PREFERRED_NAME as 'Name', Role, NumRole From MemberData M
-                    LEFT JOIN (SELECT * FROM TGWPositionLog WHERE EndDate IS NULL) T ON T.UID = M.UID
-                    LEFT JOIN (SELECT * FROM CTTGWLogTable WHERE EndDate IS NULL) C ON C.UID = M.UID
-                    Where Username = '{username}' And Password = '{password}' AND (
-                            M.UID IN (Select UID From TGWPositionLog WHERE TID = 11 AND (PID >= 140))
-                            Or 
-                            M.UID IN (Select UID From CTTGWLogTable WHERE EndDate IS NULL)
-                    )""")
+                cursor.execute(f"EXEC spCTLogin @Username = '{username}', @Password = '{password}'")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 
             if len(result) == 0:
@@ -204,6 +197,20 @@ class CTScheduleAddDaysViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spCTScheduleAddClasses")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+class CTGetCCTTransitionViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('UID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spBBGetCCTTransition {uid}")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:

@@ -38,6 +38,7 @@ urlpatterns = [
 	path('ctSummaryGetAllDays/', ca.CTSummaryGetAllDaysViewSet.as_view()),
 	path('ctSummaryGetClass/', ca.CTSummaryGetClassViewSet.as_view()),
 	path('ctSummaryGetClassSummary/', ca.CTSummaryGetClassSummaryViewSet.as_view()),
+	path('ctGetCCTTransition/', ca.CTGetCCTTransitionViewSet.as_view()),
  
 	#Edu Player
 	path('eduGetMember/', ep.GetMemberViewSet.as_view()),

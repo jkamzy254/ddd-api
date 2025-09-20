@@ -241,21 +241,21 @@ class UpdateTransitionCTViewSet(APIView):
         bltJDSN =   data.get('BLTJDSN')
         hmrmJDSN = data.get('HmrmJDSN')
         intDone = data.get('IntDone')
-        intDT = data.get('IntDT')
-        reaction = data.get('Reaction')
+        intDT = data.get('IntDT').replace("'","''")
+        reaction = data.get('Reaction').replace("'","''")
 
         try:
             with connection.cursor() as cursor:
                 
                 cursor.execute(f"""EXEC spBBUpdateTransitionCT 
-                                    @UID = {uid}, 
+                                    @UID = '{uid}', 
                                     @TextBBT = '{textBBT}', 
-                                    @BLTDone = {bltDone}, 
-                                    @BLTJDSN = {bltJDSN}, 
-                                    @HmrmJDSN = {hmrmJDSN}, 
-                                    @IntDone = {intDone}, 
-                                    @IntDT = {intDT}, 
-                                    @Reaction = {reaction}
+                                    @BLTDone = '{bltDone}', 
+                                    @BLTJDSN = '{bltJDSN}', 
+                                    @HmrmJDSN = '{hmrmJDSN}', 
+                                    @IntDone = '{intDone}', 
+                                    @IntDT = '{intDT}', 
+                                    @Reaction = '{reaction}'
                                """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 

@@ -39,6 +39,8 @@ urlpatterns = [
 	path('ctSummaryGetClass/', ca.CTSummaryGetClassViewSet.as_view()),
 	path('ctSummaryGetClassSummary/', ca.CTSummaryGetClassSummaryViewSet.as_view()),
 	path('ctGetCCTTransition/', ca.CTGetCCTTransitionViewSet.as_view()),
+	path('ctGetTransitionCTDets/', ca.CTGetTransitionCTDetsViewSet.as_view()),
+	path('ctUpdateTransitionCT/', ca.UpdateTransitionCTViewSet.as_view()),
  
 	#Edu Player
 	path('eduGetMember/', ep.GetMemberViewSet.as_view()),

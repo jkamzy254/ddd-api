@@ -215,3 +215,52 @@ class CTGetCCTTransitionViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class CTGetTransitionCTDetsViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('UID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spBBGetTransitionCTDets {uid}")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+
+        
+class UpdateTransitionCTViewSet(APIView):
+    def post(self, request):
+        data =request.data
+        uid = data.get('UID')
+        textBBT = data.get('TextBBT')
+        bltDone = data.get('BLTDone')
+        bltJDSN =   data.get('BLTJDSN')
+        hmrmJDSN = data.get('HmrmJDSN')
+        intDone = data.get('IntDone')
+        intDT = data.get('IntDT')
+        reaction = data.get('Reaction')
+
+        try:
+            with connection.cursor() as cursor:
+                
+                cursor.execute(f"""EXEC spBBUpdateTransitionCT 
+                                    @UID = {uid}, 
+                                    @TextBBT = '{textBBT}', 
+                                    @BLTDone = {bltDone}, 
+                                    @BLTJDSN = {bltJDSN}, 
+                                    @HmrmJDSN = {hmrmJDSN}, 
+                                    @IntDone = {intDone}, 
+                                    @IntDT = {intDT}, 
+                                    @Reaction = {reaction}
+                               """)
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        

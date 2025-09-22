@@ -38,6 +38,9 @@ urlpatterns = [
 	path('ctSummaryGetAllDays/', ca.CTSummaryGetAllDaysViewSet.as_view()),
 	path('ctSummaryGetClass/', ca.CTSummaryGetClassViewSet.as_view()),
 	path('ctSummaryGetClassSummary/', ca.CTSummaryGetClassSummaryViewSet.as_view()),
+	path('ctGetCCTTransition/', ca.CTGetCCTTransitionViewSet.as_view()),
+	path('ctGetTransitionCTDets/', ca.CTGetTransitionCTDetsViewSet.as_view()),
+	path('ctUpdateTransitionCT/', ca.UpdateTransitionCTViewSet.as_view()),
  
 	#Edu Player
 	path('eduGetMember/', ep.GetMemberViewSet.as_view()),
@@ -59,7 +62,9 @@ urlpatterns = [
 	path('eduBBTTransferBBT/', eb.BBTransferBBTViewSet.as_view()),  
 	path('eduBBTUpdateStatus/', eb.UpdateBBTStatusViewSet.as_view()),  
 	path('eduBBTCheckTransferCT/', eb.CheckCTTransferViewSet.as_view()),  
-	path('eduBBTTransferCenter/', eb.BBTransferCenterViewSet.as_view()),    
+	path('eduBBTTransferCenter/', eb.BBTransferCenterViewSet.as_view()), 
+	path('eduBBTGetCurrentCCT/', eb.GetCurrentCCTUIDViewSet.as_view()),   
+	path('eduBBTUpdateCCTEdu/', eb.UpdateCCTEduViewSet.as_view()),    
 	# path('eduVideoUpdateFaves/', ep.EduVideoUpdateFavesViewSet.as_view()),   
  
 ]

@@ -7,6 +7,7 @@ def bot_responses(id,tname,input_text):
             i,user,pw = input_text.split('.')
             return SQLCodes.reg_new_user_request(id,tname,user,pw)
     
+    ssn = 'phys'
     uid,name,access,g,d,r,fmp_sid,fmp_ss,bb_sid,bb_ss = SQLCodes.teledata(id).split('/')
     original_uid,original_name = uid,name
     print(f"""TELEDATA:
@@ -146,6 +147,7 @@ def bot_responses(id,tname,input_text):
     #     r = 'Online'
         
     if command.startswith('all'):
+        ssn = 'all'
         fmp_sid = '%'
         bb_sid = '%'
         print(f"""fmp_sid - {fmp_sid}
@@ -153,12 +155,14 @@ def bot_responses(id,tname,input_text):
         command = command[3:]
         
     if command.startswith('sft'):
+        ssn = 'sft'
         fmp_sid, bb_sid = SQLCodes.specifyct('sft').split('/')
         print(f"""fmp_sid - {fmp_sid}
                    bb_sid - {bb_sid}""")
         command = command[3:]
         
     if command.startswith('phys'):
+        ssn = 'phys'
         fmp_sid, bb_sid = SQLCodes.specifyct('phys').split('/')
         print(f"""fmp_sid - {fmp_sid}
                    bb_sid - {bb_sid}""")
@@ -187,6 +191,10 @@ def bot_responses(id,tname,input_text):
     
     if command in ('bbstatus','bbfull'):
             return SQLCodes.bbstatus(g, d, bb_sid, access)
+    
+    if command.startswith('bbstatusdate'):
+        dt = command.removeprefix('bbstatusdate=')
+        return SQLCodes.bbstatusdate(g, d, ssn, dt, access)
     
     if command == 'bbactive':
         return SQLCodes.bbactive(g, d, bb_sid, access)

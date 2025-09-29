@@ -2020,7 +2020,7 @@ def bbtlist(q,d,g,sid,access):
         grpdept = str(d).replace('D[0-9]%','Youth')
     bbttype,query = bbtvalues[i]
     
-    columns = "LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate"
+    columns = "LastClass, BBTN, FruitName, ISNULL(L1N,'NULL')L1N, L2N, LastTopic, NextClassDate"
     grp_dept_filter = f"BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN"
     
     print(f"SELECT {columns} FROM CodeyBBList('{sid}') c WHERE NewStatus = 'New P' AND {grp_dept_filter}")

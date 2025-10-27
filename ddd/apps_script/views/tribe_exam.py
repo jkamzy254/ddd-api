@@ -60,7 +60,7 @@ class GetMyGroupViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-class UpdateBBTStatusViewSet(APIView):
+class UpdateExamScoreViewSet(APIView):
     def post(self, request):
         data =request.data
         uid = data.get('uid')

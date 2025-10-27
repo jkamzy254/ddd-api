@@ -62,11 +62,12 @@ class GetMyGroupViewSet(APIView):
         
 class UpdateExamScoreViewSet(APIView):
     def post(self, request):
-        data =request.data
+        data = request.data
+        print(data)
         uid = data.get('uid')
         score = data.get('score')
-        examid = data.GET.get('examid')
-        reporter = data.GET.get('reporter')
+        examid = data.get('examid')
+        reporter = data.get('reporter')
         reason = data.get('reason').replace("'","''")
 
         try:

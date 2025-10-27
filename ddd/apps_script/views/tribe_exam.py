@@ -66,7 +66,7 @@ class UpdateExamScoreViewSet(APIView):
         uid = data.get('uid')
         score = data.get('score')
         examid = data.GET.get('eid')
-        reporter = data.GET.get('eid')
+        reporter = data.GET.get('reporter')
         reason = data.get('reason').replace("'","''")
 
         try:

@@ -6,6 +6,7 @@ from .views import bb_registration as br
 from .views import ct_attendance as ca
 from .views import edu_player as ep
 from .views import edu_dept_bbt as eb
+from .views import tribe_exam as ex
 from django.views.generic.base import TemplateView
 
 from django.urls import path
@@ -65,6 +66,10 @@ urlpatterns = [
 	path('eduBBTTransferCenter/', eb.BBTransferCenterViewSet.as_view()), 
 	path('eduBBTGetCurrentCCT/', eb.GetCurrentCCTUIDViewSet.as_view()),   
 	path('eduBBTUpdateCCTEdu/', eb.UpdateCCTEduViewSet.as_view()),    
-	# path('eduVideoUpdateFaves/', ep.EduVideoUpdateFavesViewSet.as_view()),   
+ 
+	#Tribe Exam System
+	path('examGetMember/', ex.GetMemberViewSet.as_view()),
+	path('examGetGroupView/', ex.GetGroupViewSet.as_view()),
+	path('examGetMyGroup/', ex.GetMyGroupViewSet.as_view()),
  
 ]

@@ -73,7 +73,7 @@ class UpdateExamScoreViewSet(APIView):
         try:
             with connection.cursor() as cursor:
                 
-                cursor.execute(f"EXEC spExamReportScore @ExamID = {examid}, @ID = '{uid}', @Score = {score}, @Reason = '{reason}', @Reporter = '{reporter}'")
+                cursor.execute(f"EXEC spExamReportScore @ExamID = {examid}, @UID = '{uid}', @Score = {score}, @Reason = '{reason}', @Reporter = '{reporter}'")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 
             return Response(result, status=status.HTTP_200_OK)

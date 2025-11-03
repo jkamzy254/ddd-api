@@ -126,21 +126,13 @@ class FMPUpdateFruitProfileViewSet(APIView):
                     EXEC spFMPUpdateMPForm
                     @UID = '{form['uid']}',
                     @Nationality = '{form['nationality']}',
-                    @DOB = '{form['dob']}',
-                    @Age = '{form['age']}',
-                    @Location = '{form['location']}',
-                    @Work = '{form['work']}',
-                    @Uni = '{form['uni']}',
-                    @Church = '{form['church']}',
+                    @BIO = '{form['dob']}',
                     @Personality = '{form['personality']}',
                     @Schedule = '{form['schedule']}',
-                    @Mental = '{form['mental']}',
-                    @Crypto = '{form['crypto']}',
+                    @Concerns = '{form['concerns']}',
                     @Spirituality = '{form['spirituality']}',
                     @BBTIntro = '{form['bbtintro']}',
                     @PrefBBT = '{form['prefbbt']}',
-                    @PickingDateTime = '{form['pickingdatetime']}',
-                    @PickingLocation = '{form['pickinglocation']}',
                     @ReporterID = '{token['UID']}'
                 """)
                 fp_rec = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]

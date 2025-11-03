@@ -126,7 +126,7 @@ class FMPUpdateFruitProfileViewSet(APIView):
                     EXEC spFMPUpdateMPForm
                     @UID = '{form['uid']}',
                     @Nationality = '{form['nationality']}',
-                    @BIO = '{form['dob']}',
+                    @BIO = '{form['bio']}',
                     @Personality = '{form['personality']}',
                     @Schedule = '{form['schedule']}',
                     @Concerns = '{form['concerns']}',

@@ -133,7 +133,7 @@ class FMPUpdateFruitProfileViewSet(APIView):
                     @Spirituality = '{form['spirituality']}',
                     @BBTIntro = '{form['bbtintro']}',
                     @PrefBBT = '{form['prefbbt']}',
-                    @PicID = '{token['UID']}',
+                    @PicID = '{form['picid']}',
                     @ReporterID = '{token['UID']}'
                 """)
                 fp_rec = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]

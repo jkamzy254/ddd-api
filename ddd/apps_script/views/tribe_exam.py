@@ -63,7 +63,6 @@ class GetMyGroupViewSet(APIView):
 class UpdateExamScoreViewSet(APIView):
     def post(self, request):
         data = request.data
-        print(data)
         uid = data.get('uid')
         score = data.get('score')
         examid = data.get('examid')

@@ -79,3 +79,23 @@ class UpdateExamScoreViewSet(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+        
+class UpdateExamScoreSheetsViewSet(APIView):
+    def post(self, request):
+        data = request.data
+        evid = data.get('evid')
+        score = data.get('score')
+        examid = data.get('examid')
+        reporter = data.get('reporter')
+        reason = data.get('reason').replace("'","''")
+
+        try:
+            with connection.cursor() as cursor:
+                
+                cursor.execute(f"EXEC spExamReportScore @ExamID = {examid}, @EVID = '{evid}', @Score = {score}, @Reason = '{reason}', @Reporter = '{reporter}'")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        

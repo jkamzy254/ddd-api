@@ -72,5 +72,6 @@ urlpatterns = [
 	path('examGetGroupView/', ex.GetGroupViewSet.as_view()),
 	path('examGetMyGroup/', ex.GetMyGroupViewSet.as_view()),
 	path('examUpdateScore/', ex.UpdateExamScoreViewSet.as_view()),
+	path('examUpdateScoreSheets/', ex.UpdateExamScoreSheetsViewSet.as_view()),
  
 ]

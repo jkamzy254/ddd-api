@@ -1,9 +1,9 @@
 from django.core.management import BaseCommand
 
 
-from ddd.apis.Telegram.Codey.main import main as codey_main
-from ddd.apis.Telegram.Jira.main import main as jira_main
-from ddd.apis.Telegram.SuperGroup.main import main as sgcheck_main
+from apis.Telegram.Codey.main import main as codey_main
+from apis.Telegram.Jira.main import main as jira_main
+from apis.Telegram.SuperGroup.main import main as sgcheck_main
 from apis.Telegram.Exam.main import main as exam_main
 
 

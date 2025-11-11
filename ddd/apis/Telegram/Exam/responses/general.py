@@ -232,3 +232,56 @@ def get_chart(exam_rec):
 
     return chart_path
     
+async def report_score(text):
+    exam_rec = await sync_to_async(get_db_exam)()
+    examid = exam_rec["ID"]
+    processed = []
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    
+    extracted_data = []
+    response_arr = []
+    
+    for line in lines:
+        # ✅ Skip department header lines
+        if "---Department:" in line:
+            response_arr.append(f"<b>Score Report: <{line}/b>")
+        
+        # Match pattern: extract student name, EVID, and Score
+        # Example line: 🟢G21 Abel B500 (500) - 100
+        match = re.search(r'([A-Za-z]+)\s.*\((\d+)\)\s*-\s*(\d+)', line)
+        if match:
+            student_name = match.group(1)
+            EVID = int(match.group(2))
+            Score = int(match.group(3))
+            if Score > 0:
+                extracted_data.append((student_name, EVID, Score))
+    
+    if not extracted_data:
+        return
+    
+    # Build the reply
+    response_lines = []
+    processed = await sync_to_async(save_scores)(extracted_data, examid)
+    
+    response_lines = [f"✅ <b>{name}</b> (<b>{evid}</b>) — Score: <b>{score}</b>" for name, evid, score, _ in processed]
+    
+    response_arr.extend(response_lines)
+    response = "\n".join(response_arr)
+    return response
+    
+    
+def save_scores(data, examid):
+    reporter = "A006Z"
+    local_processed = []
+    for name, evid, score in data:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "EXEC spExamReportScore @ExamID=%s, @EVID=%s, @Score=%s, @Reporter=%s",
+                [examid, evid, score, reporter]
+            )
+            try:
+                result = [dict(zip([col[0] for col in cursor.description], rec)) for rec in cursor.fetchall()]
+            except Exception:
+                result = []
+        local_processed.append((name, evid, score, result))
+    return local_processed

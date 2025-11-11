@@ -7,7 +7,7 @@ import warnings
 import logging
 
 from telegram import ForceReply, Update, Bot, ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
 bot = Bot(token=os.environ.get('EXAM_BOT_TOKEN'))
 
@@ -85,32 +85,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     warnings.filterwarnings('ignore')
     id = update.message.chat.id
     tname = str(update.effective_chat.first_name)
-    text = str(update.message.text)
-    print(f'[{tname}/{id}] {text}')
-    # response = R.bot_responses(id,tname,text)
-    response = []
-    if isinstance(response, list):
-        response,new_message,recipient_id = response
-        pm = 'Markdown' if new_message.startswith('Telegram user') else 'HTML'
-        await bot.sendMessage(chat_id=recipient_id, text=new_message, parse_mode=pm)
-    if len(response) <= 4096:
-        await update.message.reply_text(response, parse_mode='HTML') 
-    elif len(response) <= 49152:
-        response = response.replace('<b>','').replace('</b>','').replace('<i>','').replace('</i>','').replace('<u>','').replace('</u>','').replace('<pre>','').replace('</pre>','')
-        await update.message.reply_text(f'<pre>{response[:4096]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[4096:8192]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[8192:12288]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[12288:16384]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[16384:20480]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[20480:24576]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[24576:28672]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[28672:32768]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[32768:36864]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[36864:40960]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[40960:45056]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[45056:]}</pre>', parse_mode='HTML')
-    else:
-        await update.message.reply_text("Maximum character limit (49152) exceeeded", parse_mode='HTML')
+    text = update.message.text.strip()
+    response = await g.report_score(text)
+    await update.message.reply_text(response, parse_mode='HTML') 
 
 
 
@@ -123,6 +100,7 @@ def main():
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("getexcel", get_excel))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     # application.add_handler(CommandHandler("help", help_command))
 
     # on non command i.e message - echo the message on Telegram

@@ -32,7 +32,7 @@ async def get_scores(excel):
 
 def get_db_exam():
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM ExamListTable WHERE DATEADD(Week,2, ExamDate) > GETDATE()")
+        cursor.execute("SELECT * FROM ExamListTable WHERE DATEADD(Week,1 , ExamDate) > GETDATE()")
         # Get column names immediately after execution
         columns = [column[0] for column in cursor.description]
 

@@ -34,7 +34,7 @@ class GetGroupViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute(f"""SELECT M.*, E.Score, E.Reason, E.ReportDate 
                                     FROM MembersGetGroupViewFunction('{uid}') M 
-                                    LEFT JOIN (Select * From ExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID
+                                    LEFT JOIN (Select * From ExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
                                """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
@@ -51,7 +51,7 @@ class GetMyGroupViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute(f"""SELECT M.*, E.Score, E.Reason, E.ReportDate 
                                     FROM MembersGetMyGroupFunction('{uid}') M 
-                                    LEFT JOIN (Select * From ExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID
+                                    LEFT JOIN (Select * From ExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
                                """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 

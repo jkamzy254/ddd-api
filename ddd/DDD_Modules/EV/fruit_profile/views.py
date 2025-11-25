@@ -144,6 +144,28 @@ class FMPUpdateFruitProfileViewSet(APIView):
             print(str(e))
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class FMPUpdateLeavesViewSet(APIView):
+    def post(self, request):
+        form = request.data
+        token = decode_jwt(request)
+        
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"""
+                    EXEC spEditLeaves
+                    @FID = '{form['uid']}',
+                    @L1 = '{form['l1']}',
+                    @L2 = '{form['l2']}',
+                    @Stage = '{form['stage']}',
+                    @ReporterID = '{token['UID']}'
+                """)
+                fp_rec = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(fp_rec, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(str(e))
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class FMPUpdateFruitDataViewSet(APIView):
     def post(self, request):
         form = request.data

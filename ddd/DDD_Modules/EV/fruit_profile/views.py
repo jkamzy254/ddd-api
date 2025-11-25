@@ -151,14 +151,12 @@ class FMPUpdateLeavesViewSet(APIView):
         
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"""
-                    EXEC spEditLeaves
-                    @FID = '{form['uid']}',
-                    @L1 = '{form['l1']}',
-                    @L2 = '{form['l2']}',
-                    @Stage = '{form['stage']}',
-                    @ReporterID = '{token['UID']}'
-                """)
+                cursor.execute("EXEC spEditLeaves @FID = %s, @L1 = %s, @L2 = %s, @Stage = %s", [
+                    form.get('uid'), 
+                    form.get('l1'), 
+                    form.get('l2'), 
+                    form.get('stage')
+                ])
                 fp_rec = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(fp_rec, status=status.HTTP_200_OK)
 

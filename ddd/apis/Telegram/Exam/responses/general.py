@@ -94,15 +94,20 @@ def get_excel(exam_rec, recs):
     
     ws["A1"] = exam_title
     
+    with connection.cursor() as cursor:
+        sql = "SELECT * FROM ExamResultsTable WHERE ExamID = %s"
+        cursor.execute(sql, [exam_rec.get('ID')])
+        erecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+    
     rec_map = {
         str(rec["EVID"]).strip(): rec
-        for rec in recs
+        for rec in erecs
         if rec.get("EVID") is not None
     }
     last_row = ws.max_row
 
-    for row in range(6, last_row + 1):
-        student_id = ws.cell(row=row, column=6).value  # Column F = 6th col
+    for row in range(7, last_row + 1):
+        student_id = ws.cell(row=row, column=7).value  # Column F = 6th col
         if not student_id:
             continue
 

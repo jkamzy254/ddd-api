@@ -106,7 +106,7 @@ def get_excel(exam_rec, recs):
     }
     last_row = ws.max_row
 
-    for row in range(7, last_row + 1):
+    for row in range(6, last_row + 1):
         student_id = ws.cell(row=row, column=7).value  # Column F = 6th col
         if not student_id:
             continue
@@ -120,6 +120,10 @@ def get_excel(exam_rec, recs):
             # Example: write score to column H (8th col) and reason to I (9th col)
             ws.cell(row=row, column=11).value = score
             ws.cell(row=row, column=12).value = reason
+        else:
+            ws.cell(row=row, column=11).value = "0"
+            ws.cell(row=row, column=12).value = "No submission"
+            
     
     pattern = r"[:.,]"
     replacement = "_"

@@ -198,6 +198,9 @@ def bot_responses(id,tname,input_text):
     
     if command == 'bbactive':
         return SQLCodes.bbactive(g, d, bb_sid, access)
+    
+    if command == 'bbactive2':
+        return SQLCodes.bbactive2(g, d, bb_sid, access)
         
     if command == 'bbinactive':
             return SQLCodes.bbinactive(g, d, bb_sid, access)

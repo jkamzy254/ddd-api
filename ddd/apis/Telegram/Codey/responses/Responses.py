@@ -192,6 +192,9 @@ def bot_responses(id,tname,input_text):
     if command in ('bbstatus','bbfull'):
             return SQLCodes.bbstatus(g, d, bb_sid, access)
     
+    if command in ('bbstatus2','bbfull2'):
+            return SQLCodes.bbstatus(g, d, bb_sid, access, True)
+    
     if command.startswith('bbstatusdate'):
         dt = command.removeprefix('bbstatusdate=')
         return SQLCodes.bbstatusdate(g, d, ssn, dt, access)
@@ -228,10 +231,15 @@ def bot_responses(id,tname,input_text):
         if command.endswith('status'):
             q = command.removesuffix('status')
             return SQLCodes.bbtstatus(q,g,d,bb_sid,access,False) # returns normal bbtstatus
+        if command.endswith('status2'):
+            q = command.removesuffix('status2')
+            return SQLCodes.bbtstatus(q,g,d,bb_sid,access,False,True) # returns normal bbtstatus2
         if command.endswith('dept'):
             q = command.removesuffix('dept')
             return SQLCodes.bbtstatus(q,g,d,bb_sid,access,True) # returns bbtdept (bbtstatus but without group list)
-
+        if command.endswith('dept2'):
+            q = command.removesuffix('dept2')
+            return SQLCodes.bbtstatus(q,g,d,bb_sid,access,True,True) # returns bbtdept2 (bbtstatus2 but without group list)
         
     if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
         q = command.split('active')

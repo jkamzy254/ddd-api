@@ -149,13 +149,14 @@ class UpdateBBTStatusViewSet(APIView):
         data =request.data
         uid = data.get('UID')
         btm = data.get('BTM')
-        status = data.get('Status')
+        bb_status = data.get('Status')
 
         try:
             with connection.cursor() as cursor:
                 
-                cursor.execute("EXEC spBBUpdateBBTStatus @UID = {0}, @BTM = '{1}', @Status = {2}".format(uid, btm, status))
+                cursor.execute(f"EXEC spBBUpdateBBTStatus @UID = '{uid}', @BTM = '{btm}', @Status = {bb_status}")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                print("Result: ", result)
                 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:

@@ -326,6 +326,8 @@ def bot_responses(id,tname,input_text):
                 return SQLCodes.deptphone(d)
             if command == 'bbtdeptold':
                 return SQLCodes.bbtdeptold()
+            if command == 'bbtmission':
+                return SQLCodes.bbtmission()
             # if command == 'bbtdept':
             #     return SQLCodes.bbtdept(d,bb_sid)
             

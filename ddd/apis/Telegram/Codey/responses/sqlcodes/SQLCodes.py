@@ -4253,3 +4253,27 @@ def bbstatusdate(g, d, ssn, dt, access):
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
+
+
+
+def bbtmission():        
+    conn = odbc.connect(conn_str)
+    sql  = "SELECT Dept, ActiveBBTs, TotalBBTs, PercentActive FROM ActiveBBTs"
+    print(sql)
+    ds = pd.read_sql(sql, conn)
+    ds.columns = ['Dept','ActiveBBTs','TotalBBTs','PercentActive']
+    ds.replace(r' Dept',r'', regex = True, inplace = True)
+    ds.replace(r'InnerSFT',r'InSFT', regex = True, inplace = True)
+    conn.cursor().close()
+
+    table = ''
+    for r in range(len(ds)):
+        dp =   str(ds.loc[r,'Dept']) + ' '*(6-len(str(ds.loc[r,'Dept'])))
+        pa  = ' '*(5-len(str(ds.loc[r,'PercentActive'])))  + str(ds.loc[r,'PercentActive'])
+        ab  = ' '*(3-len(str(ds.loc[r,'ActiveBBTs']))) + '(' + str(ds.loc[r,'ActiveBBTs']) + '/'
+        tb  = ' '*(2-len(str(ds.loc[r,'TotalBBTs']))) + str(ds.loc[r,'TotalBBTs']) + ')'
+        table = f'{table}{dp}{pa}{ab}{tb}\n'
+    
+    summary = f"<b><u>Active BBT Rate</u></b>\n\n<pre>Dept  Prcnt  (A/TT)\n\n{table}</pre>"
+    summary = re.sub(r'0.0%',r'-   ',summary)
+    return summary

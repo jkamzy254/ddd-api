@@ -12,6 +12,7 @@ urlpatterns = [
 	path('getFruitProfile/', v.FMPGetFruitProfileViewSet.as_view()),
 	path('updateFruitProfile/', v.FMPUpdateFruitProfileViewSet.as_view()),
 	path('updateFruitData/', v.FMPUpdateFruitDataViewSet.as_view()),
+	path('updateLeaves/', v.FMPUpdateLeavesViewSet.as_view()),
  
 	path('getSeasonHistory/', v.FMPGetFPSeasonHistoryViewSet.as_view()),
 	path('getPreviousFruitHistory/', v.FMPGetFPPreviousFruitHistoryViewSet.as_view()),

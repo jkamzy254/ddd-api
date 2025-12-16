@@ -237,6 +237,7 @@ class UpdateTransitionCTViewSet(APIView):
         data =request.data
         uid = data.get('UID')
         textBBT = data.get('TextBBT')
+        ctCardCT = data.get('CTCardCT')
         bltDone = data.get('BLTDone')
         bltJDSN =   data.get('BLTJDSN')
         hmrmJDSN = data.get('HmrmJDSN')
@@ -250,6 +251,7 @@ class UpdateTransitionCTViewSet(APIView):
                 cursor.execute(f"""EXEC spBBUpdateTransitionCT 
                                     @UID = '{uid}', 
                                     @TextBBT = '{textBBT}', 
+                                    @CTCardCT = '{ctCardCT}', 
                                     @BLTDone = '{bltDone}', 
                                     @BLTJDSN = '{bltJDSN}', 
                                     @HmrmJDSN = '{hmrmJDSN}', 

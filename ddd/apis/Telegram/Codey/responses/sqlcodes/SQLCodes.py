@@ -3024,10 +3024,13 @@ def bbactive(g, d, sid, access):
 
 
 
+<<<<<<< HEAD
 
 
 
 
+=======
+>>>>>>> 7eb93163d31e51eb3b26681e7efd8df0891bab4a
 def bbactive2(g, d, sid, access):
                 
     g = g if access == 'Group' else '%'

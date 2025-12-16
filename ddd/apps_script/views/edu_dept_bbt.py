@@ -15,9 +15,7 @@ class GetMemberViewSet(APIView):
         
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"""Select UID, PREFERRED_NAME as 'Name' From MemberData 
-                               Where BBT = 1 And Username = '{username}' And Password = '{password}' 
-                            AND UID IN (SELECT UID FROM TGWPositionLog WHERE TID IN (8,3) AND PID >= 200 AND EndDate IS NULL)""")
+                cursor.execute(f"EXEC spBBAppsScriptLogin @Username = '{username}', @Password = '{password}'")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 
             if len(result) == 0:
@@ -151,13 +149,14 @@ class UpdateBBTStatusViewSet(APIView):
         data =request.data
         uid = data.get('UID')
         btm = data.get('BTM')
-        status = data.get('Status')
+        bb_status = data.get('Status')
 
         try:
             with connection.cursor() as cursor:
                 
-                cursor.execute("EXEC spBBUpdateBBTStatus @UID = {0}, @BTM = '{1}', @Status = {2}".format(uid, btm, status))
+                cursor.execute(f"EXEC spBBUpdateBBTStatus @UID = '{uid}', @BTM = '{btm}', @Status = {bb_status}")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                print("Result: ", result)
                 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:

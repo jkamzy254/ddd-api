@@ -2,25 +2,24 @@ from datetime import datetime, timedelta
 from .sqlcodes import SQLCodes
 
 def bot_responses(id,tname,input_text):
+
+    # if input_text.lower() == 'test':
+    #     return SQLCodes.test()
     
     if input_text.lower().startswith('register'):
             i,user,pw = input_text.split('.')
             return SQLCodes.reg_new_user_request(id,tname,user,pw)
     
     ssn = 'phys'
-    uid,name,access,g,d,r,fmp_sid,fmp_ss,bb_sid,bb_ss = SQLCodes.teledata(id).split('/')
+    uid,name,access,g,d,r,fmp_sid,fmp_ss,bb_sid,bb_ss,phys_sid,on_sid = SQLCodes.teledata(id).split('/')
     original_uid,original_name = uid,name
     print(f"""TELEDATA:
           uid - {uid}
           name - {name}
           access - {access}
-          g - {g}
-          d - {d}
-          r - {r}
-          fmp_sid - {fmp_sid}
-          fmp_ss - {fmp_ss}
-          bb_sid - {bb_sid}
-          bb_ss - {bb_ss}""")
+          g - {g} | d - {d} | r - {r}
+          fmp_sid - {fmp_sid} | fmp_ss - {fmp_ss} | bb_sid - {bb_sid} | bb_ss - {bb_ss}
+          phys_sid - {phys_sid} | on_sid - {on_sid}""")
     
     user_message = str(input_text).lower().replace(' ','')
         
@@ -30,16 +29,12 @@ def bot_responses(id,tname,input_text):
             user_message = user_message.lower()
             uid,name,access,g,d,r,fmp_sid,fmp_ss,bb_sid,bb_ss = SQLCodes.namedata(user_name).split('/')
             print(f"""NAMEDATA:
-            uid - {uid}
-            name - {name}
-            access - {access}
-            g - {g}
-            d - {d}
-            r - {r}
-            fmp_sid - {fmp_sid}
-            fmp_ss - {fmp_ss}
-            bb_sid - {bb_sid}
-            bb_ss - {bb_ss}""")
+                  uid - {uid}
+                  name - {name}
+                  access - {access}
+                  g - {g} | d - {d} | r - {r}
+                  fmp_sid - {fmp_sid} | fmp_ss - {fmp_ss} | bb_sid - {bb_sid} | bb_ss - {bb_ss}
+                  phys_sid - {phys_sid} | on_sid - {on_sid}""")
                         
     if access == 'None':
         return '-'
@@ -131,39 +126,38 @@ def bot_responses(id,tname,input_text):
 
     SQLCodes.functionlog(original_uid, original_name, input_text, command)
     
-    print(f"""Final parameters before command call:
-          uid - {uid}
-          name - {name}
-          access - {access}
-          g - {g}
-          d - {d}
-          r - {r}
-          fmp_sid - {fmp_sid}
-          fmp_ss - {fmp_ss}
-          bb_sid - {bb_sid}
-          bb_ss - {bb_ss}""")
+    # print(f"""Final parameters before command call:
+    #       uid - {uid}
+    #       name - {name}
+    #       access - {access}
+    #       g - {g}
+    #       d - {d}
+    #       r - {r}
+    #       fmp_sid - {fmp_sid}
+    #       fmp_ss - {fmp_ss}
+    #       bb_sid - {bb_sid}
+    #       bb_ss - {bb_ss}""")
     
     # if r in ('Geelong','Darwin'):
     #     r = 'Online'
         
     if command.startswith('all'):
         ssn = 'all'
-        fmp_sid = '%'
-        bb_sid = '%'
+        fmp_sid, bb_sid = '%', '%'
         print(f"""fmp_sid - {fmp_sid}
                    bb_sid - {bb_sid}""")
         command = command[3:]
         
     if command.startswith('sft'):
         ssn = 'sft'
-        fmp_sid, bb_sid = SQLCodes.specifyct('sft').split('/')
+        fmp_sid, bb_sid = on_sid, on_sid # fmp_sid, bb_sid = SQLCodes.specifyct('sft').split('/')
         print(f"""fmp_sid - {fmp_sid}
                    bb_sid - {bb_sid}""")
         command = command[3:]
         
     if command.startswith('phys'):
         ssn = 'phys'
-        fmp_sid, bb_sid = SQLCodes.specifyct('phys').split('/')
+        fmp_sid, bb_sid = phys_sid, phys_sid # fmp_sid, bb_sid = SQLCodes.specifyct('phys').split('/')
         print(f"""fmp_sid - {fmp_sid}
                    bb_sid - {bb_sid}""")
         command = command[4:]
@@ -188,6 +182,15 @@ def bot_responses(id,tname,input_text):
         
     if command == 'bblist':
         return SQLCodes.bblist(d,g,bb_sid,access)
+    
+    if command == 'bblist2':
+        return SQLCodes.bblist2(d,g,access)
+    
+    if command == 'bblists':
+        return SQLCodes.bblists(d,g,phys_sid,on_sid,access)
+    
+    if command == 'pickfe':
+        return SQLCodes.pickfe(g, d, access)
     
     if command in ('bbstatus','bbfull'):
             return SQLCodes.bbstatus(g, d, bb_sid, access)

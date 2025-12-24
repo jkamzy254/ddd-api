@@ -1,0 +1,71 @@
+'hgn.py'
+'get'
+SELECT Access FROM FinAccess WHERE UID = @uid -- returns access level to be used in front end
+--SELECT Access FROM FinAccess WHERE UID = 'A0052'
+EXEC spFinIncomeSummary @uid, ?@yrmth, ?@grp
+--EXEC spFinIncomeSummary A005X, ?'Mar-25', ?'G21'
+EXEC spFinIncomeList @uid, ?@yrmth, ?@grp
+--EXEC spFinIncomeList A00CQ, ?'Apr-25', ?'G9'
+EXEC spFinTransferList @uid, ?@yrmth, ?@grp
+--EXEC spFinTransferList A00CQ, ?'Apr-25', ?'G9'
+EXEC spFinExpenseSummary @uid, ?@yrmth, ?@grp
+--EXEC spFinExpenseSummary A002L, ?'May-25', ?'G1'
+EXEC spFinClaimsList @uid, ?@yrmth
+--EXEC spFinClaimsList A00CQ, ?'Mar-25'
+EXEC spFinClaimPopUp @uid, @status, @grp, @claimid
+--EXEC spFinClaimPopUp A007F, 'Spent', 'G10', 1992
+EXEC spFinReceiptPopUp @claimID -- This is the receipts list WITHIN the claim pop-up
+--EXEC spFinReceiptPopUp 1992
+EXEC spFinHgnSummaryMonth @uid, ?@yrmth, ?@grp
+--EXEC spFinHgnSummaryMonth A0052, ?'Apr-25', ?'G9'
+EXEC spFinChurchSummaryMonth ??@yrmth
+--EXEC spFinChurchSummaryMonth ?'Apr-25'
+EXEC spFinBalanceSummary @uid, ?@grp
+--EXEC spFinBalanceSummary A00I8, ?'G9'
+'post'
+EXEC spFinInsertIncome @uid,@src,@amt,@det
+--EXEC spFinInsertIncome ABCDE,Greg,5,deets
+EXEC spFinInsertClaim @uid,@grp,@reqcategory,@claimname,@reqamount,@claimdate,@detailedinfo,@expensetype,@bankname,@accountname,@bsb,@accountnumber,@transfergroups,?@claimid
+--EXEC spFinInsertClaim A0052,G1,EDU,'ClaimClaim',43.21,'2024-12-12','detailed info','Group','Commonwealth Bank of Australia','Frederick Bobson',332211,87654321,NULL
+EXEC spFinInsertReceipt @claimid, @uid, @receipturl, @transferurl, @itemsjson, ?@grp
+--EXEC spFinInsertReceipt 98765, A0052, 'https://www.receipt.com.au', 'https://www.transfer.co.uk', N'[{"Qty":4,"Item":"PS1","Cost":3.5},{"Qty":3,"Item":"PS2","Cost":7.3}]'
+EXEC spFinInsertSpending @claimid
+--EXEC spFinInsertSpending 87654
+EXEC spFinInsertBalanceSS @uid, @url
+--EXEC spFinInsertBalanceSS ZZZZZ, 'https://i.pinimg.com/564x/8e/70/19/8e7019e7afcd66a83fc0cf4e66cdea4f.jpg'
+'put'
+EXEC spFinDeleteBalanceSS @id, @deleted
+--EXEC spFinDeleteBalanceSS 9999, 1
+EXEC spFinDeleteClaim @claimid, @deleted
+--EXEC spFinDeleteClaim 9999, 1
+EXEC spFinDeleteDonation @id, @deleted
+--EXEC spFinDeleteDonation 9999, 1
+EXEC spFinDeleteIncome @incomeid, @deleted
+--EXEC spFinDeleteIncome 9999, 1
+EXEC spFinDeleteTransfer @transferid, @deleted
+--EXEC spFinDeleteTransfer 9999, 1
+'delete'
+EXEC spFinDeleteReceipt @receiptid
+--EXEC spFinDeleteReceipt 9999
+'tjn.py'
+'get'
+SELECT * FROM FinReceiptCheck(@subdivision)
+--SELECT * FROM FinReceiptCheck('Youth')
+SELECT * FROM FinTransferCheck(@subdivision)
+--SELECT * FROM FinTransferCheck('Youth')
+'put'
+EXEC spFinConfirmReceipt @receiptid, @physical, @notes
+--EXEC spFinConfirmReceipt 3750, 1, notenotenote
+'gjn.py'
+'get'
+SELECT * FROM FinGjnInfo
+EXEC spFinChurchSummary @weekid
+--EXEC spFinChurchSummary 25041
+'post'
+EXEC spFinInsertGjnNotes @uid, @weekid, @gid, @note
+--EXEC spFinInsertGjnNotes ZZZZZ, 25022, 1002, 'money money money'
+'put'
+EXEC spFinApproveClaim @claimid, @approve
+--EXEC spFinApproveClaim 9999, 1
+EXEC spFinPrintClaim @claimid, @print
+--EXEC spFinPrintClaim 9999, 1

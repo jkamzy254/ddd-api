@@ -1995,10 +1995,193 @@ def bblist(d,g,sid,access):
 
 
 
+def bblists(d,g,sid,alt,phys,access):
+
+    d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
+    g = '%' if access != 'Group' else g
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    else:
+        grpdept = str(d).replace('D[0-9]%','Youth')
+
+    queryP = f"FROM CodeyBBList('{sid}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}') AND (L1D LIKE '{d}' OR L2D LIKE '{d}')"
+    queryO = f"FROM CodeyBBList('{alt}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}') AND (L1D LIKE '{d}' OR L2D LIKE '{d}')"
+    
+    print(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryP} AND NewStatus = 'New P'    ORDER BY BBTN")
+    
+    conn = odbc.connect(conn_str)   
+
+    dNP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryP} AND NewStatus = 'New P'    ORDER BY BBTN", conn)
+    dOP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryP} AND NewStatus = 'Old P'    ORDER BY BBTN", conn)
+    dAB = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryP} AND NewStatus = 'ABB'      ORDER BY BBTN", conn)
+    dIM = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryP} AND NewStatus = 'IBB ME'   ORDER BY BBTN", conn)
+    dIF = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryP} AND NewStatus = 'IBB FA'   ORDER BY BBTN", conn)
+    dFP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryP} AND NewStatus = 'Fallen P' ORDER BY BBTN", conn)
+    dAC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryP} AND NewStatus = 'ABB CCT'  ORDER BY BBTN", conn)
+    dIC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryP} AND NewStatus = 'IBB CCT'  ORDER BY BBTN", conn)
+    oNP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryO} AND NewStatus = 'New P'    ORDER BY BBTN", conn)
+    oOP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryO} AND NewStatus = 'Old P'    ORDER BY BBTN", conn)
+    oAB = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryO} AND NewStatus = 'ABB'      ORDER BY BBTN", conn)
+    oIM = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryO} AND NewStatus = 'IBB ME'   ORDER BY BBTN", conn)
+    oIF = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryO} AND NewStatus = 'IBB FA'   ORDER BY BBTN", conn)
+    oFP = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryO} AND NewStatus = 'Fallen P' ORDER BY BBTN", conn)
+    oAC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryO} AND NewStatus = 'ABB CCT'  ORDER BY BBTN", conn)
+    oIC = pd.read_sql(f"SELECT LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints {queryO} AND NewStatus = 'IBB CCT'  ORDER BY BBTN", conn)
+    dNP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dOP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dAB.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dIM.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dIF.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dFP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dAC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dIC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    oNP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    oOP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    oAB.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    oIM.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    oIF.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    oFP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    oAC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    oIC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    conn.cursor().close()
+    
+    if access == 'Group':
+        pts = [dNP['Points'].sum(), dOP['Points'].sum(), dAB['Points'].sum(), dIM['Points'].sum(), dIF['Points'].sum(), dFP['Points'].sum(), dAC['Points'].sum(), dIC['Points'].sum()]
+        opts = [oNP['Points'].sum(), oOP['Points'].sum(), oAB['Points'].sum(), oIM['Points'].sum(), oIF['Points'].sum(), oFP['Points'].sum(), oAC['Points'].sum(), oIC['Points'].sum()]
+        pt = 'Points'
+    elif d != 'D[0-9]%':
+        pts = [dNP['DPoints'].sum(), dOP['DPoints'].sum(), dAB['DPoints'].sum(), dIM['DPoints'].sum(), dIF['DPoints'].sum(), dFP['DPoints'].sum(), dAC['DPoints'].sum(), dIC['DPoints'].sum()]
+        opts = [oNP['DPoints'].sum(), oOP['DPoints'].sum(), oAB['DPoints'].sum(), oIM['DPoints'].sum(), oIF['DPoints'].sum(), oFP['DPoints'].sum(), oAC['DPoints'].sum(), oIC['DPoints'].sum()]
+        pt = 'DPoints'
+    else:
+        pts = [len(dNP),len(dOP),len(dAB),len(dIM),len(dIF),len(dFP),len(dAC),len(dIC)]
+        opts = [len(oNP),len(oOP),len(oAB),len(oIM),len(oIF),len(oFP),len(oAC),len(oIC)]
+        
+    if len(dNP) == 0:
+        np = ''
+    else:
+        np = f"<i><b><u>New Picking ({pts[0]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dNP)):
+            np = f"{np}💛{r+1}. [{dNP.loc[r,'LastClass']}] [{dNP.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dNP.loc[r,'FruitName'][:8]} - {dNP.loc[r,'L1N']}{dNP.loc[r,'L2N']} - {(dNP.loc[r,'BBTN'])}\n"
+        np = np + '</pre>\n'
+        
+    if len(dOP) == 0:
+        op = ''
+    else:
+        op = f"<i><b><u>Old Picking ({pts[1]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dOP)):
+            op = f"{op}⛔️{r+1}. [{dOP.loc[r,'LastClass']}] [{dOP.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dOP.loc[r,'FruitName'][:8]} - {dOP.loc[r,'L1N']}{dOP.loc[r,'L2N']} - {(dOP.loc[r,'BBTN'])}\n"
+        op = op + '</pre>\n'
+    
+    if len(dAB) == 0:
+        ab = ''
+    else:
+        ab = f"<i><b><u>Active BB ({pts[2]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dAB)):
+            ab = f"{ab}🟢{r+1}. [{dAB.loc[r,'LastClass']}] [{dAB.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dAB.loc[r,'FruitName'][:8]} - {dAB.loc[r,'L1N']}{dAB.loc[r,'L2N']} - {(dAB.loc[r,'BBTN'])} - {(dAB.loc[r,'LastTopic'])} → [{(dAB.loc[r,'NextClassDate'])}]\n"
+        ab = ab + '</pre>\n'
+        
+    if len(dIM) == 0:
+        im = ''
+    else:
+        im = f"<i><b><u>IBB Missed Education ({pts[3]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dIM)):
+            im = f"{im}🔴{r+1}. [{dIM.loc[r,'LastClass']}] [{dIM.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dIM.loc[r,'FruitName'][:8]} - {dIM.loc[r,'L1N']}{dIM.loc[r,'L2N']} - {(dIM.loc[r,'BBTN'])} - {(dIM.loc[r,'LastTopic'])} → [{(dIM.loc[r,'NextClassDate'])}]\n"
+        im = im + '</pre>\n'
+        
+    if len(dIF) == 0:
+        fa = ''
+    else:
+        fa = f"<i><b><u>IBB Fallen ({pts[4]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dIF)):
+            fa = f"{fa}⚫️{r+1}. [{dIF.loc[r,'LastClass']}] [{dIF.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dIF.loc[r,'FruitName'][:8]} - {dIF.loc[r,'L1N']}{dIF.loc[r,'L2N']} - {(dIF.loc[r,'BBTN'])} - {(dIF.loc[r,'LastTopic'])} → [{(dIF.loc[r,'NextClassDate'])}]\n"
+        fa = fa + '</pre>\n'
+        
+    if len(dFP) == 0:
+        fp = ''
+    else:
+        fp = f"<i><b><u>Fallen Picking ({pts[5]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dFP)):
+            fp = f"{fp}❌{r+1}. [{dFP.loc[r,'LastClass']}] [{dFP.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dFP.loc[r,'FruitName'][:8]} - {dFP.loc[r,'L1N']}{dFP.loc[r,'L2N']} - {(dFP.loc[r,'BBTN'])}\n"
+        fp = fp + '</pre>\n'
+        
+    if len(dAC) == 0:
+        ac = ''
+    else:
+        ac = f"<i><b><u>CCT ABB ({pts[6]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dAC)):
+            ac = f"{ac}⭐️{r+1}. [{dAC.loc[r,'LastClass']}] [{dAC.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dAC.loc[r,'FruitName'][:8]} - {dAC.loc[r,'L1N']}{dAC.loc[r,'L2N']} - {(dAC.loc[r,'BBTN'])} - {(dAC.loc[r,'LastTopic'])} → [{(dAC.loc[r,'NextClassDate'])}]\n"
+        ac = ac + '</pre>\n'
+        
+    if len(dIC) == 0:
+        ic = ''
+    else:
+        ic = f"<i><b><u>CCT IBB ({pts[7]} Pt)</u></b></i>\n<pre>"
+        for r in range(len(dIC)):
+            ic = f"{ic}⭐️{r+1}. [{dIC.loc[r,'LastClass']}] [{dIC.loc[r,pt] if d != 'D[0-9]%' else '1'}] {dIC.loc[r,'FruitName'][:8]} - {dIC.loc[r,'L1N']}{dIC.loc[r,'L2N']} - {(dIC.loc[r,'BBTN'])} - {(dIC.loc[r,'LastTopic'])} → [{(dIC.loc[r,'NextClassDate'])}]\n"
+        ic = ic + '</pre>\n'
+
+    # ^^^ Physical ^^^
+    # -----------------
+    # vvv  Online  vvv
+
+    npo = opo = abo = imo = fao = fpo = aco = ico = ''
+    c = 0
+
+    if len(oNP) > 0:
+        for r in range(len(oNP)):
+            c += 1
+            npo = f"{npo}💛{c}. [{oNP.loc[r,'LastClass']}] [{oNP.loc[r,pt] if d != 'D[0-9]%' else '1'}] {oNP.loc[r,'FruitName'][:8]} - {oNP.loc[r,'L1N']}{oNP.loc[r,'L2N']} - {(oNP.loc[r,'BBTN'])}\n"
+    if len(oOP) > 0:
+        for r in range(len(oOP)):
+            c += 1
+            opo = f"{opo}⛔️{c}. [{oOP.loc[r,'LastClass']}] [{oOP.loc[r,pt] if d != 'D[0-9]%' else '1'}] {oOP.loc[r,'FruitName'][:8]} - {oOP.loc[r,'L1N']}{oOP.loc[r,'L2N']} - {(oOP.loc[r,'BBTN'])}\n"
+    if len(oAB) > 0:
+        for r in range(len(oAB)):
+            c += 1
+            abo = f"{abo}🟢{c}. [{oAB.loc[r,'LastClass']}] [{oAB.loc[r,pt] if d != 'D[0-9]%' else '1'}] {oAB.loc[r,'FruitName'][:8]} - {oAB.loc[r,'L1N']}{oAB.loc[r,'L2N']} - {(oAB.loc[r,'BBTN'])} - {(oAB.loc[r,'LastTopic'])} → [{(oAB.loc[r,'NextClassDate'])}]\n"
+    if len(oIM) > 0:
+        for r in range(len(oIM)):
+            c += 1
+            imo = f"{imo}🔴{c}. [{oIM.loc[r,'LastClass']}] [{oIM.loc[r,pt] if d != 'D[0-9]%' else '1'}] {oIM.loc[r,'FruitName'][:8]} - {oIM.loc[r,'L1N']}{oIM.loc[r,'L2N']} - {(oIM.loc[r,'BBTN'])} - {(oIM.loc[r,'LastTopic'])} → [{(oIM.loc[r,'NextClassDate'])}]\n"
+    if len(oIF) > 0:
+        for r in range(len(oIF)):
+            c += 1
+            fao = f"{fao}⚫️{c}. [{oIF.loc[r,'LastClass']}] [{oIF.loc[r,pt] if d != 'D[0-9]%' else '1'}] {oIF.loc[r,'FruitName'][:8]} - {oIF.loc[r,'L1N']}{oIF.loc[r,'L2N']} - {(oIF.loc[r,'BBTN'])} - {(oIF.loc[r,'LastTopic'])} → [{(oIF.loc[r,'NextClassDate'])}]\n"
+    if len(oFP) > 0:
+        for r in range(len(oFP)):
+            c += 1
+            fpo = f"{fpo}❌{c}. [{oFP.loc[r,'LastClass']}] [{oFP.loc[r,pt] if d != 'D[0-9]%' else '1'}] {oFP.loc[r,'FruitName'][:8]} - {oFP.loc[r,'L1N']}{oFP.loc[r,'L2N']} - {(oFP.loc[r,'BBTN'])}\n"   
+    if len(oAC) > 0:
+        for r in range(len(oAC)):
+            c += 1
+            aco = f"{aco}⭐️{c}. [{oAC.loc[r,'LastClass']}] [{oAC.loc[r,pt] if d != 'D[0-9]%' else '1'}] {oAC.loc[r,'FruitName'][:8]} - {oAC.loc[r,'L1N']}{oAC.loc[r,'L2N']} - {(oAC.loc[r,'BBTN'])} - {(oAC.loc[r,'LastTopic'])} → [{(oAC.loc[r,'NextClassDate'])}]\n"
+    if len(oIC) > 0:
+        for r in range(len(oIC)):
+            c += 1
+            ico = f"{ico}⭐️{c}. [{oIC.loc[r,'LastClass']}] [{oIC.loc[r,pt] if d != 'D[0-9]%' else '1'}] {oIC.loc[r,'FruitName'][:8]} - {oIC.loc[r,'L1N']}{oIC.loc[r,'L2N']} - {(oIC.loc[r,'BBTN'])} - {(oIC.loc[r,'LastTopic'])} → [{(oIC.loc[r,'NextClassDate'])}]\n"
+    
+    physical = 'Total' if sum(opts) == 0 else 'Physical'
+    online = '' if sum(opts) == 0 else f"\n\n<i><b><u>Online ({sum(opts)} Pt)</u></b></i>\n<pre>{npo}{opo}{abo}{imo}{fao}{fpo}{aco}{ico}</pre>"
+
+    result = f"<b><u>📚{grpdept} BB Fruit List📚</u></b>\n\n<i>▫️Status▫️\n#. [LastClassDate] [Pts] - Fruit - L1 / L2 - BBT - LastTopic → [NextClassDate]</i>\n\n{np}{op}{ab}{im}{fa}{fp}{ac}{ic}<b><i><u>{physical}: {sum(pts)} Pts</u></i></b>{online}"
+    result = re.sub(r'\.0',r'',result)
+    result = re.sub(r' \(\)',r'',result)
+    result = re.sub(r'\((\d+)\)', r'(G\1)', result)
+    result = re.sub(r'\[1\] ', r'', result)
+    result = re.sub(r'\n<b><i><u>Physical',r'<b><i><u>Physical',result)
+    return result
 
 
 
-def bblists(d,g,physical,online,access):
+
+
+
+
+
+def bblists2(d,g,physical,online,access):
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     g = '%' if access != 'Group' else g
@@ -4548,3 +4731,44 @@ def pickfe(g, d, access):
 
 # def test():
 #     return 'hello'
+
+
+
+def febmission():
+    
+    conn = odbc.connect(conn_str)
+    q = f"SELECT Dept, Total, TGW, Member, \"0 P\", \"1 P+\", \"1 FE+\" FROM FebCtMission"
+    print(q)
+    dq = pd.read_sql(q, conn)
+    dq.columns = ['Dept','Total','TGW','Member','0 P','1 P+','1 FE+']
+    dq.replace(r' Dept',r'', regex = True, inplace = True)
+    conn.cursor().close()
+        
+    dept = str()  
+    for r in range(len(dq)):
+        dp =   str(dq.loc[r,'Dept']) + ' '*(9-len(str(dq.loc[r,'Dept'])))
+        tt  = ' '*(3-len(str(dq.loc[r,'Total'])))   + str(dq.loc[r,'Total'])
+        tg  = ' '*(2-len(str(dq.loc[r,'TGW'])))     + str(dq.loc[r,'TGW'])
+        mm  = ' '*(3-len(str(dq.loc[r,'Member'])))  + str(dq.loc[r,'Member'])
+        np  = ' '*(3-len(str(dq.loc[r,'0 P'])))     + str(dq.loc[r,'0 P'])
+        pk  = ' '*(3-len(str(dq.loc[r,'1 P+'])))    + str(dq.loc[r,'1 P+'])
+        fe  = ' '*(3-len(str(dq.loc[r,'1 FE+'])))   + str(dq.loc[r,'1 FE+'])
+        dept = f'{dept}{dp}[{tt}|{tg}|{mm}|{np}|{pk}|{fe}]\n'
+    dept = dept + '\n'
+
+
+    total = str()
+    tt  = ' '*(3-len(str(dq.loc[0,'Total'])))  + str(dq.loc[0,'Total'])
+    tg  = ' '*(2-len(str(dq.loc[0,'TGW'])))    + str(dq.loc[0,'TGW'])
+    mm  = ' '*(3-len(str(dq.loc[0,'Member']))) + str(dq.loc[0,'Member'])
+    np  = ' '*(3-len(str(dq.loc[0,'0 P'])))    + str(dq.loc[0,'0 P'])
+    pk  = ' '*(3-len(str(dq.loc[0,'1 P+'])))   + str(dq.loc[0,'1 P+'])
+    fe  = ' '*(3-len(str(dq.loc[0,'1 FE+'])))  + str(dq.loc[0,'1 FE+'])
+    total = f'Total    [{tt}|{tg}|{mm}|{np}|{pk}|{fe}]'
+
+    header = f"Dept     [Tot|TG|Mem|0 P|1P+|FE+]"
+    summary = f"{dept}{total}</pre>" # Not putting header yet, so re.sub does not affect the "0 P"
+    summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
+    summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
+    summary = f"<b><u>Feb CT Mission</u></b>\n\n<pre>Dept     [Tot|TG|Mem|0 P|1P+|FE+]\n\n{summary}"
+    return summary

@@ -22,10 +22,7 @@ class GetMemberViewSet(APIView):
         
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"""
-                Select M.UID, PREFERRED_NAME as 'Name', (SELECT T.TID, T.PID FROM TGWPositionLog T WHERE T.UID = M.UID And EndDate IS NULL FOR JSON PATH) AS Positions
-                FROM MemberData M Where Username = '{username}' And Password = '{password}';
-                """)
+                cursor.execute("SELECT * FROM NewEduASLoginFunction(%s, %s)", [username,password])
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 
             if len(result) == 0:
@@ -43,6 +40,20 @@ class EduVideoGetFoldersViewSet(APIView):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(f"EXEC spEduVideoGetFolders @User = '{uid}'")
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class EduVideoGetMaterialViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get("UID")
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"SELECT * FROM NewEduMaterialTable")
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:
@@ -112,3 +123,111 @@ class EduVideoUpdateFavesViewSet(APIView):
             # Handle exceptions here, e.g., logging or returning an error response
             print(e)
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+         
+        
+class EduVideoGetActiveEdus(APIView):
+    def get(self, request):
+        try:
+            uid = request.GET.get('UID')
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM NewEduWeekDetailsFunction(%s)', (uid,))
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+        
+class EduVideoGetGroupAttendance(APIView):
+    def get(self, request):
+        rec = request.data
+        try:
+            uid = request.GET.get('UID')
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM NewEduGetAttendanceFunction(%s)', (uid,))
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class EduVideoGetMembers(APIView):
+    def get(self, request):
+        try:
+            uid = request.GET.get('UID')
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM MembersGetGroupViewFunction(%s) ORDER BY Pos, ID', (uid,))
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class EduVideoUpdateAttendanceViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        try:
+            uid = rec.get('UID')
+            attend = rec.get('Attendance')
+            eduid = rec.get('ID')
+            reason = "'"+rec.get('Reason').replace("'","''")+"'" if rec.get('Reason') else "NULL"
+
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spEduVideoUpdateAttendance @UID = '{uid}',  @Attendance = {attend}, @ID = {eduid},  @Reason ={reason}")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class EduVideosExamGroupViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('uid')
+        examid = request.GET.get('eid')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"""SELECT M.*, E.Score, E.Reason, E.ReportDate 
+                                    FROM MembersGetGroupViewFunction('{uid}') M 
+                                    LEFT JOIN (Select * From NewEduExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
+                               """)
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class EduVideosExamMyGroupViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('uid')
+        examid = request.GET.get('eid')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"""SELECT M.*, E.Score, E.Reason, E.ReportDate 
+                                    FROM MembersGetMyGroupFunction('{uid}') M 
+                                    LEFT JOIN (Select * From NewEduExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
+                               """)
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class EduVideosSummaryViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('UID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM NewEduSummaryFunction(%s)', (uid,))
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        

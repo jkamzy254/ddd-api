@@ -40,6 +40,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://script.google.com",
+    "https://*.ngrok-free.app",
+]
+
 INTERNAL_IPS = [
     '127.0.0.1',
 ]
@@ -104,6 +109,10 @@ CORS_ORIGIN_WHITELIST = (
     'http://localhost:4200',
     'http://127.0.0.1:4200',
     'http://127.0.0.1:8000',
+    'https://delorse-nondepreciative-janae.ngrok-free.dev',
+    "https://*.ngrok-free.app",
+    "https://*.ngrok.io",
+    "https://script.google.com",
     'https://dddmelb84.atlassian.net', #Jira URL
     'https://ang-dj.herokuapp.com', #Django backend
     'https://ddd-ticket-trial-6cb8f882f1d8.herokuapp.com', #Ticket Module Testing Site

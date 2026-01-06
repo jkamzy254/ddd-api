@@ -175,10 +175,11 @@ class EduVideoUpdateAttendanceViewSet(APIView):
             uid = rec.get('UID')
             attend = rec.get('Attendance')
             eduid = rec.get('ID')
+            edutype = rec.get('Type')
             reason = "'"+rec.get('Reason').replace("'","''")+"'" if rec.get('Reason') else "NULL"
 
             with connection.cursor() as cursor:
-                cursor.execute(f"EXEC spEduVideoUpdateAttendance @UID = '{uid}',  @Attendance = {attend}, @ID = {eduid},  @Reason ={reason}")
+                cursor.execute(f"EXEC spEduVideoUpdateAttendance @UID = '{uid}',  @Attendance = {attend}, @ID = {eduid},  @Reason ={reason},  @Type ={edutype}")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
 
             return Response(result, status=status.HTTP_200_OK)

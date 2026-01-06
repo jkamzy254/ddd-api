@@ -18,12 +18,12 @@ class Command(BaseCommand):
         sgcheck_process = Process(target=sgcheck_main)
         exam_process = Process(target=exam_main)
 
-        codey_process.start()
-        jira_process.start()
-        sgcheck_process.start()
+        # codey_process.start()
+        # jira_process.start()
+        # sgcheck_process.start()
         exam_process.start()
 
-        codey_process.join()
-        jira_process.join()
-        sgcheck_process.join()
+        # codey_process.join()
+        # jira_process.join()
+        # sgcheck_process.join()
         exam_process.join()

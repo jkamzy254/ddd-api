@@ -252,7 +252,6 @@ class EduVideoFetchFileViewSet(APIView):
 class EduVideoUploadFileViewSet(APIView):
     def post(self, request):
         rec = request.data
-        print(rec)
         try:
             uid = rec.get('UID')
             fileid = rec.get('FileID')
@@ -274,7 +273,6 @@ class EduVideosGetSubmissionsIndViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute('SELECT * FROM HSPSubmissionsIndFunction(%s) ORDER BY ID DESC', (uid,))
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                print(result)
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
@@ -288,7 +286,6 @@ class EduVideosGetSubmissionsAllViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute('SELECT * FROM HSPSubmissionsAllFunction() ORDER BY ID DESC')
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                print(result)
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
@@ -298,7 +295,6 @@ class EduVideosGetSubmissionsAllViewSet(APIView):
 class EduVideoUpdateCommentViewSet(APIView):
     def post(self, request):
         rec = request.data
-        print(rec)
         try:
             fileid = rec.get('FileID')
             feedback = rec.get('Feedback').replace("'","''")

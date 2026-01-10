@@ -4568,10 +4568,11 @@ def pickfe(g, d, access):
 
 
 
-def febmission():
+def febmission(access):
     
+    d = '%' if access in ('All','IT') else access.capitalize().replace('d','D')
     conn = odbc.connect(conn_str)
-    q = f"SELECT Dept, Total, TGW, Member, \"0 P\", \"1 P+\", \"1 FE+\" FROM FebCtMission"
+    q = f"FebCtMission '{d}'"
     print(q)
     dq = pd.read_sql(q, conn)
     dq.columns = ['Dept','Total','TGW','Member','0 P','1 P+','1 FE+']
@@ -4590,18 +4591,11 @@ def febmission():
         dept = f'{dept}{dp}[{tt}|{tg}|{mm}|{np}|{pk}|{fe}]\n'
     dept = dept + '\n'
 
-    total = str()
-    tt  = ' '*(3-len(str(dq.loc[0,'Total'])))  + str(dq.loc[0,'Total'])
-    tg  = ' '*(2-len(str(dq.loc[0,'TGW'])))    + str(dq.loc[0,'TGW'])
-    mm  = ' '*(3-len(str(dq.loc[0,'Member']))) + str(dq.loc[0,'Member'])
-    np  = ' '*(3-len(str(dq.loc[0,'0 P'])))    + str(dq.loc[0,'0 P'])
-    pk  = ' '*(3-len(str(dq.loc[0,'1 P+'])))   + str(dq.loc[0,'1 P+'])
-    fe  = ' '*(3-len(str(dq.loc[0,'1 FE+'])))  + str(dq.loc[0,'1 FE+'])
-    total = f'Total    [{tt}|{tg}|{mm}|{np}|{pk}|{fe}]'
+    totalrow = 'Total' if access in ('All','IT') else d
 
-    header = f"Dept     [Tot|TG|Mem|0 P|1P+|FE+]"
-    summary = f"{dept}{total}</pre>" # Not putting header yet, so re.sub does not affect the "0 P"
+    summary = f"{dept}</pre>" # Not putting header yet, so re.sub does not affect the "0 P"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
+    summary = re.sub(totalrow,f"\n{totalrow}",summary)
     summary = f"<b><u>Feb CT Mission</u></b>\n\n<pre>Dept     [Tot|TG|Mem|0 P|1P+|FE+]\n\n{summary}"
     return summary

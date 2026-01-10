@@ -57,7 +57,12 @@ urlpatterns = [
 	path('eduVideoExamGetGroup/', ep.EduVideosExamGroupViewSet.as_view()),   
 	path('eduVideoExamGetMyGroup/', ep.EduVideosExamMyGroupViewSet.as_view()),  
 	path('eduVideoSummary/', ep.EduVideosSummaryViewSet.as_view()),   
-	path('eduVideoGetMaterial/', ep.EduVideoGetMaterialViewSet.as_view()),     
+	path('eduVideoGetMaterial/', ep.EduVideoGetMaterialViewSet.as_view()),
+	path('eduVideoFetchFile/', ep.EduVideoFetchFileViewSet.as_view()), 
+	path('eduVideoUploadFile/', ep.EduVideoUploadFileViewSet.as_view()),     
+	path('eduVideoGetSubmissionsInd/', ep.EduVideosGetSubmissionsIndViewSet.as_view()), 
+	path('eduVideoGetSubmissionsAll/', ep.EduVideosGetSubmissionsAllViewSet.as_view()),  
+	path('eduVideoUpdateComment/', ep.EduVideoUpdateCommentViewSet.as_view()),    
  
 	#Edu Dept BBT System
 	path('eduBBTGetMember/', eb.GetMemberViewSet.as_view()),

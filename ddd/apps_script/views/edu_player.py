@@ -186,6 +186,7 @@ class EduVideoUpdateAttendanceViewSet(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+        
 class EduVideosExamGroupViewSet(APIView):
     def get(self, request):
         uid = request.GET.get('uid')
@@ -232,3 +233,76 @@ class EduVideosSummaryViewSet(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+class EduVideoFetchFileViewSet(APIView):
+    def get(self, request):
+        id = request.GET.get("FileID")
+        uid = request.GET.get("UID")
+        
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spHSPEduFetchFile @UID = '{uid}',  @FileID = {id}")
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class EduVideoUploadFileViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        try:
+            uid = rec.get('UID')
+            fileid = rec.get('FileID')
+            filename = rec.get('Filename')
+
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spHSPVideoSubmit @UID = '{uid}',  @FileID = '{fileid}', @FileName = '{filename}'")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class EduVideosGetSubmissionsIndViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('UID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM HSPSubmissionsIndFunction(%s) ORDER BY ID DESC', (uid,))
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class EduVideosGetSubmissionsAllViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('UID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM HSPSubmissionsAllFunction() ORDER BY ID DESC')
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class EduVideoUpdateCommentViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        try:
+            fileid = rec.get('FileID')
+            feedback = rec.get('Feedback').replace("'","''")
+
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spHSPVideoAddFeedback @FileID = '{fileid}', @Feedback = '{feedback}'")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

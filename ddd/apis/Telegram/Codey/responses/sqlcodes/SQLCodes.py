@@ -4605,7 +4605,10 @@ def febmission(access):
 
 
 
-def secondedu(g, d, access):
+def secondedu(g, d, access, standard):
+
+    views = {'bbt':'BbtSE','leaf':'LeafSE','all':'SE'}
+    view = views[standard]
     
     name = 'BBTCode' if access == 'Group' else 'BBTGrp'
         
@@ -4614,11 +4617,11 @@ def secondedu(g, d, access):
     grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth')
     
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT Dept, Grp, {name}, X, P, FE, SE FROM BbtSE WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID, {name}"
-    bb_group = f"SELECT Grp, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM BbtSE WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
-    bb_dept = f"SELECT Dept, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM BbtSE WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
-    bb_youth = f"SELECT SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM BbtSE WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
-    
+    bb_mem = f"SELECT Dept, Grp, {name}, X, P, FE, SE FROM {view} WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID, {name}"
+    bb_group = f"SELECT Grp, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view} WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
+    bb_dept = f"SELECT Dept, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view} WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
+    bb_youth = f"SELECT SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view} WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+
     print(bb_group)
     
     dm = pd.read_sql(bb_mem, conn)

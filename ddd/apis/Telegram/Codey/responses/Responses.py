@@ -271,8 +271,12 @@ def bot_responses(id,tname,input_text):
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
         return SQLCodes.deptbbtinactive(q, d, r, access)
     
-    if command == 'secondedu':
-        return SQLCodes.secondedu(g,d,access)
+    if command.startswith('secondedu'):
+        standard = command.removeprefix('secondedu')
+        standard = 'bbt' if standard == '' else standard
+        if standard not in ['bbt','leaf','all','']:
+            return "must select secondedu (bbt standard), secondeduleaf (leaf standard) or secondeduall (leaf+bbt standard)"
+        return SQLCodes.secondedu(g,d,access,standard)
     
     if command == 'classtoday':
         return SQLCodes.classes(g,d,access,'today')

@@ -276,7 +276,8 @@ def bot_responses(id,tname,input_text):
         standard = 'bbt' if standard == '' else standard
         if standard not in ['bbt','leaf','all','']:
             return "must select secondedu (bbt standard), secondeduleaf (leaf standard) or secondeduall (leaf+bbt standard)"
-        return SQLCodes.secondedu(g,d,access,standard)
+        ct = {'%':'Physical + Online',phys_sid:'Physical',on_sid:'Online'}[bb_sid]
+        return SQLCodes.secondedu(g,d,bb_sid,standard,ct,access)
     
     if command == 'classtoday':
         return SQLCodes.classes(g,d,access,'today')

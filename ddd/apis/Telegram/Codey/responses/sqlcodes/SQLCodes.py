@@ -4605,9 +4605,9 @@ def febmission(access):
 
 
 
-def secondedu(g, d, access, standard):
+def secondedu(g, d, sid, standard, ct, access):
 
-    views = {'bbt':'BbtSE','leaf':'LeafSE','all':'SE'}
+    views = {'bbt':'FnBbtSE','leaf':'FnLeafSE','all':'FnSE'}
     view = views[standard]
     
     name = 'BBTCode' if access == 'Group' else 'BBTGrp'
@@ -4617,10 +4617,10 @@ def secondedu(g, d, access, standard):
     grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth')
     
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT Dept, Grp, {name}, X, P, FE, SE FROM {view} WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID, {name}"
-    bb_group = f"SELECT Grp, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view} WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
-    bb_dept = f"SELECT Dept, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view} WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
-    bb_youth = f"SELECT SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view} WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+    bb_mem = f"SELECT Dept, Grp, {name}, X, P, FE, SE FROM {view}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID, {name}"
+    bb_group = f"SELECT Grp, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
+    bb_dept = f"SELECT Dept, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
+    bb_youth = f"SELECT SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
 
     print(bb_group)
     
@@ -4674,7 +4674,7 @@ def secondedu(g, d, access, standard):
         s  = ' '*(3-len(str(dy.loc[0,'SE']))) + str(dy.loc[0,'SE'])
         total = f'Total[{x}|{p}|{f}|{s}]'
     
-    summary = f"<b><u>{grpdept} Second Edu</u></b>\n\n<pre>     [ X | P | FE| SE]\n\n{member}{group}{dept}{total}</pre>"
+    summary = f"<b><u>{grpdept} Second Edu</u></b>\n<i>Standard = {standard.capitalize()}\n{ct} CT</i>\n\n<pre>     [ X | P | FE| SE]\n\n{member}{group}{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary

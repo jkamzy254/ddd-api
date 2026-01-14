@@ -187,12 +187,8 @@ def bot_responses(id,tname,input_text):
         return SQLCodes.bblist2(d,g,access)
     
     if command == 'bblists':
-        sid,alt,phys = on_sid,phys_sid,0 if bb_sid == on_sid else phys_sid,on_sid,1
-        return SQLCodes.bblists(d,g,sid,alt,phys,access)
-
-    if command == 'bblists2':
-        return SQLCodes.bblists2(d,g,phys_sid,on_sid,access)
-
+        return SQLCodes.bblists(d,g,phys_sid,on_sid,access)
+    
     if command == 'pickfe':
         return SQLCodes.pickfe(g, d, access)
     
@@ -275,7 +271,13 @@ def bot_responses(id,tname,input_text):
         i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
         return SQLCodes.deptbbtinactive(q, d, r, access)
     
-    
+    if command.startswith('secondedu'):
+        standard = command.removeprefix('secondedu')
+        standard = 'bbt' if standard == '' else standard
+        if standard not in ['bbt','leaf','all','']:
+            return "must select secondedu (bbt standard), secondeduleaf (leaf standard) or secondeduall (leaf+bbt standard)"
+        ct = {'%':'Physical + Online',phys_sid:'Physical',on_sid:'Online'}[bb_sid]
+        return SQLCodes.secondedu(g,d,bb_sid,standard,ct,access)
     
     if command == 'classtoday':
         return SQLCodes.classes(g,d,access,'today')
@@ -321,8 +323,8 @@ def bot_responses(id,tname,input_text):
         if command in ['youthmxpx','deptmxpx']:
             return SQLCodes.youthmxpx(d)
 
-        # if command in ['tol','bbdept']:
-        #     return SQLCodes.tol(d)
+        if command == 'febmission':
+            return SQLCodes.febmission(access)
         
         if command.startswith('approve'):
             a,userUID,telID,i = command.split('#')
@@ -335,8 +337,6 @@ def bot_responses(id,tname,input_text):
                 return SQLCodes.bbtdeptold()
             if command == 'bbtmission':
                 return SQLCodes.bbtmission()
-            if command == 'febmission':
-                return SQLCodes.febmission()
             # if command == 'bbtdept':
             #     return SQLCodes.bbtdept(d,bb_sid)
             

@@ -1122,7 +1122,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False):
     bbttype,query = bbtvalues[i]
     
     codeybbtstatusmembers = 'CodeyBBTStatusMembers2' if v2 else 'CodeyBBTStatusMembers'
-    d_filt = '%' if v2 else d
+    d_filt = '%' if v2 and d == 'D[0-9]%' else d
     fe_col = ', FE' if v2 else ''
     fe_sum = ', SUM(FE)FE' if v2 else ''
     
@@ -4568,10 +4568,11 @@ def pickfe(g, d, access):
 
 
 
-def febmission():
+def febmission(access):
     
+    d = '%' if access in ('All','IT') else access.capitalize().replace('d','D')
     conn = odbc.connect(conn_str)
-    q = f"SELECT Dept, Total, TGW, Member, \"0 P\", \"1 P+\", \"1 FE+\" FROM FebCtMission"
+    q = f"FebCtMission '{d}'"
     print(q)
     dq = pd.read_sql(q, conn)
     dq.columns = ['Dept','Total','TGW','Member','0 P','1 P+','1 FE+']
@@ -4590,18 +4591,90 @@ def febmission():
         dept = f'{dept}{dp}[{tt}|{tg}|{mm}|{np}|{pk}|{fe}]\n'
     dept = dept + '\n'
 
-    total = str()
-    tt  = ' '*(3-len(str(dq.loc[0,'Total'])))  + str(dq.loc[0,'Total'])
-    tg  = ' '*(2-len(str(dq.loc[0,'TGW'])))    + str(dq.loc[0,'TGW'])
-    mm  = ' '*(3-len(str(dq.loc[0,'Member']))) + str(dq.loc[0,'Member'])
-    np  = ' '*(3-len(str(dq.loc[0,'0 P'])))    + str(dq.loc[0,'0 P'])
-    pk  = ' '*(3-len(str(dq.loc[0,'1 P+'])))   + str(dq.loc[0,'1 P+'])
-    fe  = ' '*(3-len(str(dq.loc[0,'1 FE+'])))  + str(dq.loc[0,'1 FE+'])
-    total = f'Total    [{tt}|{tg}|{mm}|{np}|{pk}|{fe}]'
+    totalrow = 'Total' if access in ('All','IT') else d
 
-    header = f"Dept     [Tot|TG|Mem|0 P|1P+|FE+]"
-    summary = f"{dept}{total}</pre>" # Not putting header yet, so re.sub does not affect the "0 P"
+    summary = f"{dept}</pre>" # Not putting header yet, so re.sub does not affect the "0 P"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
+    summary = re.sub(totalrow,f"\n{totalrow}",summary)
     summary = f"<b><u>Feb CT Mission</u></b>\n\n<pre>Dept     [Tot|TG|Mem|0 P|1P+|FE+]\n\n{summary}"
+    return summary
+
+
+
+
+
+
+def secondedu(g, d, sid, standard, ct, access):
+
+    views = {'bbt':'FnBbtSE','leaf':'FnLeafSE','all':'FnSE'}
+    view = views[standard]
+    
+    name = 'BBTCode' if access == 'Group' else 'BBTGrp'
+        
+    g = g if access == 'Group' else '%'
+    d = d.capitalize().replace('d','D')
+    grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth')
+    
+    conn = odbc.connect(conn_str)
+    bb_mem = f"SELECT Dept, Grp, {name}, X, P, FE, SE FROM {view}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID, {name}"
+    bb_group = f"SELECT Grp, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
+    bb_dept = f"SELECT Dept, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
+    bb_youth = f"SELECT SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+
+    print(bb_group)
+    
+    dm = pd.read_sql(bb_mem, conn)
+    dg = pd.read_sql(bb_group, conn)
+    dd = pd.read_sql(bb_dept, conn)
+    dy = pd.read_sql(bb_youth, conn)
+    dm.columns = ['Dept','Grp','BBT','X','P','FE','SE']
+    dg.columns = ['Grp','X','P','FE','SE']
+    dd.columns = ['Dept','X','P','FE','SE']
+    dy.columns = ['X','P','FE','SE']
+        
+    conn.cursor().close()
+    member = str()
+    if not d.endswith('D[0-9]%'):
+        for r in range(len(dm)):
+            bbt =   str(dm.loc[r,'BBT'][:5]) + ' '*(5-len(str(dm.loc[r,'BBT'][:5])))
+            x = ' '*(3-len(str(dm.loc[r,'X']))) + str(dm.loc[r,'X'])
+            p  = ' '*(3-len(str(dm.loc[r,'P']))) + str(dm.loc[r,'P'])
+            f  = ' '*(3-len(str(dm.loc[r,'FE']))) + str(dm.loc[r,'FE'])
+            s  = ' '*(3-len(str(dm.loc[r,'SE']))) + str(dm.loc[r,'SE'])
+            member = f'{member}{bbt}[{x}|{p}|{f}|{s}]\n'        
+        member = member + '\n'
+            
+    group = str() 
+    for r in range(len(dg)):
+        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        x = ' '*(3-len(str(dg.loc[r,'X']))) + str(dg.loc[r,'X'])
+        p  = ' '*(3-len(str(dg.loc[r,'P']))) + str(dg.loc[r,'P'])
+        f  = ' '*(3-len(str(dg.loc[r,'FE']))) + str(dg.loc[r,'FE'])
+        s  = ' '*(3-len(str(dg.loc[r,'SE']))) + str(dg.loc[r,'SE'])
+        group = f'{group}{grp}[{x}|{p}|{f}|{s}]\n'
+    group = group + '\n'
+            
+    dept = str()  
+    if access != 'Group':  
+        for r in range(len(dd)):
+            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            x = ' '*(3-len(str(dd.loc[r,'X']))) + str(dd.loc[r,'X'])
+            p  = ' '*(3-len(str(dd.loc[r,'P']))) + str(dd.loc[r,'P'])
+            f  = ' '*(3-len(str(dd.loc[r,'FE']))) + str(dd.loc[r,'FE'])
+            s  = ' '*(3-len(str(dd.loc[r,'SE']))) + str(dd.loc[r,'SE'])
+            dept = f'{dept}{dpt}[{x}|{p}|{f}|{s}]\n'
+        dept = dept + '\n'
+        
+    total = str()
+    if d == 'D[0-9]%':
+        x = ' '*(3-len(str(dy.loc[0,'X']))) + str(dy.loc[0,'X'])
+        p  = ' '*(3-len(str(dy.loc[0,'P']))) + str(dy.loc[0,'P'])
+        f  = ' '*(3-len(str(dy.loc[0,'FE']))) + str(dy.loc[0,'FE'])
+        s  = ' '*(3-len(str(dy.loc[0,'SE']))) + str(dy.loc[0,'SE'])
+        total = f'Total[{x}|{p}|{f}|{s}]'
+    
+    summary = f"<b><u>{grpdept} Second Edu</u></b>\n<i>Standard = {standard.capitalize()}\n{ct} CT</i>\n\n<pre>     [ X | P | FE| SE]\n\n{member}{group}{dept}{total}</pre>"
+    summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
+    summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary

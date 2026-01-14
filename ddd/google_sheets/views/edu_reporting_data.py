@@ -31,7 +31,7 @@ class GetEduWeeklySessionsViewSet(APIView):
         print(request)
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT Type, Date FROM Education_GetEducations")
+                cursor.execute("SELECT Type, Date FROM Education_GetEducations UNION SELECT Type, Date FROM Service_GetServices WHERE Type = 'Wed'")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

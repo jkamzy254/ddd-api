@@ -39,7 +39,7 @@ class GetHSPEduWeeklySessionsViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-class GetHSPEduWeeklySessionsViewSet(APIView):
+class GetHSPEduSessionScoresViewSet(APIView):
     def get(self, request):
         print(request)
         try:

@@ -52,6 +52,6 @@ urlpatterns = [
 	#Edu Reporting Data
 	path('getWeeklyAttendance/', erd.GetEduWeeklyAttendanceViewSet.as_view()),
 	path('getHSPWeeklySessions/', erd.GetHSPEduWeeklySessionsViewSet.as_view()),
-	path('getHSPSessionScores/', erd.GetHSPEduWeeklySessionsViewSet.as_view()),
+	path('getHSPSessionScores/', erd.GetHSPEduSessionScoresViewSet.as_view()),
  
 ]

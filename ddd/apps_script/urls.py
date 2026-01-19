@@ -43,7 +43,7 @@ urlpatterns = [
 	path('ctGetTransitionCTDets/', ca.CTGetTransitionCTDetsViewSet.as_view()),
 	path('ctUpdateTransitionCT/', ca.UpdateTransitionCTViewSet.as_view()),
  
-	#Edu Player
+	#HSP
 	path('eduGetMember/', ep.GetMemberViewSet.as_view()),
 	path('hspGetFolders/', ep.HSPGetFoldersViewSet.as_view()),  
 	path('hspGetLogs/', ep.HSPGetLogsViewSet.as_view()),  
@@ -56,13 +56,16 @@ urlpatterns = [
 	path('hspUpdateAttendance/', ep.HSPUpdateAttendanceViewSet.as_view()),  
 	path('hspExamGetGroup/', ep.HSPExamGroupViewSet.as_view()),   
 	path('hspExamGetMyGroup/', ep.HSPExamMyGroupViewSet.as_view()),  
+	path('hspExamUpdateScore/', ex.HSPExamUpdateScoreViewSet.as_view()),
 	path('hspSummary/', ep.HSPSummaryViewSet.as_view()),   
 	path('hspGetMaterial/', ep.HSPGetMaterialViewSet.as_view()),
 	path('hspFetchFile/', ep.HSPFetchFileViewSet.as_view()), 
 	path('hspUploadFile/', ep.HSPUploadFileViewSet.as_view()),     
 	path('hspGetSubmissionsInd/', ep.HSPGetSubmissionsIndViewSet.as_view()), 
 	path('hspGetSubmissionsAll/', ep.HSPGetSubmissionsAllViewSet.as_view()),  
-	path('hspUpdateComment/', ep.HSPUpdateCommentViewSet.as_view()),    
+	path('hspUpdateComment/', ep.HSPUpdateCommentViewSet.as_view()),   
+	path('hspGetExpIndSum/', ep.HSPPDropInExpIndSumViewSet.as_view()),   
+	path('hspGetExpDept/', ep.HSPPDropInExpDeptViewSet.as_view()),     
  
 	#Edu Dept BBT System
 	path('eduBBTGetMember/', eb.GetMemberViewSet.as_view()),

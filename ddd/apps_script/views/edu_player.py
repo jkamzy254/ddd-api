@@ -195,7 +195,7 @@ class HSPExamGroupViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute(f"""SELECT M.*, E.Score, E.Reason, E.ReportDate 
                                     FROM MembersGetGroupViewFunction('{uid}') M 
-                                    LEFT JOIN (Select * From NewEduExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
+                                    LEFT JOIN (Select * From HSPExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
                                """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
@@ -212,10 +212,30 @@ class HSPExamMyGroupViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute(f"""SELECT M.*, E.Score, E.Reason, E.ReportDate 
                                     FROM MembersGetMyGroupFunction('{uid}') M 
-                                    LEFT JOIN (Select * From NewEduExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
+                                    LEFT JOIN (Select * From HSPExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
                                """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class HSPExamUpdateScoreViewSet(APIView):
+    def post(self, request):
+        data = request.data
+        uid = data.get('uid')
+        score = data.get('score')
+        examid = data.get('examid')
+        reporter = data.get('reporter')
+        reason = data.get('reason').replace("'","''")
+
+        try:
+            with connection.cursor() as cursor:
+                
+                cursor.execute(f"EXEC spHSPExamReportScore @ExamID = {examid}, @UID = '{uid}', @Score = {score}, @Reason = '{reason}', @Reporter = '{reporter}'")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -226,7 +246,7 @@ class HSPSummaryViewSet(APIView):
         uid = request.GET.get('UID')
         try:
             with connection.cursor() as cursor:
-                cursor.execute('SELECT * FROM NewEduSummaryFunction(%s)', (uid,))
+                cursor.execute('SELECT * FROM HSPSummaryFunction(%s)', (uid,))
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
 
             return Response(result, status=status.HTTP_200_OK)
@@ -302,6 +322,32 @@ class HSPUpdateCommentViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute(f"EXEC spHSPVideoAddFeedback @FileID = '{fileid}', @Feedback = '{feedback}'")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class HSPPDropInExpDeptViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('UID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM dbo.HSPDropInExpDeptFunction() ORDER BY Division, OGID')
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class HSPPDropInExpIndSumViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('UID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM dbo.HSPDropInIndSumFunction()')
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:

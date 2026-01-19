@@ -56,7 +56,7 @@ urlpatterns = [
 	path('hspUpdateAttendance/', ep.HSPUpdateAttendanceViewSet.as_view()),  
 	path('hspExamGetGroup/', ep.HSPExamGroupViewSet.as_view()),   
 	path('hspExamGetMyGroup/', ep.HSPExamMyGroupViewSet.as_view()),  
-	path('hspExamUpdateScore/', ex.HSPExamUpdateScoreViewSet.as_view()),
+	path('hspExamUpdateScore/', ep.HSPExamUpdateScoreViewSet.as_view()),
 	path('hspSummary/', ep.HSPSummaryViewSet.as_view()),   
 	path('hspGetMaterial/', ep.HSPGetMaterialViewSet.as_view()),
 	path('hspFetchFile/', ep.HSPFetchFileViewSet.as_view()), 

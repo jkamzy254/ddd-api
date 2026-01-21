@@ -267,7 +267,8 @@ def todayfish(g):
         dp['Timestamp'] = dp['Timestamp'].dt.strftime('%a %d/%m, %I:%M %p')
         dp.replace(np.nan, '', regex = True, inplace = True)
         
-        pts = str(pd.read_sql(sql_pts, conn).iloc[0,0])
+        pts_result = pd.read_sql(sql_pts, conn).iloc[0,0]
+        pts = str(int(pts_result)) if pts_result is not None and not pd.isna(pts_result) else '0'
         conn.cursor().close()
 
         fish = str()
@@ -293,7 +294,8 @@ def weekfish(g):
         dp['Timestamp'] = dp['Timestamp'].dt.strftime('%a %d/%m, %I:%M %p')
         dp.replace(np.nan, '', regex = True, inplace = True)
         
-        pts = str(pd.read_sql(sql_pts, conn).iloc[0,0])
+        pts_result = pd.read_sql(sql_pts, conn).iloc[0,0]
+        pts = str(int(pts_result)) if pts_result is not None and not pd.isna(pts_result) else '0'
         conn.cursor().close()
         
         
@@ -321,7 +323,8 @@ def seasonpick(g):
         dp['Timestamp'] = dp['Timestamp'].dt.strftime('%a %d/%m')
         dp.replace(np.nan, '', regex = True, inplace = True)
         
-        pts = str(pd.read_sql(sql_pts, conn).iloc[0,0])
+        pts_result = pd.read_sql(sql_pts, conn).iloc[0,0]
+        pts = str(int(pts_result)) if pts_result is not None and not pd.isna(pts_result) else '0'
         conn.cursor().close()
 
         fish = str()
@@ -4605,6 +4608,8 @@ def febmission(access):
 
 
 
+
+
 def secondedu(g, d, sid, standard, ct, access):
 
     views = {'bbt':'FnBbtSE','leaf':'FnLeafSE','all':'FnSE'}
@@ -4678,3 +4683,63 @@ def secondedu(g, d, sid, standard, ct, access):
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
+
+
+
+
+def svcabs(gd,svctype,filt):
+    # THIS FUNCTION IS WRITTEN IN MARKDOWNV2, NOT HTML LIKE ALL OTHER FUNCTIONS.
+    # (TECHNICALLY MOST OF IT IS HTML EXCEPT <pre>Absentees AND <pre>Not_Reported, BUT MAIN.PY WILL CONVERT IT TO MARKDOWNV2)
+    # THE REASON FOR THIS IS THAT ONLY MARKDOWNV2 ALLOWS CUSTOM CODE BLOCK LABELS.
+    # TO SET PARSE MODE TO MARKDOWNV2, ENSURE RESPONSES.PY RETURNS STRING "MARKDOWNV2" IN FRONT OF THIS FUNCTION'S RETURN
+
+    gd = gd.capitalize()
+    svctype = svctype.capitalize()
+          
+    conn = odbc.connect(conn_str)   
+
+    query_abs = f"SELECT Dept, Grp, MemberCode FROM CodeyServiceAbsentees('{svctype}') WHERE Attendance = 'Abs' AND {filt} LIKE '{gd}'"
+    query_nr  = f"SELECT Dept, Grp, MemberCode FROM CodeyServiceAbsentees('{svctype}') WHERE Attendance = 'NoReport' AND {filt} LIKE '{gd}'"
+
+    print(query_abs)
+
+    dAB = pd.read_sql(query_abs, conn)                
+    dNR = pd.read_sql(query_nr, conn)
+
+    dAB.columns = ['Dept','Grp','MemberCode']
+    dNR.columns = ['Dept','Grp','MemberCode']
+
+    conn.cursor().close()
+    ab = "" # "<i><b><u>Absentees</u></b></i>\n"
+    nr = "" # "<i><b><u>Not Reported</u></b></i>\n"
+
+    if len(dAB) == 0:
+        ab = f"{ab}<i>No Members</i>"
+    else:
+        ab = f"{ab}<pre>Absentees\n"
+        for r in range(len(dAB)):
+            ab = f"{ab}{r+1}.{' '*(3-len(str(r+1)))}{dAB.loc[r,'Dept']} {dAB.loc[r,'Grp']} {dAB.loc[r,'MemberCode']}\n"
+        ab = f"{ab}</pre>"
+
+    if len(dNR) == 0:
+        nr = f"{nr}<i>No Members</i>"
+    else:
+        nr = f'{nr}<pre>NotReported\n'
+        for r in range(len(dNR)):
+            nr = f"{nr}{r+1}.{' '*(3-len(str(r+1)))}{dNR.loc[r,'Dept']} {dNR.loc[r,'Grp']} {dNR.loc[r,'MemberCode']}\n"
+        nr = f"{nr}</pre>"
+
+    result = f"*<b>{gd} {svctype} Service Absentee List</b>*\n\n{ab}\n{nr}"
+    result = re.sub(r'\.0',r'',result)
+    result = re.sub(r' \(\)',r'',result)
+    result = re.sub(r'\((\d+)\)', r'(G\1)', result)
+    result = re.sub(r'\[1\] ', r'', result)
+    return result
+
+
+def markdownv2test():
+#     message = """```hello
+# message
+# ```"""    
+    message = "**__hello__** ***hi*** ___hey___"
+    return message

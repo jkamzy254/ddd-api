@@ -34,7 +34,7 @@ class GetMemberViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-class EduVideoGetFoldersViewSet(APIView):
+class HSPGetFoldersViewSet(APIView):
     def get(self, request):
         uid = request.GET.get("UID")
         try:
@@ -48,7 +48,7 @@ class EduVideoGetFoldersViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-class EduVideoGetMaterialViewSet(APIView):
+class HSPGetMaterialViewSet(APIView):
     def get(self, request):
         uid = request.GET.get("UID")
         try:
@@ -62,7 +62,7 @@ class EduVideoGetMaterialViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class EduVideoGetLogsViewSet(APIView):
+class HSPGetLogsViewSet(APIView):
     def get(self, request):
         uid = request.GET.get("UID")
         try:
@@ -76,7 +76,7 @@ class EduVideoGetLogsViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-class EduVideoUpdateLogViewSet(APIView):
+class HSPUpdateLogViewSet(APIView):
     def post(self, request):
         rec = request.data
         try:
@@ -94,7 +94,7 @@ class EduVideoUpdateLogViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
-class EduVideoGetFavesViewSet(APIView):
+class HSPGetFavesViewSet(APIView):
     def get(self, request):
         uid = request.GET.get("UID")
         try:
@@ -108,7 +108,7 @@ class EduVideoGetFavesViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-class EduVideoUpdateFavesViewSet(APIView):
+class HSPUpdateFavesViewSet(APIView):
     def get(self, request):
         rec = request.data
         try:
@@ -125,7 +125,7 @@ class EduVideoUpdateFavesViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
          
         
-class EduVideoGetActiveEdus(APIView):
+class HSPGetActiveEdus(APIView):
     def get(self, request):
         try:
             uid = request.GET.get('UID')
@@ -140,7 +140,7 @@ class EduVideoGetActiveEdus(APIView):
         
         
         
-class EduVideoGetGroupAttendance(APIView):
+class HSPGetGroupAttendance(APIView):
     def get(self, request):
         rec = request.data
         try:
@@ -154,7 +154,7 @@ class EduVideoGetGroupAttendance(APIView):
             print(e)
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-class EduVideoGetMembers(APIView):
+class HSPGetMembers(APIView):
     def get(self, request):
         try:
             uid = request.GET.get('UID')
@@ -168,7 +168,7 @@ class EduVideoGetMembers(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-class EduVideoUpdateAttendanceViewSet(APIView):
+class HSPUpdateAttendanceViewSet(APIView):
     def post(self, request):
         rec = request.data
         try:
@@ -187,7 +187,7 @@ class EduVideoUpdateAttendanceViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-class EduVideosExamGroupViewSet(APIView):
+class HSPExamGroupViewSet(APIView):
     def get(self, request):
         uid = request.GET.get('uid')
         examid = request.GET.get('eid')
@@ -195,7 +195,7 @@ class EduVideosExamGroupViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute(f"""SELECT M.*, E.Score, E.Reason, E.ReportDate 
                                     FROM MembersGetGroupViewFunction('{uid}') M 
-                                    LEFT JOIN (Select * From NewEduExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
+                                    LEFT JOIN (Select * From HSPExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
                                """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
@@ -204,7 +204,7 @@ class EduVideosExamGroupViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-class EduVideosExamMyGroupViewSet(APIView):
+class HSPExamMyGroupViewSet(APIView):
     def get(self, request):
         uid = request.GET.get('uid')
         examid = request.GET.get('eid')
@@ -212,7 +212,7 @@ class EduVideosExamMyGroupViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute(f"""SELECT M.*, E.Score, E.Reason, E.ReportDate 
                                     FROM MembersGetMyGroupFunction('{uid}') M 
-                                    LEFT JOIN (Select * From NewEduExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
+                                    LEFT JOIN (Select * From HSPExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
                                """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
@@ -221,19 +221,39 @@ class EduVideosExamMyGroupViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-class EduVideosSummaryViewSet(APIView):
+class HSPExamUpdateScoreViewSet(APIView):
+    def post(self, request):
+        data = request.data
+        uid = data.get('uid')
+        score = data.get('score')
+        examid = data.get('examid')
+        reporter = data.get('reporter')
+        reason = data.get('reason').replace("'","''")
+
+        try:
+            with connection.cursor() as cursor:
+                
+                cursor.execute(f"EXEC spHSPExamReportScore @ExamID = {examid}, @UID = '{uid}', @Score = {score}, @Reason = '{reason}', @Reporter = '{reporter}'")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class HSPSummaryViewSet(APIView):
     def get(self, request):
         uid = request.GET.get('UID')
         try:
             with connection.cursor() as cursor:
-                cursor.execute('SELECT * FROM NewEduSummaryFunction(%s)', (uid,))
+                cursor.execute('SELECT * FROM HSPSummaryFunction(%s)', (uid,))
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-class EduVideoFetchFileViewSet(APIView):
+class HSPFetchFileViewSet(APIView):
     def get(self, request):
         id = request.GET.get("FileID")
         uid = request.GET.get("UID")
@@ -249,7 +269,7 @@ class EduVideoFetchFileViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-class EduVideoUploadFileViewSet(APIView):
+class HSPUploadFileViewSet(APIView):
     def post(self, request):
         rec = request.data
         try:
@@ -266,7 +286,7 @@ class EduVideoUploadFileViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-class EduVideosGetSubmissionsIndViewSet(APIView):
+class HSPGetSubmissionsIndViewSet(APIView):
     def get(self, request):
         uid = request.GET.get('UID')
         try:
@@ -279,7 +299,7 @@ class EduVideosGetSubmissionsIndViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-class EduVideosGetSubmissionsAllViewSet(APIView):
+class HSPGetSubmissionsAllViewSet(APIView):
     def get(self, request):
         uid = request.GET.get('UID')
         try:
@@ -292,7 +312,7 @@ class EduVideosGetSubmissionsAllViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-class EduVideoUpdateCommentViewSet(APIView):
+class HSPUpdateCommentViewSet(APIView):
     def post(self, request):
         rec = request.data
         try:
@@ -302,6 +322,32 @@ class EduVideoUpdateCommentViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute(f"EXEC spHSPVideoAddFeedback @FileID = '{fileid}', @Feedback = '{feedback}'")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class HSPPDropInExpDeptViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('UID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM dbo.HSPDropInExpDeptFunction() ORDER BY Division, OGID')
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class HSPPDropInExpIndSumViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('UID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM dbo.HSPDropInIndSumFunction()')
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:

@@ -64,7 +64,7 @@ urlpatterns = [
 	path('hspGetSubmissionsInd/', ep.HSPGetSubmissionsIndViewSet.as_view()), 
 	path('hspGetSubmissionsAll/', ep.HSPGetSubmissionsAllViewSet.as_view()),  
 	path('hspUpdateComment/', ep.HSPUpdateCommentViewSet.as_view()),   
-	path('hspGetExpIndSum/', ep.HSPPDropInExpIndSumViewSet.as_view()),   
+	path('hspGetExpIndSum/', ep.HSPDropInExpIndSumViewSet.as_view()),   
 	path('hspGetExpDept/', ep.HSPDropInExpDeptViewSet.as_view()),     
 	path('hspGetExpDept/', ep.HSPDropInExpDeptViewSet.as_view()),     
 	path('hspGetDeptSubmission/', ep.HSPDeptVidSubmissionViewSet.as_view()),    

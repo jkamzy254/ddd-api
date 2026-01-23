@@ -65,8 +65,12 @@ urlpatterns = [
 	path('hspGetSubmissionsAll/', ep.HSPGetSubmissionsAllViewSet.as_view()),  
 	path('hspUpdateComment/', ep.HSPUpdateCommentViewSet.as_view()),   
 	path('hspGetExpIndSum/', ep.HSPPDropInExpIndSumViewSet.as_view()),   
-	path('hspGetExpDept/', ep.HSPPDropInExpDeptViewSet.as_view()),     
- 
+	path('hspGetExpDept/', ep.HSPDropInExpDeptViewSet.as_view()),     
+	path('hspGetExpDept/', ep.HSPDropInExpDeptViewSet.as_view()),     
+	path('hspGetDeptVid/', ep.HSPDeptVidSubmissionViewSet.as_view()),    
+	path('hspGetExpDept/', ep.HSPGetEduWeeklySessionsViewSet.as_view()),   
+	path('hspGetSessionScores/', ep.HSPGetEduSessionScoresViewSet.as_view()),    
+     
 	#Edu Dept BBT System
 	path('eduBBTGetMember/', eb.GetMemberViewSet.as_view()),
 	path('eduBBTGetBBTData/', eb.GetBBTDataViewSet.as_view()),

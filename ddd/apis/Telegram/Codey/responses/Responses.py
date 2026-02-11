@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from .sqlcodes import SQLCodes
 
 def bot_responses(id,tname,input_text):
-
+    
     pm = 'HTML@@' # Default parse mode
 
     if input_text.lower().startswith('markdownv2'):
@@ -14,9 +14,14 @@ def bot_responses(id,tname,input_text):
         input_text = input_text[8:].strip() # The [8:] removes the 'markdown' part and .strip() removes any leading/trailing spaces
         print(f'Markdown detected. New input_text: {input_text}')
         pm = 'Markdown@@'
-
-    if input_text.lower() == 'test':
-        return pm + SQLCodes.markdownv2test()
+    
+    if id == 659275499: # Test functions - Returns string without connecting to database. Only works for ID 659275499.
+        if input_text == 'Approve: #A0052#659275499#':
+            return SQLCodes.approve_new_user_request('A0052','659275499')
+        if input_text.lower() == 'test1niheuigfyedfskj':
+            return 'Markdown@@' + SQLCodes.test1()
+        if input_text.lower() == 'test2dwuyidhcnekhdfs':
+            return 'Markdown@@' + SQLCodes.test2()
     
     if input_text.lower().startswith('register'):
             i,user,pw = input_text.split('.')
@@ -52,26 +57,27 @@ def bot_responses(id,tname,input_text):
         return '-'
 
     
-    if access in ['All','IT','MT']:
-        d = f'D[0-9]%' if access != 'MT' else '%'
-        g = '%' if access == 'MT' else g
-        if '//r' in user_message.lower():
-            try:
-                print('//r')
-                command,d = user_message.lower().split('//')
-                d = 'r1d[0-9]%' if d == 'r1' else d
-                d = 'r2d[0-9]%' if d == 'r2' else d
-                d = d.replace('r1','¹').replace('r2','²').replace('d','D')
-                access = d if access != 'MT' else 'MT'
-                print(f"command = {command}, d = {d}, access = {access}")
-            except ValueError:
-                    return 'Format error: Too many "/"s'
-        elif '//' in user_message:
+    if access in ['All','IT','MT','EDU']:
+        d = f'D[0-9]%' if access not in ('MT','EDU') else '%'
+        g = '%' if access in ('MT','EDU') else g
+        # if '//r' in user_message.lower():
+        #     try:
+        #         print('//r')
+        #         command,d = user_message.lower().split('//')
+        #         d = 'r1d[0-9]%' if d == 'r1' else d
+        #         d = 'r2d[0-9]%' if d == 'r2' else d
+        #         d = d.replace('r1','¹').replace('r2','²').replace('d','D')
+        #         access = d if access not in ('MT','EDU') else access
+        #         print(f"command = {command}, d = {d}, access = {access}")
+        #     except ValueError:
+        #             return 'Format error: Too many "/"s'
+        # elif '//' in user_message:
+        if '//' in user_message:
             try:
                 print('//')
                 command,d = user_message.split('//')
                 d = d.capitalize() if d.startswith('d') else d.replace('sft','SFT').replace('inner','Inner')
-                access = d if access != 'MT' else 'MT'
+                access = d if access not in ('MT','EDU') else access
                 print(f"command = {command}, d = {d}, access = {access}")
             except ValueError:
                     return 'Format error: Too many "/"s'
@@ -113,18 +119,18 @@ def bot_responses(id,tname,input_text):
         d = access if access != 'Dept' else d
         allowed_groups = SQLCodes.deptgroup(d)
         if '/' in user_message:
-            if access[0] in ['¹','²'] and '/g' in user_message.lower():
-                print('access[0] in [¹,²]')
-                try:
-                    command,g = user_message.split('/')
-                    g = f'{access[0]}{g.capitalize()}'
-                except ValueError:
-                    return 'Format error: Too many "/"s'
-            else:
-                try:
-                    command,g = user_message.split('/')
-                except ValueError:
-                    return 'Format error: Too many "/"s'
+            # if access[0] in ['¹','²'] and '/g' in user_message.lower():
+            #     print('access[0] in [¹,²]')
+            #     try:
+            #         command,g = user_message.split('/')
+            #         g = f'{access[0]}{g.capitalize()}'
+            #     except ValueError:
+            #         return 'Format error: Too many "/"s'
+            # else:
+            try:
+                command,g = user_message.split('/')
+            except ValueError:
+                return 'Format error: Too many "/"s'
             d,fmp_sid,fmp_ss,bb_sid,bb_ss = SQLCodes.groupinfo(g).split('/')
             access = 'Group' if access != 'MT' else 'MT' # If specific group is specified, their access for the current function reduced to Group-level
             if g.lower() not in allowed_groups and user_message.lower()[:3] != 'ev/':
@@ -180,109 +186,109 @@ def bot_responses(id,tname,input_text):
         if 'phonenumber' in str(user_message):
             return "Sorry, 'phonenumber' is not a recognised command. However, to check if someone has been fished before, you may enter their phone number starting with '04' e.g. <pre>0412345678</pre> :)"
         if user_message.startswith('04'):
-            return pm + SQLCodes.duplicate_check(user_message)
+            return SQLCodes.duplicate_check(user_message)
         
         if command == 'commands':
-            return pm + SQLCodes.commands(access)
+            return SQLCodes.commands(access)
         
         if command in ('tfmp','youtht','deptt','gyjnt','oevt','tgwt','membert','oevt','ievt','edut','svt'):
             return f"Sorry, <i>{command}</i> is not a valid command. Try replacing the 'T' with one of: 'today', 'yesterday', 'week', 'last week' or 'season'.\nFor example: <pre>" + command.replace('tfmp','todayfmp').replace('youtht','youthtoday').replace('deptt','depttoday').replace('gyjnt','gyjntoday').replace('tgwt','tgwtoday').replace('membert','membertoday').replace('oevt','oevtoday').replace('ievt','ievtoday').replace('edut','edutoday').replace('svt','svtoday') + "</pre> :)"
             
         if command in ['todayfmp','yesterdayfmp','weekfmp','lastweekfmp','seasonfmp']:
             timerange = command[:-3]
-            return pm + SQLCodes.memberfmp(timerange,g,fmp_sid,fmp_ss,access)
+            return SQLCodes.memberfmp(timerange,g,fmp_sid,fmp_ss,access)
             
         if command == 'fmstatus':
-            return pm + SQLCodes.fmstatus(d,g,'2020-01-01',access) # date is a dummy variable here
+            return SQLCodes.fmstatus(d,g,'2020-01-01',access) # date is a dummy variable here
             
         if command == 'bblist':
-            return pm + SQLCodes.bblist(d,g,bb_sid,access)
+            return SQLCodes.bblist(d,g,bb_sid,access)
         
         
         if command == 'bblists':
-            return pm + SQLCodes.bblists(d,g,phys_sid,on_sid,access)
+            return SQLCodes.bblists(d,g,phys_sid,on_sid,access)
         
         if command == 'pickfe':
-            return pm + SQLCodes.pickfe(g, d, access)
+            return SQLCodes.pickfe(g, d, access)
         
         if command in ('bbstatus','bbfull'):
-                return pm + SQLCodes.bbstatus(g, d, bb_sid, access)
+                return SQLCodes.bbstatus(g, d, bb_sid, access)
         
         if command in ('bbstatus2','bbfull2'):
-                return pm + SQLCodes.bbstatus(g, d, bb_sid, access, True)
+                return SQLCodes.bbstatus(g, d, bb_sid, access, True)
         
         if command.startswith('bbstatusdate'):
             dt = command.removeprefix('bbstatusdate=')
-            return pm + SQLCodes.bbstatusdate(g, d, ssn, dt, access)
+            return SQLCodes.bbstatusdate(g, d, ssn, dt, access)
         
         if command == 'bbactive':
-            return pm + SQLCodes.bbactive(g, d, bb_sid, access)
+            return SQLCodes.bbactive(g, d, bb_sid, access)
         
         if command == 'bbactive2':
-            return pm + SQLCodes.bbactive2(g, d, bb_sid, access)
+            return SQLCodes.bbactive2(g, d, bb_sid, access)
             
         if command == 'bbinactive':
-                return pm + SQLCodes.bbinactive(g, d, bb_sid, access)
+                return SQLCodes.bbinactive(g, d, bb_sid, access)
             
         if command == 'newbblist':
-            return pm + SQLCodes.newbblist(d,g,bb_sid,access)
+            return SQLCodes.newbblist(d,g,bb_sid,access)
         
         if command == 'newbbstatus':
-                return pm + SQLCodes.newbbstatus(g, d, bb_sid, access)
+                return SQLCodes.newbbstatus(g, d, bb_sid, access)
             
         if (command.startswith('newbtm') or command.startswith('newbbt') or command.startswith('newgyjnbbt')) and command.endswith('list'):
             q = command.removesuffix('list')
-            return pm + SQLCodes.newbbtlist(q,d,g,bb_sid,access)
+            return SQLCodes.newbbtlist(q,d,g,bb_sid,access)
             
         if (command.startswith('newbtm') or command.startswith('newbbt') or command.startswith('newgyjnbbt')) and command.endswith('status'):
             q,i = command.split('status')
-            return pm + SQLCodes.newbbtstatus(q,g,d,bb_sid,access)
+            return SQLCodes.newbbtstatus(q,g,d,bb_sid,access)
             
         
         if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('list'):
             q = command.removesuffix('list')
-            return pm + SQLCodes.bbtlist(q,d,g,bb_sid,access)
+            return SQLCodes.bbtlist(q,d,g,bb_sid,access)
             
         if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')):
             if command.endswith('status'):
                 q = command.removesuffix('status')
-                return pm + SQLCodes.bbtstatus(q,g,d,bb_sid,access,False) # returns normal bbtstatus
+                return SQLCodes.bbtstatus(q,g,d,bb_sid,access,False) # returns normal bbtstatus
             if command.endswith('status2'):
                 q = command.removesuffix('status2')
-                return pm + SQLCodes.bbtstatus(q,g,d,bb_sid,access,False,True) # returns normal bbtstatus2
+                return SQLCodes.bbtstatus(q,g,d,bb_sid,access,False,True) # returns normal bbtstatus2
             if command.endswith('dept'):
                 q = command.removesuffix('dept')
-                return pm + SQLCodes.bbtstatus(q,g,d,bb_sid,access,True) # returns bbtdept (bbtstatus but without group list)
+                return SQLCodes.bbtstatus(q,g,d,bb_sid,access,True) # returns bbtdept (bbtstatus but without group list)
             if command.endswith('dept2'):
                 q = command.removesuffix('dept2')
-                return pm + SQLCodes.bbtstatus(q,g,d,bb_sid,access,True,True) # returns bbtdept2 (bbtstatus2 but without group list)
+                return SQLCodes.bbtstatus(q,g,d,bb_sid,access,True,True) # returns bbtdept2 (bbtstatus2 but without group list)
             
         if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
             q = command.split('active')
-            return pm + SQLCodes.bbtactive(q, g, d, r, access)
+            return SQLCodes.bbtactive(q, g, d, r, access)
         
         if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('inactive'):
             q,i = command.split('inactive')
-            return pm + SQLCodes.bbtinactive(q, g, d, r, access)
+            return SQLCodes.bbtinactive(q, g, d, r, access)
         
         if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('status'):
             q,i = command.split('status') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
             i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
-            return pm + SQLCodes.deptbbtstatus(q, d, r, access)
+            return SQLCodes.deptbbtstatus(q, d, r, access)
         
         if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('active') and not command.endswith('inactive'):
             if d == 'D[0-9]%' and '/' in user_message:
                 i,d = user_message.split('/')
             q,i = command.split('active') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
             i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
-            return pm + SQLCodes.deptbbtactive(q, d, r, access)
+            return SQLCodes.deptbbtactive(q, d, r, access)
         
         if (command.startswith('deptbtm') or command.startswith('deptbbt') or command.startswith('deptgyjnbbt')) and command.endswith('inactive'):
             if d == 'D[0-9]%' and '/' in user_message:
                 i,d = user_message.split('/')
             q,i = command.split('inactive') # removing 'inactive', leaving 'deptbbt' CAN ALSO USE .removesuffix('suffix')!!!!
             i,q = q.split('dept') # removing 'dept', leaving 'bbt' (or 'btm15', 'gyjnbbt' etc.) CAN ALSO USE .removesuffix('suffix')!!!!
-            return pm + SQLCodes.deptbbtinactive(q, d, r, access)
+            return SQLCodes.deptbbtinactive(q, d, r, access)
         
         if command.startswith('secondedu'):
             standard = command.removeprefix('secondedu')
@@ -290,18 +296,22 @@ def bot_responses(id,tname,input_text):
             if standard not in ['bbt','leaf','all','']:
                 return "must select secondedu (bbt standard), secondeduleaf (leaf standard) or secondeduall (leaf+bbt standard)"
             ct = {'%':'Physical + Online',phys_sid:'Physical',on_sid:'Online'}[bb_sid]
-            return pm + SQLCodes.secondedu(g,d,bb_sid,standard,ct,access)
+            return SQLCodes.secondedu(g,d,bb_sid,standard,ct,access)
         
         if command == 'classtoday':
-            return pm + SQLCodes.classes(g,d,access,'today')
+            return SQLCodes.classes(g,d,access,'today')
         if command == 'classweek':
-            return pm + SQLCodes.classes(g,d,access,'week')
+            return SQLCodes.classes(g,d,access,'week')
         
         
         
         if command not in ('edutoday','eduyesterday','edulastweek','eduweek','eduseason') and command.startswith('edu'):
             day = command.removeprefix('edu')
-            return pm + SQLCodes.edu(day, g, d, access) if day != 'rev' else pm + SQLCodes.edurev(g, d, access)
+            return SQLCodes.edu(day, g, d, access) if day != 'rev' else SQLCodes.edurev(g, d, access)
+        
+
+        if command == 'hspreport':
+            return SQLCodes.hspreport(g, d, access)
     
     
     
@@ -316,92 +326,100 @@ def bot_responses(id,tname,input_text):
                 # If the rest of the string is a Y value, return X and Y
                 if timerange in ['today', 'yesterday', 'week', 'lastweek', 'season']:
                     if task in ['youth','dept','tgw','member']:
-                        return pm + SQLCodes.deptfmp(task,timerange,d,fmp_sid,fmp_ss,access)
+                        return SQLCodes.deptfmp(task,timerange,d,fmp_sid,fmp_ss,access)
                     if task in ['gyjn','oev','iev','edu','sv']:
-                        return pm + SQLCodes.taskfmp(task,timerange,d,fmp_sid,fmp_ss,access)    
+                        return SQLCodes.taskfmp(task,timerange,d,fmp_sid,fmp_ss,access)    
                 
         if command in ('youthfm','deptfm'):
-            return pm + SQLCodes.youthfm(d)
+            return SQLCodes.youthfm(d)
         if command == 'oldbbactive':
-            return pm + SQLCodes.oldbbactive(d)
+            return SQLCodes.oldbbactive(d)
         if command == 'deptbbactive':
-            return pm + SQLCodes.deptbbactive(d, bb_sid, access)
+            return SQLCodes.deptbbactive(d, bb_sid, access)
         if command == 'deptbbinactive':
-            return pm + SQLCodes.deptbbinactive(d, bb_sid, access)
+            return SQLCodes.deptbbinactive(d, bb_sid, access)
         
         if command in ['youthmxpx','deptmxpx']:
-            return pm + SQLCodes.youthmxpx(d)
+            return SQLCodes.youthmxpx(d)
 
         if command == 'febmission':
-            return pm + SQLCodes.febmission(access)
+            return SQLCodes.febmission(access)
         
         if command.startswith('approve'):
             a,userUID,telID,i = command.split('#')
-            return pm + SQLCodes.approve_new_user_request(userUID,telID)
+            return SQLCodes.approve_new_user_request(userUID,telID)
         
         if access in ['¹','²','All','IT']:
             if command == 'deptphone':
-                return pm + SQLCodes.deptphone(d)
+                return SQLCodes.deptphone(d)
 
             if command == 'bbtmission':
-                return pm + SQLCodes.bbtmission()
+                return SQLCodes.bbtmission()
             # if command == 'bbtdept':
-            #     return pm + SQLCodes.bbtdept(d,bb_sid)
+            #     return SQLCodes.bbtdept(d,bb_sid)
             
             # if access in ('All','IT'):
             #     if command == 'bbtbtmstatus':
-            #         return pm + SQLCodes.bbtbtmstatus()
+            #         return SQLCodes.bbtbtmstatus()
     
     if original_access in ('MT','IT'):
-        if command.endswith('absent'):
+        if command.endswith('svcabsent'):
             if '/' not in user_message:
-                return "To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. wedabsent//D3</i>, or group with <code>/G#</code> <i>e.g. sunabsent/G10</i>"
+                return "To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. wedsvcabsent//D3</i>, or group with <code>/G#</code> <i>e.g. sunabsent/G10</i>"
             pm = 'MarkdownV2@@' # This function should always use MarkdownV2 as it contains custom code block labels
             filt, gd = ('Dept', d) if '//' in user_message else ('Grp', g)
-            svctype = command.removesuffix('absent')
-            return pm + SQLCodes.svcabs(gd,svctype,filt)
+            svctype = command.removesuffix('svcabsent')
+            return f'{pm}{SQLCodes.svcabs(gd,svctype,filt)}'
         
+    if original_access in ('EDU','IT'):
+        if command.endswith('eduabsent'):
+            if '/' not in user_message:
+                return "To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. moneduabsent//D3</i>, or group with <code>/G#</code> <i>e.g. moneduabsent/G10</i>"
+            pm = 'MarkdownV2@@' # This function should always use MarkdownV2 as it contains custom code block labels
+            filt, gd = ('Dept', d) if '//' in user_message else ('Grp', g)
+            edutype = command.removesuffix('eduabsent')
+            return f'{pm}{SQLCodes.eduabs(gd,edutype,filt)}'
 
     if original_access == 'IT':
         
         # Group Functions
         if command == 'todayfish':
-            return pm + SQLCodes.todayfish(g)
+            return SQLCodes.todayfish(g)
         if command == 'weekfish':
-            return pm + SQLCodes.weekfish(g)
+            return SQLCodes.weekfish(g)
         if command == 'seasonpick':
-            return pm + SQLCodes.seasonpick(g) 
+            return SQLCodes.seasonpick(g) 
         if command == 'seasonfe':
-            return pm + SQLCodes.seasonfe(g)
+            return SQLCodes.seasonfe(g)
         if command == 'todaympfe':
-            return pm + SQLCodes.todaympfe(g)
+            return SQLCodes.todaympfe(g)
         if command == 'weekmpfe':
-            return pm + SQLCodes.weekmpfe(g)
+            return SQLCodes.weekmpfe(g)
         if command == 'mxlist':
-            return pm + SQLCodes.mxlist(g)
+            return SQLCodes.mxlist(g)
         if command == 'pxlist':
-            return pm + SQLCodes.pxlist(g)
+            return SQLCodes.pxlist(g)
         if command == 'bbpick':
-            return pm + SQLCodes.bbpick(g)    
+            return SQLCodes.bbpick(g)    
         if command == 'bbfe':
-            return pm + SQLCodes.bbfe(g)
+            return SQLCodes.bbfe(g)
         if command == 'fmlist':
-            return pm + SQLCodes.fmlist(g)
+            return SQLCodes.fmlist(g)
 
         if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('listold'):
             q,i = command.split('listold')
-            return pm + SQLCodes.bbtlistold(q,d)
+            return SQLCodes.bbtlistold(q,d)
         
         if command == 'ev':
             i,id = user_message.split('/')
             if access == 'IT':
-                return pm + SQLCodes.ev(id)
+                return SQLCodes.ev(id)
             if access in ['D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT']:
                 idlist = SQLCodes.idlist('dept',d)
             if access == 'Group':
                 idlist = SQLCodes.idlist('group',g)
             if int(id) in idlist:
-                return pm + SQLCodes.ev(id)
+                return SQLCodes.ev(id)
             else:
                 return 'Sorry, you cannot access this member ID'
 

@@ -328,7 +328,7 @@ class HSPUpdateCommentViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-class HSPPDropInExpDeptViewSet(APIView):
+class HSPDropInExpDeptViewSet(APIView):
     def get(self, request):
         uid = request.GET.get('UID')
         try:
@@ -341,7 +341,7 @@ class HSPPDropInExpDeptViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-class HSPPDropInExpIndSumViewSet(APIView):
+class HSPDropInExpIndSumViewSet(APIView):
     def get(self, request):
         uid = request.GET.get('UID')
         try:
@@ -352,3 +352,45 @@ class HSPPDropInExpIndSumViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class HSPDeptVidSubmissionViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('UID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM [HSPDeptSubmissionSumFunction]() ORDER BY Division, Pct DESC, OGID')
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class HSPGetEduWeeklySessionsViewSet(APIView):
+    def get(self, request):
+        print(request)
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM [dbo].[HSPCurrentSessionsFunction]() ORDER BY DATE")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class HSPGetEduSessionScoresViewSet(APIView):
+    def get(self, request):
+        print(request)
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM dbo.HSPCurrentScoresFunction() ORDER BY WedScore DESC, GID")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+     

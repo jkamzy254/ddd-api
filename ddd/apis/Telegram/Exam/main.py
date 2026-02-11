@@ -2,7 +2,7 @@ from dotenv import load_dotenv, find_dotenv
 import os
 load_dotenv(find_dotenv())
 
-from .responses import general as g, scheduled as s
+from .responses import general as g, scheduled as s, hsp as h
 import warnings
 import logging
 
@@ -80,6 +80,51 @@ async def get_excel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             parse_mode='HTML'
         )
 
+async def get_hsp_excel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    file_path, exam_title, file_name, score_txt, chart_path = await h.get_scores('Yes')
+
+    # Send the exam title and progress message last
+    await update.message.reply_text(
+        f"<b>{exam_title}</b>\nPreparing your report...",
+        parse_mode='HTML'
+    )
+
+    # Send confirmation message
+    score_parts = score_txt.split('\n\n')
+
+    for part in score_parts:
+        part = part.strip()
+        if not part:
+            continue
+
+        # If a chunk is too long, split further by character length
+        while len(part) > 4000:
+            await update.message.reply_text(part[:4000], parse_mode='HTML')
+            part = part[4000:]
+
+        await update.message.reply_text(part, parse_mode='HTML')
+    # Send confirmation message
+    await update.message.reply_text(
+        f"<b>{exam_title}</b>\nPreparing your report...",
+        parse_mode='HTML'
+    )
+    
+    
+    await update.message.reply_photo(
+        photo=open(chart_path, "rb"),
+        caption=f"<b>{exam_title}</b>\n📊 Exam Summary by Department",
+        parse_mode='HTML'
+    )
+
+    # Send the Excel file with custom download name
+    with open(file_path, "rb") as f:
+        await update.message.reply_document(
+            document=f,
+            filename=file_name,  # 👈 this sets the visible filename
+            caption=f"<b>{exam_title}</b>",
+            parse_mode='HTML'
+        )
+
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     warnings.filterwarnings('ignore')
@@ -100,6 +145,7 @@ def main():
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("getexcel", get_excel))
+    application.add_handler(CommandHandler("gethspexcel", get_hsp_excel))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     # application.add_handler(CommandHandler("help", help_command))
 

@@ -70,7 +70,7 @@ async def handle_message(update, context):
             await update.message.reply_text(response, parse_mode='HTML') 
     elif len(response) <= 49152:
         print('Splitting message into chunks of 4096 characters due to Telegram limit')
-        response = response.replace('<b>','').replace('</b>','').replace('<i>','').replace('</i>','').replace('<u>','').replace('</u>','').replace('<pre>','').replace('</pre>','')[4:]
+        response = response.replace('<b>','').replace('</b>','').replace('<i>','').replace('</i>','').replace('<u>','').replace('</u>','').replace('<pre>','').replace('</pre>','')
         await update.message.reply_text(f'<pre>{response[:4096]}</pre>', parse_mode='HTML')
         await update.message.reply_text(f'<pre>{response[4096:8192]}</pre>', parse_mode='HTML')
         await update.message.reply_text(f'<pre>{response[8192:12288]}</pre>', parse_mode='HTML')

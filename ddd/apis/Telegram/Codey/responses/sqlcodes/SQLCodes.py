@@ -4559,13 +4559,13 @@ def pickfe(g, d, access):
     return summary
 
 
-# def test1():
+def test1():
 
-#     return "<b>[D1 Va](https://drive.google.com/drive/folders/1xZ_VjGcOPp-xZmRtnlXpfBoQTMuE7sB4?usp=drive_link)\n[G1 Janel - Akot 🌟](https://docs.google.com/spreadsheets/d/1BqLj6p_Tw220zDs3w6s7JlVnZSiTFsWO3NLvnrk4W5M/edit?usp=drive_link)\n[G2 AJ - Natasha](https://docs.google.com/spreadsheets/d/1-Vw04M9YWeaEeLYN5fEKhiwj_Tl77jkjyq47HlMXAPs/edit?usp=drive_link)\n[G3 Karen - Mycah](https://docs.google.com/spreadsheets/d/1qXpYHxMUauxvLB1wCF1npw4Ol_1f4J7O5TwGc-R73SI/edit?usp=drive_link)\n[G4 Rohit - Ku Mo ❤️](https://docs.google.com/spreadsheets/d/1VTTUwilcpUUUuEsnbS1gaYMlY6tsxkyGogEoXcwmKq8/edit?usp=drive_link)\n\n[D2 Lun](https://drive.google.com/drive/folders/1dv0hvgh955L3AG0Bj9YTo8X76aTAhkHT?usp=drive_link)\n[G5 Wei Kin - Kiana 🌟](https://docs.google.com/spreadsheets/d/1HfzGRBESpDARQdVltQM5DtWA0EnSh51FnNxuRQ36iKc/edit?usp=drive_link)\n[G6 Priscilla - Vanessa ❤️](https://docs.google.com/spreadsheets/d/1l0zuKDcvGPMoaoiLbmwMjqyu-i0oI2LhNs59TOaamQA/edit?usp=drive_link)\n[G7 Kupa - Iokapeta ❤️](https://docs.google.com/spreadsheets/d/1l8qDSt-YDqmShvGwq91_RwNcguLOj9kkaqPRq6TF8dc/edit?usp=drive_link)\n[G8 Donia - Doreen](https://docs.google.com/spreadsheets/d/1zGLftSi4ldy1FzQ67ofeZdVE0O-iE9QGK4YGhO4Ciow/edit?usp=drive_link)\n\n[D3 King](https://drive.google.com/drive/folders/12Lx7EHVoUuciFeSm6MdT6qLx5hAuPgMP?usp=drive_link)\n[G9 Trucilla - Jhanice ❤️](https://docs.google.com/spreadsheets/d/13BkTDU5q0vS-_EUbet0H2ZxFFWQ02wvtkW0XUQEHb1Q/edit?usp=drive_link)\n[G10 Mary - Nic ❤️](https://docs.google.com/spreadsheets/d/1gJrP6ap3Dl0Lo9fK_72fvXhDCvxEHf_vMtds0HCco5g/edit?usp=drive_link)\n[G11 Aman - Yazmin ❤️](https://docs.google.com/spreadsheets/d/1gr1LMXtbshQ3MH7-mJH4ZLuKLgHvP2OJaZ38YRNDOpQ/edit?usp=drive_link)\n[G12 Alliza - Rachel 🌟](https://docs.google.com/spreadsheets/d/19bOGWcnArmwQUtfHEMb87dHnV-rnQ_LNNjtvbZlb2uE/edit?usp=drive_link)\n\n[D4 Nicola](https://drive.google.com/drive/folders/1JY318Dc_bWLj1jQwRQmsdF92AW_WqvUs?usp=drive_link)\n[G13 Rejie - Malu ❤️](https://docs.google.com/spreadsheets/d/1kJKvK5RT_S-A2n4GHBVu5_Ne_BC6Y6QjgpCwQtdxdJ4/edit?usp=drive_link)\n[G14 Lamy - Riz ❤️](https://docs.google.com/spreadsheets/d/1wceJg6hoghi2fwKRZXyQapcdp9YJ7rUD0ktJYU8y4Hg/edit?usp=drive_link)\n[G15 Mayom - Bianca 🌟](https://docs.google.com/spreadsheets/d/1gdv8_WSbu1i0P4Ffsp6QlV3HsSaCeXbMYOGQx3VSP3Q/edit?usp=drive_link)\n[G16 Cheyanne - Rachel ❤️](https://docs.google.com/spreadsheets/d/1jtDpQHdX2iOmGiv8g6KxIg4t1vsrOT5Y_pZt3ihiuDI/edit?usp=drive_link)\n\n[D5 Chelley](https://drive.google.com/drive/folders/1JY318Dc_bWLj1jQwRQmsdF92AW_WqvUs?usp=drive_link)\n[G17 Sosna - Ara ❤️](https://docs.google.com/spreadsheets/d/1qL5RbKq4X3UepKg9Tec9PsfG5l_E2YB6ICFxb9WaUGw/edit?usp=drive_link)\n[G18 Pamela - Tina ❤️](https://docs.google.com/spreadsheets/d/1fPWL4Fl7Z9iBDPFghlpogMAASK-8vCKi7zsB_zkhhTo/edit?usp=drive_link)\n[G19 Victoria - Josh ❤️](https://docs.google.com/spreadsheets/d/1TBwsSCREBGqGourVm_JadMGnufB_aPaMtMJvdxvSe54/edit?usp=drive_link)\n[G20 Matt K - Gabriel 🌟❤️](https://docs.google.com/spreadsheets/d/1hy9Kpf-k0nQAuHRrGz8TMGsSQXS1AmRcknaWQRDvPGk/edit?usp=drive_link)</b>"
+    return "[D1 Va](https://drive.google.com/drive/folders/1xZ_VjGcOPp-xZmRtnlXpfBoQTMuE7sB4?usp=drive_link)\n[G1 Janel - Akot 🌟](https://docs.google.com/spreadsheets/d/1BqLj6p_Tw220zDs3w6s7JlVnZSiTFsWO3NLvnrk4W5M/edit?usp=drive_link)\n[G2 AJ - Natasha](https://docs.google.com/spreadsheets/d/1-Vw04M9YWeaEeLYN5fEKhiwj_Tl77jkjyq47HlMXAPs/edit?usp=drive_link)\n[G3 Karen - Mycah](https://docs.google.com/spreadsheets/d/1qXpYHxMUauxvLB1wCF1npw4Ol_1f4J7O5TwGc-R73SI/edit?usp=drive_link)\n[G4 Rohit - Ku Mo ❤️](https://docs.google.com/spreadsheets/d/1VTTUwilcpUUUuEsnbS1gaYMlY6tsxkyGogEoXcwmKq8/edit?usp=drive_link)\n\n[D2 Lun](https://drive.google.com/drive/folders/1dv0hvgh955L3AG0Bj9YTo8X76aTAhkHT?usp=drive_link)\n[G5 Wei Kin - Kiana 🌟](https://docs.google.com/spreadsheets/d/1HfzGRBESpDARQdVltQM5DtWA0EnSh51FnNxuRQ36iKc/edit?usp=drive_link)\n[G6 Priscilla - Vanessa ❤️](https://docs.google.com/spreadsheets/d/1l0zuKDcvGPMoaoiLbmwMjqyu-i0oI2LhNs59TOaamQA/edit?usp=drive_link)\n[G7 Kupa - Iokapeta ❤️](https://docs.google.com/spreadsheets/d/1l8qDSt-YDqmShvGwq91_RwNcguLOj9kkaqPRq6TF8dc/edit?usp=drive_link)\n[G8 Donia - Doreen](https://docs.google.com/spreadsheets/d/1zGLftSi4ldy1FzQ67ofeZdVE0O-iE9QGK4YGhO4Ciow/edit?usp=drive_link)\n\n[D3 King](https://drive.google.com/drive/folders/12Lx7EHVoUuciFeSm6MdT6qLx5hAuPgMP?usp=drive_link)\n[G9 Trucilla - Jhanice ❤️](https://docs.google.com/spreadsheets/d/13BkTDU5q0vS-_EUbet0H2ZxFFWQ02wvtkW0XUQEHb1Q/edit?usp=drive_link)\n[G10 Mary - Nic ❤️](https://docs.google.com/spreadsheets/d/1gJrP6ap3Dl0Lo9fK_72fvXhDCvxEHf_vMtds0HCco5g/edit?usp=drive_link)\n[G11 Aman - Yazmin ❤️](https://docs.google.com/spreadsheets/d/1gr1LMXtbshQ3MH7-mJH4ZLuKLgHvP2OJaZ38YRNDOpQ/edit?usp=drive_link)\n[G12 Alliza - Rachel 🌟](https://docs.google.com/spreadsheets/d/19bOGWcnArmwQUtfHEMb87dHnV-rnQ_LNNjtvbZlb2uE/edit?usp=drive_link)\n\n[D4 Nicola](https://drive.google.com/drive/folders/1JY318Dc_bWLj1jQwRQmsdF92AW_WqvUs?usp=drive_link)\n[G13 Rejie - Malu ❤️](https://docs.google.com/spreadsheets/d/1kJKvK5RT_S-A2n4GHBVu5_Ne_BC6Y6QjgpCwQtdxdJ4/edit?usp=drive_link)\n[G14 Lamy - Riz ❤️](https://docs.google.com/spreadsheets/d/1wceJg6hoghi2fwKRZXyQapcdp9YJ7rUD0ktJYU8y4Hg/edit?usp=drive_link)\n[G15 Mayom - Bianca 🌟](https://docs.google.com/spreadsheets/d/1gdv8_WSbu1i0P4Ffsp6QlV3HsSaCeXbMYOGQx3VSP3Q/edit?usp=drive_link)\n[G16 Cheyanne - Rachel ❤️](https://docs.google.com/spreadsheets/d/1jtDpQHdX2iOmGiv8g6KxIg4t1vsrOT5Y_pZt3ihiuDI/edit?usp=drive_link)\n\n[D5 Chelley](https://drive.google.com/drive/folders/1JY318Dc_bWLj1jQwRQmsdF92AW_WqvUs?usp=drive_link)\n[G17 Sosna - Ara ❤️](https://docs.google.com/spreadsheets/d/1qL5RbKq4X3UepKg9Tec9PsfG5l_E2YB6ICFxb9WaUGw/edit?usp=drive_link)\n[G18 Pamela - Tina ❤️](https://docs.google.com/spreadsheets/d/1fPWL4Fl7Z9iBDPFghlpogMAASK-8vCKi7zsB_zkhhTo/edit?usp=drive_link)\n[G19 Victoria - Josh ❤️](https://docs.google.com/spreadsheets/d/1TBwsSCREBGqGourVm_JadMGnufB_aPaMtMJvdxvSe54/edit?usp=drive_link)\n[G20 Matt K - Gabriel 🌟❤️](https://docs.google.com/spreadsheets/d/1hy9Kpf-k0nQAuHRrGz8TMGsSQXS1AmRcknaWQRDvPGk/edit?usp=drive_link)"
 
-# def test2():
+def test2():
 
-#     return "<b>[D6 James](https://drive.google.com/drive/folders/1DQ0TK8j0PcKCjPDRCh6CpXN0C9G4vww-?usp=drive_link)\n[G21 Melvin - Flavi](https://docs.google.com/spreadsheets/d/1UAgd22ec2U9gHlml8rq3fiZw3mcsM4byV6Jnk883If0/edit?usp=drive_link)\n[G22 Sindy - Carys 🌟](https://docs.google.com/spreadsheets/d/1WPldJVSASulBAkgU-O7bc1smOtPYi1YYgnatY9UDvk4/edit?usp=drive_link)\n[G23 Maria - Charlotte](https://docs.google.com/spreadsheets/d/1CPkxTxHun4SgqBhwhdXMz9QVwCe1cHSZlN7L-yydLOc/edit?usp=drive_link)\n[G24 Vivian - Zephaniah❤️](https://docs.google.com/spreadsheets/d/1ZVzJBEwZrTGhVkJ1GYHl2IJ3EoJxFWuCVEUWoV-JVi4/edit?usp=drive_link)\n\n[D7 Kim](https://drive.google.com/drive/folders/1Ljt6hunDOWqeVJSMPRK6gHtWTHP2xQJv?usp=drive_link)\n[G25 Shiv - Tiam](https://docs.google.com/spreadsheets/d/1MmSyc111yFDtkpnkzC9wlkgkYkavYbQLMGRApKqHRKI/edit?usp=drive_link)\n[G26 Kathleen - Richard](https://docs.google.com/spreadsheets/d/1J3Di_todMI2Ax7J3Sn4eapwFRV0CyEbcfR2Hz1AiIBU/edit?usp=drive_link)\n[G27 Shaun - Janice](https://docs.google.com/spreadsheets/d/16rPrPDXVKyNJCtFXtbNEZyGpATx9p_DESya9h8diNx4/edit?usp=drive_link)\n[G28 Marielle - Sian 🌟❤️](https://docs.google.com/spreadsheets/d/1PoKIH4XjfKBPQQdjNLffX9TDG4pBwcr0v0aoelsrUnQ/edit?usp=drive_link)\n\n[D8 Christian](https://drive.google.com/drive/folders/1I6phtHFzs4VAOC526dgdpBUXzi70GXLH?usp=drive_link)\n[G29 Zindzi - Cherry 158 ❤️](https://docs.google.com/spreadsheets/d/1adoNCuOqs_sKlbBMl7I7jrtOVMJIPhXwSrkNV5OgppU/edit?usp=drive_link)\n[G30 John L - James](https://docs.google.com/spreadsheets/d/1az9JHj2LtLLlFHEs-CgZqKIH_XPLNJ4EAOktmvO8uJY/edit?usp=drive_link)\n[G31 Tam - Noah](https://docs.google.com/spreadsheets/d/1aNyl6GjFSe0tExdDhZF6_fc7wkuv1mmV2yXhDAtqSYc/edit?usp=drive_link)\n[G32 Chen Yee - Joshmar 🌟](https://docs.google.com/spreadsheets/d/14__SWTLgOBhLO-t634n0gnOW7lhAfW8TLfb1MfPiLS8/edit?usp=drive_link)\n\n[D9 Nahom](https://drive.google.com/drive/folders/1mgPLQbH9Yp451ZMMyfFog56SwKvMwNAc?usp=drive_link)\n[G33 Za Duh - Kaitu’u](https://docs.google.com/spreadsheets/d/1E2inpJh0XBlaW_J_0lL3tEcgMetPSLfvEITkYCo5JFo/edit?usp=drive_link)\n[G34 Genesis - Nelson 🌟](https://docs.google.com/spreadsheets/d/19alyvyfFmulqMLdtIAArAV1cG4HwY5k7cUXZROSnomU/edit?usp=drive_link)\n[G35 Jeice - Cates](https://docs.google.com/spreadsheets/d/1HYWUFcFd5X57dajrfRhgHOhL47AbEabLF7F4siFyXec/edit?usp=drive_link)\n[G36 Zia - Cardin❤️](https://docs.google.com/spreadsheets/d/1c1-uFx0uVseynWJAXNRU7xTSSQqWV0ajW_kT5NXzlE8/edit?usp=drive_link)\n\n[D10 Hayden](https://drive.google.com/drive/folders/1Ik3XlftMrAyABj6ZG1BkdeMeYWaS91df?usp=drive_link)\n[G37 Mikko - Moana ❤️](https://docs.google.com/spreadsheets/d/1M9YW_GY0xJTyxAKRf_efbrLos7QOdeVo7PfsFC8t2Wc/edit?usp=drive_link)\n[G38 Erica - Ivy ❤️](https://docs.google.com/spreadsheets/d/1LJPBGJgqWHIRiX9xEmeuq4wZL6MiY5vGK9UTRzyvmnM/edit?usp=drive_link)\n[G39 Monica - Thao 🌟](https://docs.google.com/spreadsheets/d/1dyzGxpNfJ71DPAfhHfzvForsTF5YdNdDvjVWcLApPNg/edit?usp=drive_link)\n[G40 Seena - Bez ❤️](https://docs.google.com/spreadsheets/d/171WjKl9VlYi2iQGgIGbM_rm7z6Mxz1_zVSItRI_4KVA/edit?usp=drive_link)\n\n[D11 Jade](https://drive.google.com/drive/folders/1pfWYyhw2kmVvcIij5Qar4ra-GzxUKBTc?usp=drive_link)\n[G41 Janice - Evan❤️](https://docs.google.com/spreadsheets/d/1dmrec5M7tsw3L-ebcwslZ-g4A8Fsfkzlv0_Qg92FbGQ/edit?usp=drive_link)\n[G42 Dilan - Juma❤️](https://docs.google.com/spreadsheets/d/1MjItYN8e-iucmSNOII1Kjkb_eAxUga_Sd_99GKfY0j8/edit?usp=drive_link)\n[G43 Micah - Larmay🌟❤️](https://docs.google.com/spreadsheets/d/1s6wT7diqG-pMEz52LwLKuK3uJLAlr9MRf0tOIoECMbk/edit?usp=drive_link)\n[G44 Elijah - Mia❤️](https://docs.google.com/spreadsheets/d/183wcSKMbsZxiIjIeRP09tFoMZlZqWReooYNTWHYFMfM/edit?usp=drive_link)</b>"
+    return "[D6 James](https://drive.google.com/drive/folders/1DQ0TK8j0PcKCjPDRCh6CpXN0C9G4vww-?usp=drive_link)\n[G21 Melvin - Flavi](https://docs.google.com/spreadsheets/d/1UAgd22ec2U9gHlml8rq3fiZw3mcsM4byV6Jnk883If0/edit?usp=drive_link)\n[G22 Sindy - Carys 🌟](https://docs.google.com/spreadsheets/d/1WPldJVSASulBAkgU-O7bc1smOtPYi1YYgnatY9UDvk4/edit?usp=drive_link)\n[G23 Maria - Charlotte](https://docs.google.com/spreadsheets/d/1CPkxTxHun4SgqBhwhdXMz9QVwCe1cHSZlN7L-yydLOc/edit?usp=drive_link)\n[G24 Vivian - Zephaniah❤️](https://docs.google.com/spreadsheets/d/1ZVzJBEwZrTGhVkJ1GYHl2IJ3EoJxFWuCVEUWoV-JVi4/edit?usp=drive_link)\n\n[D7 Kim](https://drive.google.com/drive/folders/1Ljt6hunDOWqeVJSMPRK6gHtWTHP2xQJv?usp=drive_link)\n[G25 Shiv - Tiam](https://docs.google.com/spreadsheets/d/1MmSyc111yFDtkpnkzC9wlkgkYkavYbQLMGRApKqHRKI/edit?usp=drive_link)\n[G26 Kathleen - Richard](https://docs.google.com/spreadsheets/d/1J3Di_todMI2Ax7J3Sn4eapwFRV0CyEbcfR2Hz1AiIBU/edit?usp=drive_link)\n[G27 Shaun - Janice](https://docs.google.com/spreadsheets/d/16rPrPDXVKyNJCtFXtbNEZyGpATx9p_DESya9h8diNx4/edit?usp=drive_link)\n[G28 Marielle - Sian 🌟❤️](https://docs.google.com/spreadsheets/d/1PoKIH4XjfKBPQQdjNLffX9TDG4pBwcr0v0aoelsrUnQ/edit?usp=drive_link)\n\n[D8 Christian](https://drive.google.com/drive/folders/1I6phtHFzs4VAOC526dgdpBUXzi70GXLH?usp=drive_link)\n[G29 Zindzi - Cherry 158 ❤️](https://docs.google.com/spreadsheets/d/1adoNCuOqs_sKlbBMl7I7jrtOVMJIPhXwSrkNV5OgppU/edit?usp=drive_link)\n[G30 John L - James](https://docs.google.com/spreadsheets/d/1az9JHj2LtLLlFHEs-CgZqKIH_XPLNJ4EAOktmvO8uJY/edit?usp=drive_link)\n[G31 Tam - Noah](https://docs.google.com/spreadsheets/d/1aNyl6GjFSe0tExdDhZF6_fc7wkuv1mmV2yXhDAtqSYc/edit?usp=drive_link)\n[G32 Chen Yee - Joshmar 🌟](https://docs.google.com/spreadsheets/d/14__SWTLgOBhLO-t634n0gnOW7lhAfW8TLfb1MfPiLS8/edit?usp=drive_link)\n\n[D9 Nahom](https://drive.google.com/drive/folders/1mgPLQbH9Yp451ZMMyfFog56SwKvMwNAc?usp=drive_link)\n[G33 Za Duh - Kaitu’u](https://docs.google.com/spreadsheets/d/1utd4bbPrLdJsYUDle9zKxGvNE8uxHr5SClPTgVDd958/edit?usp=drive_link)\n[G34 Genesis - Nelson 🌟](https://docs.google.com/spreadsheets/d/12QRCrRXq3_oGGYwW7tgOLh2ahKxb4icYvhKdiN_G5Wo/edit?usp=drive_link)\n[G35 Jeice - Cates](https://docs.google.com/spreadsheets/d/1klefvcXSXCHQjMlCuOvuxbHFHKPHqqMaItV5gUsNCXs/edit?usp=drive_link)\n[G36 Zia - Cardin❤️](https://docs.google.com/spreadsheets/d/1USrPxVlFaTK4JM_ofal7hGJvUvOuL3GQm_ZY4AH7nYE/edit?usp=drive_link)\n\n[D10 Hayden](https://drive.google.com/drive/folders/1Ik3XlftMrAyABj6ZG1BkdeMeYWaS91df?usp=drive_link)\n[G37 Mikko - Moana ❤️](https://docs.google.com/spreadsheets/d/1gSMqWSnN6okc38MOdQSzlljWHIxcIUOIqnHb3lrY0Fo/edit?usp=drive_link)\n[G38 Erica - Ivy ❤️](https://docs.google.com/spreadsheets/d/1Ni7D-pc0B6VfJJwHVysOSAYBT4Z9cHYYWIE0VFdrrrs/edit?usp=drive_link)\n[G39 Monica - Thao 🌟](https://docs.google.com/spreadsheets/d/1kcsiVPeoXplAfkriu7A80Unx3NLNEzh7lT7n58GYrPA/edit?usp=drive_link)\n[G40 Seena - Bez ❤️](https://docs.google.com/spreadsheets/d/1I9u_7KDfJBtKbbHjrOVvoFYTkT51ml133q_Yzb2kzHc/edit?usp=drive_link)\n\n[D11 Jade](https://drive.google.com/drive/folders/1pfWYyhw2kmVvcIij5Qar4ra-GzxUKBTc?usp=drive_link)\n[G41 Janice - Evan❤️](https://docs.google.com/spreadsheets/d/1dmrec5M7tsw3L-ebcwslZ-g4A8Fsfkzlv0_Qg92FbGQ/edit?usp=drive_link)\n[G42 Dilan - Juma❤️](https://docs.google.com/spreadsheets/d/1MjItYN8e-iucmSNOII1Kjkb_eAxUga_Sd_99GKfY0j8/edit?usp=drive_link)\n[G43 Micah - Larmay🌟❤️](https://docs.google.com/spreadsheets/d/1s6wT7diqG-pMEz52LwLKuK3uJLAlr9MRf0tOIoECMbk/edit?usp=drive_link)\n[G44 Elijah - Mia❤️](https://docs.google.com/spreadsheets/d/183wcSKMbsZxiIjIeRP09tFoMZlZqWReooYNTWHYFMfM/edit?usp=drive_link)"
 
 
 
@@ -4581,11 +4581,11 @@ def pickfe(g, d, access):
 
 
 
-def febmission(access):
+def aprilmission(access):
     
     d = '%' if access in ('All','IT') else access.capitalize().replace('d','D')
     conn = odbc.connect(conn_str)
-    q = f"FebCtMission '{d}'"
+    q = f"AprilCtMission '{d}'"
     print(q)
     dq = pd.read_sql(q, conn)
     dq.columns = ['Dept','Total','TGW','Member','0 P','1 P+','1 FE+']
@@ -4610,7 +4610,7 @@ def febmission(access):
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     summary = re.sub(totalrow,f"\n{totalrow}",summary)
-    summary = f"<b><u>Feb CT Mission</u></b>\n\n<pre>Dept     [Tot|TG|Mem|0 P|1P+|FE+]\n\n{summary}"
+    summary = f"<b><u>April CT Mission</u></b>\n\n<pre>Dept     [Tot|TG|Mem|0 P|1P+|FE+]\n\n{summary}"
     return summary
 
 
@@ -4624,6 +4624,7 @@ def secondedu(g, d, sid, standard, ct, access):
 
     views = {'bbt':'FnBbtSE','leaf':'FnLeafSE','all':'FnSE'}
     view = views[standard]
+    r = {'Physical + Online':'%','Physical':'Melbourne','Online':'Online'}[ct]
     
     name = 'BBTCode' if access == 'Group' else 'BBTGrp'
         
@@ -4632,10 +4633,11 @@ def secondedu(g, d, sid, standard, ct, access):
     grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth')
     
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT Dept, Grp, {name}, X, P, FE, SE FROM {view}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID, {name}"
-    bb_group = f"SELECT Grp, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
-    bb_dept = f"SELECT Dept, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
-    bb_youth = f"SELECT SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+    bb_mem = f"SELECT Dept, Grp, {name}, X, P, FE, SE FROM {view}('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID, {name}"
+    bb_group = f"SELECT Grp, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
+    bb_dept = f"SELECT Dept, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
+    bb_youth = f"SELECT SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+    seasons = f"SELECT SeasonName FROM EVSeason WHERE ID BETWEEN 87 AND 91 AND Region LIKE '{r}'"
 
     print(bb_group)
     
@@ -4643,12 +4645,17 @@ def secondedu(g, d, sid, standard, ct, access):
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
     dy = pd.read_sql(bb_youth, conn)
+    ds = pd.read_sql(seasons, conn)
     dm.columns = ['Dept','Grp','BBT','X','P','FE','SE']
     dg.columns = ['Grp','X','P','FE','SE']
     dd.columns = ['Dept','X','P','FE','SE']
     dy.columns = ['X','P','FE','SE']
+    ds.columns = ['SeasonName']
         
     conn.cursor().close()
+
+    seasonlist = ds['SeasonName'].str.cat(sep=', ').replace('Yr 43 ','').replace('Feb CT Online','FebONL').replace('Feb CT','Feb').replace('Apr CT Online ','AprONL').replace('Apr CT','Apr').replace('Apr SE CT','AprMW')
+
     member = str()
     if not d.endswith('D[0-9]%'):
         for r in range(len(dm)):
@@ -4689,7 +4696,7 @@ def secondedu(g, d, sid, standard, ct, access):
         s  = ' '*(3-len(str(dy.loc[0,'SE']))) + str(dy.loc[0,'SE'])
         total = f'Total[{x}|{p}|{f}|{s}]'
     
-    summary = f"<b><u>{grpdept} Second Edu</u></b>\n<i>Standard = {standard.capitalize()}\n{ct} CT</i>\n\n<pre>     [ X | P | FE| SE]\n\n{member}{group}{dept}{total}</pre>"
+    summary = f"<b><u>{grpdept} Second Edu</u></b>\n<i>Standard = {standard.capitalize().replace('All','Leaf + BBT')}\n{ct} CT\n{seasonlist}</i>\n\n<pre>     [ X | P | FE| SE]\n\n{member}{group}{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary
@@ -4827,16 +4834,21 @@ def hspreport(g, d, access):
     """
     
     hsp_group = f"""
-    SELECT Grp, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
-        SUM(ISNULL(VidSubmitted,0))VidSubmitted, SUM(CASE WHEN ExamScore IS NULL OR ExamScore = 0 THEN 0 ELSE 1 END)ExamScore, COUNT(*)Total
-    FROM HSPMemberCodey
+    SELECT Grp, Members, WedPrs, Fri1Prs, DropInPrs, ExamAvg, CurrentScore
+    FROM HSPCurrentScoresFunction()
     WHERE Dept LIKE '{d}'
         AND Grp LIKE '{g}'
-    GROUP BY Grp, GID
     ORDER BY GID
     """
     
     hsp_dept = f"""
+    SELECT Grp, Members, WedPrs, Fri1Prs, DropInPrs, ExamAvg, CurrentScore
+    FROM HSPCurrentScoresFunction()
+    WHERE Dept LIKE '{d}'
+        AND Grp LIKE '{g}'
+    ORDER BY GID
+
+
     SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs, 
         SUM(ISNULL(VidSubmitted,0))VidSubmitted, SUM(CASE WHEN ExamScore IS NULL OR ExamScore = 0 THEN 0 ELSE 1 END)ExamScore, COUNT(*)Total
     FROM HSPMemberCodey

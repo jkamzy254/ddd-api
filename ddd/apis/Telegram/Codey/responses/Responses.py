@@ -292,9 +292,9 @@ def bot_responses(id,tname,input_text):
         
         if command.startswith('secondedu'):
             standard = command.removeprefix('secondedu')
-            standard = 'bbt' if standard == '' else standard
+            standard = 'leaf' if standard == '' else standard
             if standard not in ['bbt','leaf','all','']:
-                return "must select secondedu (bbt standard), secondeduleaf (leaf standard) or secondeduall (leaf+bbt standard)"
+                return "must select secondedu (leaf standard), secondedubbt (bbt standard) or secondeduall (leaf+bbt standard)"
             ct = {'%':'Physical + Online',phys_sid:'Physical',on_sid:'Online'}[bb_sid]
             return SQLCodes.secondedu(g,d,bb_sid,standard,ct,access)
         
@@ -342,8 +342,8 @@ def bot_responses(id,tname,input_text):
         if command in ['youthmxpx','deptmxpx']:
             return SQLCodes.youthmxpx(d)
 
-        if command == 'febmission':
-            return SQLCodes.febmission(access)
+        if command == 'aprilmission':
+            return SQLCodes.aprilmission(access)
         
         if command.startswith('approve'):
             a,userUID,telID,i = command.split('#')

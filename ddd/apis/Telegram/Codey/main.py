@@ -50,18 +50,27 @@ async def handle_message(update, context):
         pm = 'Markdown' if new_message.startswith('Telegram user') else 'HTML'
         print(f"Parse_mode = {pm}")
         await bot.sendMessage(chat_id=recipient_id, text=new_message, parse_mode=pm)
+    else:
+        PREFIXES = ('Markdown@@','MarkdownV2@@','HTML@@')
+        if response.startswith(PREFIXES):
+            pm,_,response = response.partition('@@')
+        else:
+            pm = 'HTML'
     if len(response) <= 4096:
-        pm,response = response.split('@@')
         if pm == 'Markdown':
+            print('Using Markdown')
             response = response.replace('<b>','*').replace('</b>','*').replace('<i>','_').replace('</i>','_').replace('<u>','').replace('</u>','').replace('<pre>','```').replace('</pre>','```')
             await update.message.reply_text(response, parse_mode='Markdown')
         elif pm == 'MarkdownV2':
-            response = response.replace('<b>','**').replace('</b>','**').replace('<i>','*').replace('</i>','*').replace('<u>','__').replace('</u>','__').replace('<pre>','```').replace('</pre>','```')
+            print('Using MarkdownV2')
+            response = response.replace('<b>','*').replace('</b>','*').replace('<i>','_').replace('</i>','_').replace('<u>','__').replace('</u>','__').replace('<pre>','```').replace('</pre>','```')
             await update.message.reply_text(response, parse_mode='MarkdownV2')
         else:
+            print('Using HTML')
             await update.message.reply_text(response, parse_mode='HTML') 
     elif len(response) <= 49152:
-        response = response.replace('<b>','').replace('</b>','').replace('<i>','').replace('</i>','').replace('<u>','').replace('</u>','').replace('<pre>','').replace('</pre>','')[4:]
+        print('Splitting message into chunks of 4096 characters due to Telegram limit')
+        response = response.replace('<b>','').replace('</b>','').replace('<i>','').replace('</i>','').replace('<u>','').replace('</u>','').replace('<pre>','').replace('</pre>','')
         await update.message.reply_text(f'<pre>{response[:4096]}</pre>', parse_mode='HTML')
         await update.message.reply_text(f'<pre>{response[4096:8192]}</pre>', parse_mode='HTML')
         await update.message.reply_text(f'<pre>{response[8192:12288]}</pre>', parse_mode='HTML')

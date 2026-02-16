@@ -2,8 +2,9 @@ import pandas as pd
 import numpy as np
 import pypyodbc as odbc
 import re
-from dotenv import load_dotenv, find_dotenv
 import os
+from datetime import datetime, timedelta
+from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
 HOST = os.environ.get('HOST')
@@ -4558,8 +4559,17 @@ def pickfe(g, d, access):
     return summary
 
 
-# def test():
-#     return 'hello'
+# def test1():
+
+#     return "<b>[D1 Va](https://drive.google.com/drive/folders/1xZ_VjGcOPp-xZmRtnlXpfBoQTMuE7sB4?usp=drive_link)\n[G1 Janel - Akot 🌟](https://docs.google.com/spreadsheets/d/1BqLj6p_Tw220zDs3w6s7JlVnZSiTFsWO3NLvnrk4W5M/edit?usp=drive_link)\n[G2 AJ - Natasha](https://docs.google.com/spreadsheets/d/1-Vw04M9YWeaEeLYN5fEKhiwj_Tl77jkjyq47HlMXAPs/edit?usp=drive_link)\n[G3 Karen - Mycah](https://docs.google.com/spreadsheets/d/1qXpYHxMUauxvLB1wCF1npw4Ol_1f4J7O5TwGc-R73SI/edit?usp=drive_link)\n[G4 Rohit - Ku Mo ❤️](https://docs.google.com/spreadsheets/d/1VTTUwilcpUUUuEsnbS1gaYMlY6tsxkyGogEoXcwmKq8/edit?usp=drive_link)\n\n[D2 Lun](https://drive.google.com/drive/folders/1dv0hvgh955L3AG0Bj9YTo8X76aTAhkHT?usp=drive_link)\n[G5 Wei Kin - Kiana 🌟](https://docs.google.com/spreadsheets/d/1HfzGRBESpDARQdVltQM5DtWA0EnSh51FnNxuRQ36iKc/edit?usp=drive_link)\n[G6 Priscilla - Vanessa ❤️](https://docs.google.com/spreadsheets/d/1l0zuKDcvGPMoaoiLbmwMjqyu-i0oI2LhNs59TOaamQA/edit?usp=drive_link)\n[G7 Kupa - Iokapeta ❤️](https://docs.google.com/spreadsheets/d/1l8qDSt-YDqmShvGwq91_RwNcguLOj9kkaqPRq6TF8dc/edit?usp=drive_link)\n[G8 Donia - Doreen](https://docs.google.com/spreadsheets/d/1zGLftSi4ldy1FzQ67ofeZdVE0O-iE9QGK4YGhO4Ciow/edit?usp=drive_link)\n\n[D3 King](https://drive.google.com/drive/folders/12Lx7EHVoUuciFeSm6MdT6qLx5hAuPgMP?usp=drive_link)\n[G9 Trucilla - Jhanice ❤️](https://docs.google.com/spreadsheets/d/13BkTDU5q0vS-_EUbet0H2ZxFFWQ02wvtkW0XUQEHb1Q/edit?usp=drive_link)\n[G10 Mary - Nic ❤️](https://docs.google.com/spreadsheets/d/1gJrP6ap3Dl0Lo9fK_72fvXhDCvxEHf_vMtds0HCco5g/edit?usp=drive_link)\n[G11 Aman - Yazmin ❤️](https://docs.google.com/spreadsheets/d/1gr1LMXtbshQ3MH7-mJH4ZLuKLgHvP2OJaZ38YRNDOpQ/edit?usp=drive_link)\n[G12 Alliza - Rachel 🌟](https://docs.google.com/spreadsheets/d/19bOGWcnArmwQUtfHEMb87dHnV-rnQ_LNNjtvbZlb2uE/edit?usp=drive_link)\n\n[D4 Nicola](https://drive.google.com/drive/folders/1JY318Dc_bWLj1jQwRQmsdF92AW_WqvUs?usp=drive_link)\n[G13 Rejie - Malu ❤️](https://docs.google.com/spreadsheets/d/1kJKvK5RT_S-A2n4GHBVu5_Ne_BC6Y6QjgpCwQtdxdJ4/edit?usp=drive_link)\n[G14 Lamy - Riz ❤️](https://docs.google.com/spreadsheets/d/1wceJg6hoghi2fwKRZXyQapcdp9YJ7rUD0ktJYU8y4Hg/edit?usp=drive_link)\n[G15 Mayom - Bianca 🌟](https://docs.google.com/spreadsheets/d/1gdv8_WSbu1i0P4Ffsp6QlV3HsSaCeXbMYOGQx3VSP3Q/edit?usp=drive_link)\n[G16 Cheyanne - Rachel ❤️](https://docs.google.com/spreadsheets/d/1jtDpQHdX2iOmGiv8g6KxIg4t1vsrOT5Y_pZt3ihiuDI/edit?usp=drive_link)\n\n[D5 Chelley](https://drive.google.com/drive/folders/1JY318Dc_bWLj1jQwRQmsdF92AW_WqvUs?usp=drive_link)\n[G17 Sosna - Ara ❤️](https://docs.google.com/spreadsheets/d/1qL5RbKq4X3UepKg9Tec9PsfG5l_E2YB6ICFxb9WaUGw/edit?usp=drive_link)\n[G18 Pamela - Tina ❤️](https://docs.google.com/spreadsheets/d/1fPWL4Fl7Z9iBDPFghlpogMAASK-8vCKi7zsB_zkhhTo/edit?usp=drive_link)\n[G19 Victoria - Josh ❤️](https://docs.google.com/spreadsheets/d/1TBwsSCREBGqGourVm_JadMGnufB_aPaMtMJvdxvSe54/edit?usp=drive_link)\n[G20 Matt K - Gabriel 🌟❤️](https://docs.google.com/spreadsheets/d/1hy9Kpf-k0nQAuHRrGz8TMGsSQXS1AmRcknaWQRDvPGk/edit?usp=drive_link)</b>"
+
+# def test2():
+
+#     return "<b>[D6 James](https://drive.google.com/drive/folders/1DQ0TK8j0PcKCjPDRCh6CpXN0C9G4vww-?usp=drive_link)\n[G21 Melvin - Flavi](https://docs.google.com/spreadsheets/d/1UAgd22ec2U9gHlml8rq3fiZw3mcsM4byV6Jnk883If0/edit?usp=drive_link)\n[G22 Sindy - Carys 🌟](https://docs.google.com/spreadsheets/d/1WPldJVSASulBAkgU-O7bc1smOtPYi1YYgnatY9UDvk4/edit?usp=drive_link)\n[G23 Maria - Charlotte](https://docs.google.com/spreadsheets/d/1CPkxTxHun4SgqBhwhdXMz9QVwCe1cHSZlN7L-yydLOc/edit?usp=drive_link)\n[G24 Vivian - Zephaniah❤️](https://docs.google.com/spreadsheets/d/1ZVzJBEwZrTGhVkJ1GYHl2IJ3EoJxFWuCVEUWoV-JVi4/edit?usp=drive_link)\n\n[D7 Kim](https://drive.google.com/drive/folders/1Ljt6hunDOWqeVJSMPRK6gHtWTHP2xQJv?usp=drive_link)\n[G25 Shiv - Tiam](https://docs.google.com/spreadsheets/d/1MmSyc111yFDtkpnkzC9wlkgkYkavYbQLMGRApKqHRKI/edit?usp=drive_link)\n[G26 Kathleen - Richard](https://docs.google.com/spreadsheets/d/1J3Di_todMI2Ax7J3Sn4eapwFRV0CyEbcfR2Hz1AiIBU/edit?usp=drive_link)\n[G27 Shaun - Janice](https://docs.google.com/spreadsheets/d/16rPrPDXVKyNJCtFXtbNEZyGpATx9p_DESya9h8diNx4/edit?usp=drive_link)\n[G28 Marielle - Sian 🌟❤️](https://docs.google.com/spreadsheets/d/1PoKIH4XjfKBPQQdjNLffX9TDG4pBwcr0v0aoelsrUnQ/edit?usp=drive_link)\n\n[D8 Christian](https://drive.google.com/drive/folders/1I6phtHFzs4VAOC526dgdpBUXzi70GXLH?usp=drive_link)\n[G29 Zindzi - Cherry 158 ❤️](https://docs.google.com/spreadsheets/d/1adoNCuOqs_sKlbBMl7I7jrtOVMJIPhXwSrkNV5OgppU/edit?usp=drive_link)\n[G30 John L - James](https://docs.google.com/spreadsheets/d/1az9JHj2LtLLlFHEs-CgZqKIH_XPLNJ4EAOktmvO8uJY/edit?usp=drive_link)\n[G31 Tam - Noah](https://docs.google.com/spreadsheets/d/1aNyl6GjFSe0tExdDhZF6_fc7wkuv1mmV2yXhDAtqSYc/edit?usp=drive_link)\n[G32 Chen Yee - Joshmar 🌟](https://docs.google.com/spreadsheets/d/14__SWTLgOBhLO-t634n0gnOW7lhAfW8TLfb1MfPiLS8/edit?usp=drive_link)\n\n[D9 Nahom](https://drive.google.com/drive/folders/1mgPLQbH9Yp451ZMMyfFog56SwKvMwNAc?usp=drive_link)\n[G33 Za Duh - Kaitu’u](https://docs.google.com/spreadsheets/d/1E2inpJh0XBlaW_J_0lL3tEcgMetPSLfvEITkYCo5JFo/edit?usp=drive_link)\n[G34 Genesis - Nelson 🌟](https://docs.google.com/spreadsheets/d/19alyvyfFmulqMLdtIAArAV1cG4HwY5k7cUXZROSnomU/edit?usp=drive_link)\n[G35 Jeice - Cates](https://docs.google.com/spreadsheets/d/1HYWUFcFd5X57dajrfRhgHOhL47AbEabLF7F4siFyXec/edit?usp=drive_link)\n[G36 Zia - Cardin❤️](https://docs.google.com/spreadsheets/d/1c1-uFx0uVseynWJAXNRU7xTSSQqWV0ajW_kT5NXzlE8/edit?usp=drive_link)\n\n[D10 Hayden](https://drive.google.com/drive/folders/1Ik3XlftMrAyABj6ZG1BkdeMeYWaS91df?usp=drive_link)\n[G37 Mikko - Moana ❤️](https://docs.google.com/spreadsheets/d/1M9YW_GY0xJTyxAKRf_efbrLos7QOdeVo7PfsFC8t2Wc/edit?usp=drive_link)\n[G38 Erica - Ivy ❤️](https://docs.google.com/spreadsheets/d/1LJPBGJgqWHIRiX9xEmeuq4wZL6MiY5vGK9UTRzyvmnM/edit?usp=drive_link)\n[G39 Monica - Thao 🌟](https://docs.google.com/spreadsheets/d/1dyzGxpNfJ71DPAfhHfzvForsTF5YdNdDvjVWcLApPNg/edit?usp=drive_link)\n[G40 Seena - Bez ❤️](https://docs.google.com/spreadsheets/d/171WjKl9VlYi2iQGgIGbM_rm7z6Mxz1_zVSItRI_4KVA/edit?usp=drive_link)\n\n[D11 Jade](https://drive.google.com/drive/folders/1pfWYyhw2kmVvcIij5Qar4ra-GzxUKBTc?usp=drive_link)\n[G41 Janice - Evan❤️](https://docs.google.com/spreadsheets/d/1dmrec5M7tsw3L-ebcwslZ-g4A8Fsfkzlv0_Qg92FbGQ/edit?usp=drive_link)\n[G42 Dilan - Juma❤️](https://docs.google.com/spreadsheets/d/1MjItYN8e-iucmSNOII1Kjkb_eAxUga_Sd_99GKfY0j8/edit?usp=drive_link)\n[G43 Micah - Larmay🌟❤️](https://docs.google.com/spreadsheets/d/1s6wT7diqG-pMEz52LwLKuK3uJLAlr9MRf0tOIoECMbk/edit?usp=drive_link)\n[G44 Elijah - Mia❤️](https://docs.google.com/spreadsheets/d/183wcSKMbsZxiIjIeRP09tFoMZlZqWReooYNTWHYFMfM/edit?usp=drive_link)</b>"
+
+
+
+    # return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
 
@@ -4714,6 +4724,57 @@ def svcabs(gd,svctype,filt):
     nr = "" # "<i><b><u>Not Reported</u></b></i>\n"
 
     if len(dAB) == 0:
+        ab = f"{ab}<b>Absentees</b>\n<i>No Members</i>"
+    else:
+        ab = f"{ab}<pre>Absentees\n"
+        for r in range(len(dAB)):
+            ab = f"{ab}{r+1}.{' '*(3-len(str(r+1)))}{dAB.loc[r,'Dept']} {dAB.loc[r,'Grp']} {dAB.loc[r,'MemberCode']}\n"
+        ab = f"{ab}</pre>"
+
+    if len(dNR) == 0:
+        nr = f"{nr}<b>Not Reported</b>\n<i>No Members</i>"
+    else:
+        nr = f'{nr}<pre>NotReported\n'
+        for r in range(len(dNR)):
+            nr = f"{nr}{r+1}.{' '*(3-len(str(r+1)))}{dNR.loc[r,'Dept']} {dNR.loc[r,'Grp']} {dNR.loc[r,'MemberCode']}\n"
+        nr = f"{nr}</pre>"
+
+    result = f"<b>{gd} {svctype} Service Absentee List</b>\n\n{ab}\n{nr}"
+    result = re.sub(r'\.0',r'',result)
+    result = re.sub(r' \(\)',r'',result)
+    result = re.sub(r'\((\d+)\)', r'(G\1)', result)
+    result = re.sub(r'\[1\] ', r'', result)
+    return result
+
+
+
+def eduabs(gd,edutype,filt):
+    # THIS FUNCTION IS WRITTEN IN MARKDOWNV2, NOT HTML LIKE ALL OTHER FUNCTIONS.
+    # (TECHNICALLY MOST OF IT IS HTML EXCEPT <pre>Absentees AND <pre>Not_Reported, BUT MAIN.PY WILL CONVERT IT TO MARKDOWNV2)
+    # THE REASON FOR THIS IS THAT ONLY MARKDOWNV2 ALLOWS CUSTOM CODE BLOCK LABELS.
+    # TO SET PARSE MODE TO MARKDOWNV2, ENSURE RESPONSES.PY RETURNS STRING "MARKDOWNV2" IN FRONT OF THIS FUNCTION'S RETURN
+
+    gd = gd.capitalize()
+    edutype = edutype.capitalize()
+          
+    conn = odbc.connect(conn_str)   
+
+    query_abs = f"SELECT Dept, Grp, MemberCode FROM CodeyEduAbsentees('{edutype}') WHERE Attendance = 'Abs' AND {filt} LIKE '{gd}'"
+    query_nr  = f"SELECT Dept, Grp, MemberCode FROM CodeyEduAbsentees('{edutype}') WHERE Attendance = 'NoReport' AND {filt} LIKE '{gd}'"
+
+    print(query_abs)
+
+    dAB = pd.read_sql(query_abs, conn)                
+    dNR = pd.read_sql(query_nr, conn)
+
+    dAB.columns = ['Dept','Grp','MemberCode']
+    dNR.columns = ['Dept','Grp','MemberCode']
+
+    conn.cursor().close()
+    ab = "" # "<i><b><u>Absentees</u></b></i>\n"
+    nr = "" # "<i><b><u>Not Reported</u></b></i>\n"
+
+    if len(dAB) == 0:
         ab = f"{ab}<i>No Members</i>"
     else:
         ab = f"{ab}<pre>Absentees\n"
@@ -4729,7 +4790,7 @@ def svcabs(gd,svctype,filt):
             nr = f"{nr}{r+1}.{' '*(3-len(str(r+1)))}{dNR.loc[r,'Dept']} {dNR.loc[r,'Grp']} {dNR.loc[r,'MemberCode']}\n"
         nr = f"{nr}</pre>"
 
-    result = f"*<b>{gd} {svctype} Service Absentee List</b>*\n\n{ab}\n{nr}"
+    result = f"*<b>{gd} {edutype} Edu Absentee List</b>*\n\n{ab}\n{nr}"
     result = re.sub(r'\.0',r'',result)
     result = re.sub(r' \(\)',r'',result)
     result = re.sub(r'\((\d+)\)', r'(G\1)', result)
@@ -4737,9 +4798,136 @@ def svcabs(gd,svctype,filt):
     return result
 
 
-def markdownv2test():
-#     message = """```hello
-# message
-# ```"""    
-    message = "**__hello__** ***hi*** ___hey___"
-    return message
+
+
+
+
+
+
+
+
+
+def hspreport(g, d, access):
+    
+    g = g if access == 'Group' else '%'
+    d = d.capitalize().replace('d','D')
+
+    grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth')
+    
+    conn = odbc.connect(conn_str)
+
+    hsp_mem = f"""
+    SELECT MemberCode, WedPrs, Fri1Prs, DropInPrs, Fri2Prs,
+        CASE WHEN VidSubmitted IS NULL OR VidSubmitted = 0 THEN N'❌' ELSE N'✅' END VidSubmitted,
+        CASE WHEN ExamScore IS NULL OR ExamScore = 0 THEN N'❌' ELSE N'✅' END ExamScore
+    FROM HSPMemberCodey
+    WHERE Dept LIKE '{d}'
+        AND Grp LIKE '{g}'
+    ORDER BY Pos, MemberCode
+    """
+    
+    hsp_group = f"""
+    SELECT Grp, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
+        SUM(ISNULL(VidSubmitted,0))VidSubmitted, SUM(CASE WHEN ExamScore IS NULL OR ExamScore = 0 THEN 0 ELSE 1 END)ExamScore, COUNT(*)Total
+    FROM HSPMemberCodey
+    WHERE Dept LIKE '{d}'
+        AND Grp LIKE '{g}'
+    GROUP BY Grp, GID
+    ORDER BY GID
+    """
+    
+    hsp_dept = f"""
+    SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs, 
+        SUM(ISNULL(VidSubmitted,0))VidSubmitted, SUM(CASE WHEN ExamScore IS NULL OR ExamScore = 0 THEN 0 ELSE 1 END)ExamScore, COUNT(*)Total
+    FROM HSPMemberCodey
+    WHERE Dept LIKE '{d}'
+        AND Grp LIKE '{g}'
+        GROUP BY Dept, DID
+    ORDER BY DID
+    """
+    
+    hsp_youth = f"""
+    SELECT SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
+            SUM(ISNULL(VidSubmitted,0))VidSubmitted, SUM(CASE WHEN ExamScore IS NULL OR ExamScore = 0 THEN 0 ELSE 1 END)ExamScore, COUNT(*)Total
+        FROM HSPMemberCodey
+        WHERE Dept LIKE '{d}'
+            AND Grp LIKE '{g}'
+    """
+       
+    dm = pd.read_sql(hsp_mem, conn)
+    dg = pd.read_sql(hsp_group, conn)
+    dd = pd.read_sql(hsp_dept, conn)
+    dy = pd.read_sql(hsp_youth, conn)
+
+    dm.columns = ['Member','WD','F1','DI','F2','VS','EX']
+    dg.columns = ['Grp','WD','F1','DI','F2','VS','EX','TT']
+    dd.columns = ['Dept','WD','F1','DI','F2','VS','EX','TT']
+    dy.columns = ['WD','F1','DI','F2','VS','EX','TT']
+    
+    dd.replace(r' Dept',r'', regex = True, inplace = True)
+    
+    conn.cursor().close()
+
+    member = str()
+    if access == 'Group':
+        member = '1⃣2⃣3⃣4⃣5⃣6⃣\n'
+        for r in range(len(dm)):
+            mem =   str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
+            wp  = str(dm.loc[r,'WD'])
+            f1  = str(dm.loc[r,'F1'])
+            di  = str(dm.loc[r,'DI'])
+            f2  = str(dm.loc[r,'F2'])
+            vs  = str(dm.loc[r,'VS'])
+            ex  = str(dm.loc[r,'EX'])
+            member = f'{member}~{wp}~{f1}~{di}~{f2}{vs}{ex}{mem}\n'        
+        member = f'</pre>{member}\n'
+    
+    s = 2 if access == 'Group' else 3  
+    group = str()    
+    for r in range(len(dg)):
+        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        wp  = ' '*(s-len(str(dg.loc[r,'WD']))) + str(dg.loc[r,'WD'])
+        f1  = ' '*(s-len(str(dg.loc[r,'F1']))) + str(dg.loc[r,'F1'])
+        di  = ' '*(s-len(str(dg.loc[r,'DI']))) + str(dg.loc[r,'DI'])
+        f2  = ' '*(s-len(str(dg.loc[r,'F2']))) + str(dg.loc[r,'F2'])
+        vs  = ' '*(s-len(str(dg.loc[r,'VS']))) + str(dg.loc[r,'VS'])
+        ex  = ' '*(s-len(str(dg.loc[r,'EX']))) + str(dg.loc[r,'EX'])
+        tt  = ' '*(s-len(str(dg.loc[r,'TT']))) + str(dg.loc[r,'TT'])
+        group = f'{group}{grp}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]\n' if access != 'Group' else f'<b>{group}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}]</b>\n(<i>{tt} members)</i><pre>\n'
+    group = group + '\n'
+      
+    dept = str()  
+    if access != 'Group':
+        for r in range(len(dd)):
+            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            wp  = ' '*(3-len(str(dd.loc[r,'WD']))) + str(dd.loc[r,'WD'])
+            f1  = ' '*(3-len(str(dd.loc[r,'F1']))) + str(dd.loc[r,'F1'])
+            di  = ' '*(3-len(str(dd.loc[r,'DI']))) + str(dd.loc[r,'DI'])
+            f2  = ' '*(3-len(str(dd.loc[r,'F2']))) + str(dd.loc[r,'F2'])
+            vs  = ' '*(3-len(str(dd.loc[r,'VS']))) + str(dd.loc[r,'VS'])
+            ex  = ' '*(3-len(str(dd.loc[r,'EX']))) + str(dd.loc[r,'EX'])
+            tt  = ' '*(3-len(str(dd.loc[r,'TT']))) + str(dd.loc[r,'TT'])
+            dept = f'{dept}{dpt}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]\n'
+        dept = dept + '\n'
+    
+    total = str()
+    if d == 'D[0-9]%':
+        wp  = ' '*(3-len(str(dy.loc[0,'WD']))) + str(dy.loc[0,'WD'])
+        f1  = ' '*(3-len(str(dy.loc[0,'F1']))) + str(dy.loc[0,'F1'])
+        di  = ' '*(3-len(str(dy.loc[0,'DI']))) + str(dy.loc[0,'DI'])
+        f2  = ' '*(3-len(str(dy.loc[0,'F2']))) + str(dy.loc[0,'F2'])
+        vs  = ' '*(3-len(str(dy.loc[0,'VS']))) + str(dy.loc[0,'VS'])
+        ex  = ' '*(3-len(str(dy.loc[0,'EX']))) + str(dy.loc[0,'EX'])
+        tt  = ' '*(3-len(str(dy.loc[0,'TT']))) + str(dy.loc[0,'TT'])
+        total = f'Total[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]'
+
+    now = datetime.now().strftime('%Y-%m-%d, %H:%M:%S')
+    header = f"<b><u>{grpdept} HSP EDU REPORTING</u></b>\n<i>{now}</i>\n\n"
+    header = header if access != 'Group' else f"{header}1⃣ Wed\n2⃣ Friday 1\n3⃣ Drop-in \n4⃣ Friday 2\n5⃣ Video Submission\n6⃣ Exam\n\n✅ Submitted/Reported/Attended\n❌ Not Submitted/Reported/Attended\n\n"
+    columns = '' if access == 'Group' else '     [WED|FR1|DPN|FR2|VID|EXM|TOT]\n\n'
+    member = member.replace('~1','✅').replace('~0','❌')
+    table = f"<pre>{columns}{member}{group}{dept}{total}</pre>"
+    table = re.sub(r'\.0',r'  ',table) if access != 'Group' else table # Replaces '.0' with empty space
+    table = re.sub(r'(\D)0([^.])',r'\1-\2',table) if access != 'Group' else table   # Replaces lone '0' with '-'
+    summary = f"{header}{table}"
+    return summary

@@ -4832,44 +4832,45 @@ def hspreport(g, d, access):
         AND Grp LIKE '{g}'
     ORDER BY Pos, MemberCode
     """
+    print("Member Query:")
+    print(hsp_mem)
     
     hsp_group = f"""
-    SELECT Grp, Members, WedPrs, Fri1Prs, DropInPrs, ExamAvg, CurrentScore
-    FROM HSPCurrentScoresFunction()
+    SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, ROUND(VideoScore,0)VideoScore, ExamAvg, Members
+    FROM HSPCodey
     WHERE Dept LIKE '{d}'
         AND Grp LIKE '{g}'
     ORDER BY GID
     """
+    print("Group Query:")
+    print(hsp_group)
     
     hsp_dept = f"""
-    SELECT Grp, Members, WedPrs, Fri1Prs, DropInPrs, ExamAvg, CurrentScore
-    FROM HSPCurrentScoresFunction()
+    SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs, ROUND(SUM(VideoScore)/COUNT(*),0)VideoScore,
+            SUM(ExamAvg)/COUNT(*)ExamAvg, SUM(Members)Total
+    FROM HSPCodey
     WHERE Dept LIKE '{d}'
         AND Grp LIKE '{g}'
-    ORDER BY GID
-
-
-    SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs, 
-        SUM(ISNULL(VidSubmitted,0))VidSubmitted, SUM(CASE WHEN ExamScore IS NULL OR ExamScore = 0 THEN 0 ELSE 1 END)ExamScore, COUNT(*)Total
-    FROM HSPMemberCodey
-    WHERE Dept LIKE '{d}'
-        AND Grp LIKE '{g}'
-        GROUP BY Dept, DID
+    GROUP BY Dept, DID
     ORDER BY DID
     """
+    print("Department Query:")
+    print(hsp_dept)
     
-    hsp_youth = f"""
-    SELECT SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
-            SUM(ISNULL(VidSubmitted,0))VidSubmitted, SUM(CASE WHEN ExamScore IS NULL OR ExamScore = 0 THEN 0 ELSE 1 END)ExamScore, COUNT(*)Total
-        FROM HSPMemberCodey
-        WHERE Dept LIKE '{d}'
-            AND Grp LIKE '{g}'
+    hsp_total = f"""
+    SELECT SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs, ROUND(SUM(VideoScore)/COUNT(*),0)VideoScore,
+            SUM(ExamAvg)/COUNT(*)ExamAvg, SUM(Members)Total
+    FROM HSPCodey
+    WHERE Dept LIKE '{d}'
+        AND Grp LIKE '{g}'
     """
+    print("Total Query:")
+    print(hsp_total)
        
     dm = pd.read_sql(hsp_mem, conn)
     dg = pd.read_sql(hsp_group, conn)
     dd = pd.read_sql(hsp_dept, conn)
-    dy = pd.read_sql(hsp_youth, conn)
+    dy = pd.read_sql(hsp_total, conn)
 
     dm.columns = ['Member','WD','F1','DI','F2','VS','EX']
     dg.columns = ['Grp','WD','F1','DI','F2','VS','EX','TT']

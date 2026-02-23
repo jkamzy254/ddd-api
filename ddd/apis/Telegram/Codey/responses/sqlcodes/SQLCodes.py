@@ -4836,7 +4836,7 @@ def hspreport(g, d, access):
     print(hsp_mem)
     
     hsp_group = f"""
-    SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, ROUND(VideoScore,0)VideoScore, ExamAvg, Members
+    SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, VideoSubmit, ExamSubmit, Members
     FROM HSPCodey
     WHERE Dept LIKE '{d}'
         AND Grp LIKE '{g}'
@@ -4846,8 +4846,8 @@ def hspreport(g, d, access):
     print(hsp_group)
     
     hsp_dept = f"""
-    SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs, ROUND(SUM(VideoScore)/COUNT(*),0)VideoScore,
-            SUM(ExamAvg)/COUNT(*)ExamAvg, SUM(Members)Total
+    SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
+        SUM(VideoSubmit)VideoSubmit, SUM(ExamSubmit)ExamSubmit, SUM(Members)Total
     FROM HSPCodey
     WHERE Dept LIKE '{d}'
         AND Grp LIKE '{g}'
@@ -4858,8 +4858,8 @@ def hspreport(g, d, access):
     print(hsp_dept)
     
     hsp_total = f"""
-    SELECT SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs, ROUND(SUM(VideoScore)/COUNT(*),0)VideoScore,
-            SUM(ExamAvg)/COUNT(*)ExamAvg, SUM(Members)Total
+    SELECT SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
+        SUM(VideoSubmit)VideoSubmit, SUM(ExamSubmit)ExamSubmit, SUM(Members)Total
     FROM HSPCodey
     WHERE Dept LIKE '{d}'
         AND Grp LIKE '{g}'

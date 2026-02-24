@@ -4,6 +4,7 @@ import pypyodbc as odbc
 import re
 import os
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
@@ -4846,8 +4847,8 @@ def hspreport(g, d, access):
         AND Grp LIKE '{g}'
     ORDER BY Pos, MemberCode
     """
-    print("Member Query:")
-    print(hsp_mem)
+    # print("Member Query:")
+    # print(hsp_mem)
     
     hsp_group = f"""
     SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, VideoSubmit, ExamSubmit, Members
@@ -4856,8 +4857,8 @@ def hspreport(g, d, access):
         AND Grp LIKE '{g}'
     ORDER BY GID
     """
-    print("Group Query:")
-    print(hsp_group)
+    # print("Group Query:")
+    # print(hsp_group)
     
     hsp_dept = f"""
     SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
@@ -4868,8 +4869,8 @@ def hspreport(g, d, access):
     GROUP BY Dept, DID
     ORDER BY DID
     """
-    print("Department Query:")
-    print(hsp_dept)
+    # print("Department Query:")
+    # print(hsp_dept)
     
     hsp_total = f"""
     SELECT SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
@@ -4878,8 +4879,8 @@ def hspreport(g, d, access):
     WHERE Dept LIKE '{d}'
         AND Grp LIKE '{g}'
     """
-    print("Total Query:")
-    print(hsp_total)
+    # print("Total Query:")
+    # print(hsp_total)
        
     dm = pd.read_sql(hsp_mem, conn)
     dg = pd.read_sql(hsp_group, conn)
@@ -4948,7 +4949,7 @@ def hspreport(g, d, access):
         tt  = ' '*(3-len(str(dy.loc[0,'TT']))) + str(dy.loc[0,'TT'])
         total = f'Total[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]'
 
-    now = datetime.now().strftime('%a %d %b, %I:%M %p') # datetime.now().strftime('%Y-%m-%d, %H:%M:%S')
+    now = datetime.now(ZoneInfo("Australia/Melbourne")).strftime('%a %d %b, %I:%M %p') # datetime.now(ZoneInfo("Australia/Melbourne")).strftime('%Y-%m-%d, %H:%M:%S')
     header = f"<b><u>{grpdept} HSP EDU REPORTING</u></b>\n<i>{now}</i>\n\n"
     header = header if access != 'Group' else f"{header}1⃣ Wed\n2⃣ Friday 1\n3⃣ Drop-in \n4⃣ Friday 2\n5⃣ Video Submission\n6⃣ Exam\n\n🔒Reporting Not Open\n⬜️Reporting Open\n❌Absent\n✅Attend\n\n"
     columns = '' if access == 'Group' else '     [WED|FR1|DPN|FR2|VID|EXM|TOT]\n\n'

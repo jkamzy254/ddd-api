@@ -4949,7 +4949,8 @@ def hspreport(g, d, access):
         tt  = ' '*(3-len(str(dy.loc[0,'TT']))) + str(dy.loc[0,'TT'])
         total = f'Total[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]'
 
-    now = datetime.now(ZoneInfo("Australia/Melbourne")).strftime('%a %d %b, %I:%M %p') # datetime.now(ZoneInfo("Australia/Melbourne")).strftime('%Y-%m-%d, %H:%M:%S')
+    now = datetime.now().strftime('%Y-%m-%d, %H:%M:%S')
+    # now = datetime.now(ZoneInfo("Australia/Melbourne")).strftime('%a %d %b, %I:%M %p')
     header = f"<b><u>{grpdept} HSP EDU REPORTING</u></b>\n<i>{now}</i>\n\n"
     header = header if access != 'Group' else f"{header}1⃣ Wed\n2⃣ Friday 1\n3⃣ Drop-in \n4⃣ Friday 2\n5⃣ Video Submission\n6⃣ Exam\n\n🔒Reporting Not Open\n⬜️Reporting Open\n❌Absent\n✅Attend\n\n"
     columns = '' if access == 'Group' else '     [WED|FR1|DPN|FR2|VID|EXM|TOT]\n\n'

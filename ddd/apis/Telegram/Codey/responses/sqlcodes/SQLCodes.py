@@ -4,6 +4,7 @@ import pypyodbc as odbc
 import re
 import os
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
@@ -4824,16 +4825,30 @@ def hspreport(g, d, access):
     conn = odbc.connect(conn_str)
 
     hsp_mem = f"""
-    SELECT MemberCode, WedPrs, Fri1Prs, DropInPrs, Fri2Prs,
-        CASE WHEN VidSubmitted IS NULL OR VidSubmitted = 0 THEN N'❌' ELSE N'✅' END VidSubmitted,
-        CASE WHEN ExamScore IS NULL OR ExamScore = 0 THEN N'❌' ELSE N'✅' END ExamScore
+    WITH Days AS
+    (SELECT CONVERT(DATE, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')TD,
+        StartDate W1,
+        DATEADD(DAY,2,StartDate)F1,
+        DATEADD(DAY,6,StartDate)T2,
+        DATEADD(DAY,9,StartDate)F2,
+        DATEADD(DAY,10,StartDate)S2,
+        DATEADD(DAY,11,StartDate)U2
+        FROM NewEduGroupTable
+        WHERE CONVERT(DATE, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') BETWEEN StartDate AND EndDate)
+    SELECT MemberCode,
+        CASE WHEN WedPrs != 0 THEN N'✅' ELSE N'❌' END WedPrs,
+        CASE WHEN Fri1Prs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F1 FROM Days) THEN N'🔒' ELSE N'❌' END Fri1Prs,
+        CASE WHEN DropInPrs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT T2 FROM Days) THEN N'🔒' WHEN (SELECT TD FROM Days) < (SELECT S2 FROM Days) THEN N'⬜️' ELSE N'❌' END DropInPrs,
+        CASE WHEN Fri2Prs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN N'🔒' ELSE N'❌' END Fri2Prs,
+        CASE WHEN ISNULL(VidSubmitted,0) != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN N'⬜️' ELSE N'❌' END VidSubmitted,
+        CASE WHEN ISNULL(ExamScore,0) != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT U2 FROM Days) THEN N'🔒' ELSE N'❌' END ExamScore
     FROM HSPMemberCodey
     WHERE Dept LIKE '{d}'
         AND Grp LIKE '{g}'
     ORDER BY Pos, MemberCode
     """
-    print("Member Query:")
-    print(hsp_mem)
+    # print("Member Query:")
+    # print(hsp_mem)
     
     hsp_group = f"""
     SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, VideoSubmit, ExamSubmit, Members
@@ -4842,8 +4857,8 @@ def hspreport(g, d, access):
         AND Grp LIKE '{g}'
     ORDER BY GID
     """
-    print("Group Query:")
-    print(hsp_group)
+    # print("Group Query:")
+    # print(hsp_group)
     
     hsp_dept = f"""
     SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
@@ -4854,8 +4869,8 @@ def hspreport(g, d, access):
     GROUP BY Dept, DID
     ORDER BY DID
     """
-    print("Department Query:")
-    print(hsp_dept)
+    # print("Department Query:")
+    # print(hsp_dept)
     
     hsp_total = f"""
     SELECT SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
@@ -4864,8 +4879,8 @@ def hspreport(g, d, access):
     WHERE Dept LIKE '{d}'
         AND Grp LIKE '{g}'
     """
-    print("Total Query:")
-    print(hsp_total)
+    # print("Total Query:")
+    # print(hsp_total)
        
     dm = pd.read_sql(hsp_mem, conn)
     dg = pd.read_sql(hsp_group, conn)
@@ -4885,14 +4900,14 @@ def hspreport(g, d, access):
     if access == 'Group':
         member = '1⃣2⃣3⃣4⃣5⃣6⃣\n'
         for r in range(len(dm)):
-            mem =   str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
+            mem = str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
             wp  = str(dm.loc[r,'WD'])
             f1  = str(dm.loc[r,'F1'])
             di  = str(dm.loc[r,'DI'])
             f2  = str(dm.loc[r,'F2'])
             vs  = str(dm.loc[r,'VS'])
             ex  = str(dm.loc[r,'EX'])
-            member = f'{member}~{wp}~{f1}~{di}~{f2}{vs}{ex}{mem}\n'        
+            member = f'{member}{wp}{f1}{di}{f2}{vs}{ex}{mem}\n'        
         member = f'</pre>{member}\n'
     
     s = 2 if access == 'Group' else 3  
@@ -4934,11 +4949,10 @@ def hspreport(g, d, access):
         tt  = ' '*(3-len(str(dy.loc[0,'TT']))) + str(dy.loc[0,'TT'])
         total = f'Total[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]'
 
-    now = datetime.now().strftime('%Y-%m-%d, %H:%M:%S')
+    now = datetime.now(ZoneInfo("Australia/Melbourne")).strftime('%a %d %b, %I:%M %p') # datetime.now(ZoneInfo("Australia/Melbourne")).strftime('%Y-%m-%d, %H:%M:%S')
     header = f"<b><u>{grpdept} HSP EDU REPORTING</u></b>\n<i>{now}</i>\n\n"
-    header = header if access != 'Group' else f"{header}1⃣ Wed\n2⃣ Friday 1\n3⃣ Drop-in \n4⃣ Friday 2\n5⃣ Video Submission\n6⃣ Exam\n\n✅ Submitted/Reported/Attended\n❌ Not Submitted/Reported/Attended\n\n"
+    header = header if access != 'Group' else f"{header}1⃣ Wed\n2⃣ Friday 1\n3⃣ Drop-in \n4⃣ Friday 2\n5⃣ Video Submission\n6⃣ Exam\n\n🔒Reporting Not Open\n⬜️Reporting Open\n❌Absent\n✅Attend\n\n"
     columns = '' if access == 'Group' else '     [WED|FR1|DPN|FR2|VID|EXM|TOT]\n\n'
-    member = member.replace('~1','✅').replace('~0','❌')
     table = f"<pre>{columns}{member}{group}{dept}{total}</pre>"
     table = re.sub(r'\.0',r'  ',table) if access != 'Group' else table # Replaces '.0' with empty space
     table = re.sub(r'(\D)0([^.])',r'\1-\2',table) if access != 'Group' else table   # Replaces lone '0' with '-'

@@ -394,4 +394,18 @@ class HSPGetEduSessionScoresViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
+class HSPGetMWScoresViewSet(APIView):
+    def get(self, request):
+        print(request)
+        try:
+            uid = request.GET.get('UID')
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM [dbo].[HSPMWCurrentScoresFunction]() ORDER By GID')
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
      

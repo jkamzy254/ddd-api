@@ -1110,7 +1110,7 @@ def bbstatus(g, d, sid, access, v2=False):
 def bbtstatus(q, g, d, sid, access, bbtdept, v2=False):
         
     name = 'BBTCode' if access == 'Group' else 'BBTGrp'
-        
+
     g = g if access == 'Group' else '%'
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
@@ -1120,10 +1120,11 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False):
     else:
         grpdept = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
     
-    i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+    i = q[:3]
+    bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
+                 'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
+                 'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
     codeybbtstatusmembers = 'CodeyBBTStatusMembers2' if v2 else 'CodeyBBTStatusMembers'
@@ -1398,10 +1399,11 @@ def newbbtstatus(q, g, d, sid, access):
     else:
         grpdept = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 1')
     
-    i = q if q in ['newbbt','newgyjnbbt'] else 'newbtm'
-    bbtvalues = {'newbbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'newgyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'newbtm'     : [q.upper().replace('NEW',''), f" AND BtmNo = '{q[6:]}'"]}
+    i = q[:3]
+    bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
+                 'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
+                 'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
     table = f"CodeyBBTStatusMembersUBB('{sid}')"
@@ -1538,10 +1540,11 @@ def deptbbtstatus(q, d, r, access):
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     
-    i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+    i = q[:3]
+    bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
+                 'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
+                 'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
@@ -1607,10 +1610,11 @@ def bbtactive(q, g, d, r, access):
     else:
         grpdept = str(d).replace('D[0-9]%','Youth')
     
-    i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+    i = q[:3]
+    bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
+                 'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
+                 'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
@@ -1691,9 +1695,11 @@ def deptbbtactive(q, d, r, access):
     
     i = q if q in ['bbt','gyjnbbt'] else 'btm'
     
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+    i = q[:3]
+    bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
+                 'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
+                 'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
@@ -1751,10 +1757,11 @@ def bbtinactive(q, g, d, r, access):
     else:
         grpdept = str(d).replace('D[0-9]%','Youth')
     
-    i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+    i = q[:3]
+    bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
+                 'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
+                 'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
@@ -1840,10 +1847,11 @@ def deptbbtinactive(q, d, r, access):
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
     
-    i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+    i = q[:3]
+    bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
+                 'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
+                 'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
@@ -2198,17 +2206,20 @@ def bblists(d,g,physical,online,access):
 def bbtlist(q,d,g,sid,access):
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+
+    i = q[:3]
+    bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
+                 'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
+                 'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+    bbttype,query = bbtvalues[i]
+
     g = '%' if access != 'Group' else g
     if access == 'Group':
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
         grpdept = str(d).replace('D[0-9]%','Youth')
-    bbttype,query = bbtvalues[i]
     
     columns = "LastClass, BBTN, FruitName, ISNULL(L1N,'NULL')L1N, L2N, LastTopic, NextClassDate"
     grp_dept_filter = f"BBTG LIKE '{g}' AND BBTD LIKE '{d}'{query} ORDER BY BBTN"
@@ -2473,17 +2484,20 @@ def newbblist(d,g,sid,access):
 def newbbtlist(q,d,g,sid,access):
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    i = q if q in ['newbbt','newgyjnbbt'] else 'btm'
-    bbtvalues = {'newbbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'newgyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'newbtm'     : [q.upper().replace('NEW',''), f" AND BtmNo = '{q[3:]}'"]}
+
+    i = q[:3]
+    bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
+                 'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
+                 'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+    bbttype,query = bbtvalues[i]
+
     g = '%' if access != 'Group' else g
     if access == 'Group':
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
         grpdept = str(d).replace('D[0-9]%','Youth')
-    bbttype,query = bbtvalues[i]
     
     cols = "LastClass, BBTN, FruitName, L1N, L2N, LastTopic, NextClassDate, Points, DPoints"
     view = f"CodeyBBListUBB('{sid}') c LEFT JOIN TaskHigh t ON t.UID = c.BBTID"
@@ -2633,10 +2647,12 @@ def newbbtlist(q,d,g,sid,access):
 def bbtlistold(q,d):
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    i = q if q in ['bbt','gyjnbbt'] else 'btm'
-    bbtvalues = {'bbt'     : ['BBT',   " AND BBTStatus IN ('Active','PreBBT')"],
-                 'gyjnbbt' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm'     : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+
+    i = q[:3]
+    bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
+                 'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
+                 'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)   
@@ -4948,8 +4964,8 @@ def hspreport(g, d, access):
         ex  = ' '*(3-len(str(dy.loc[0,'EX']))) + str(dy.loc[0,'EX'])
         tt  = ' '*(3-len(str(dy.loc[0,'TT']))) + str(dy.loc[0,'TT'])
         total = f'Total[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]'
-
-    now = datetime.now(ZoneInfo("Australia/Melbourne")).strftime('%a %d %b, %I:%M %p') # datetime.now(ZoneInfo("Australia/Melbourne")).strftime('%Y-%m-%d, %H:%M:%S')
+    now = datetime.now().strftime('%Y-%m-%d, %H:%M:%S')
+    # now = datetime.now(ZoneInfo("Australia/Melbourne")).strftime('%a %d %b, %I:%M %p')
     header = f"<b><u>{grpdept} HSP EDU REPORTING</u></b>\n<i>{now}</i>\n\n"
     header = header if access != 'Group' else f"{header}1⃣ Wed\n2⃣ Friday 1\n3⃣ Drop-in \n4⃣ Friday 2\n5⃣ Video Submission\n6⃣ Exam\n\n🔒Reporting Not Open\n⬜️Reporting Open\n❌Absent\n✅Attend\n\n"
     columns = '' if access == 'Group' else '     [WED|FR1|DPN|FR2|VID|EXM|TOT]\n\n'

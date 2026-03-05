@@ -249,7 +249,7 @@ def bot_responses(id,tname,input_text):
             q = command.removesuffix('list')
             return SQLCodes.bbtlist(q,d,g,bb_sid,access)
             
-        if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')):
+        if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt') or command.startswith('prebbt')):
             if command.endswith('status'):
                 q = command.removesuffix('status')
                 return SQLCodes.bbtstatus(q,g,d,bb_sid,access,False) # returns normal bbtstatus
@@ -343,7 +343,7 @@ def bot_responses(id,tname,input_text):
             return SQLCodes.youthmxpx(d)
 
         if command == 'aprilmission':
-            return SQLCodes.aprilmission(access)
+            return SQLCodes.aprilmission(access,standard)
         
         if command.startswith('approve'):
             a,userUID,telID,i = command.split('#')

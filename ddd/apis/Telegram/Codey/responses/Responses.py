@@ -245,7 +245,7 @@ def bot_responses(id,tname,input_text):
             return SQLCodes.newbbtstatus(q,g,d,bb_sid,access)
             
         
-        if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('list'):
+        if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt') or command.startswith('prebbt')) and command.endswith('list'):
             q = command.removesuffix('list')
             return SQLCodes.bbtlist(q,d,g,bb_sid,access)
             

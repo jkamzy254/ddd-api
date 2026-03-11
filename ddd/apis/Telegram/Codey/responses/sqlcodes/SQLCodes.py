@@ -4488,7 +4488,7 @@ def bbtmission():
         table = f'{table}{dp}{pa}{ab}{tb}\n'
     
     summary = f"<b><u>Active BBT Rate</u></b>\n\n<pre>Dept  Prcnt  (A/TT)\n\n{table}</pre>"
-    summary = re.sub(r'0.0%',r'-   ',summary)
+    summary = re.sub(r'(?<=\D)0\.0%',r'-   ',summary) # Replaces '0.0%' following a non-digit with '-'
     return summary
 
 

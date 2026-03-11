@@ -343,7 +343,7 @@ def bot_responses(id,tname,input_text):
             return SQLCodes.youthmxpx(d)
 
         if command == 'aprilmission':
-            return SQLCodes.aprilmission(access,standard)
+            return SQLCodes.aprilmission(access)
         
         if command.startswith('approve'):
             a,userUID,telID,i = command.split('#')

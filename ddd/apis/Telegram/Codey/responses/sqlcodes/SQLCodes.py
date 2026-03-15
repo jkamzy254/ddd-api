@@ -4812,8 +4812,11 @@ def eduabs(gd,edutype,filt):
 
     gd = gd.capitalize()
     edutype = edutype.capitalize()
-          
-    conn = odbc.connect(conn_str)   
+    
+    conn = odbc.connect(conn_str, autocommit=True)
+    conn.setdecoding(odbc.SQL_CHAR, encoding='utf-8')
+    conn.setdecoding(odbc.SQL_WCHAR, encoding='utf-8')
+    conn.setencoding(encoding='utf-8')
 
     query_abs = f"SELECT Dept, Grp, MemberCode FROM CodeyEduAbsentees('{edutype}') WHERE Attendance = 'Abs' AND {filt} LIKE '{gd}'"
     query_nr  = f"SELECT Dept, Grp, MemberCode FROM CodeyEduAbsentees('{edutype}') WHERE Attendance = 'NoReport' AND {filt} LIKE '{gd}'"

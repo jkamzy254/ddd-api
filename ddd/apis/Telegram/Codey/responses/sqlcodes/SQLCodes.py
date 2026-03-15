@@ -4822,15 +4822,6 @@ def eduabs(gd,edutype,filt):
     return result
 
 
-
-
-
-
-
-
-
-
-
 def hspreport(g, d, access):
     
     g = g if access == 'Group' else '%'

@@ -4812,11 +4812,21 @@ def eduabs(gd,edutype,filt):
 
     gd = gd.capitalize()
     edutype = edutype.capitalize()
+          
+    conn = odbc.connect(conn_str)   
     
-    conn = odbc.connect(conn_str, autocommit=True)
-    conn.setdecoding(odbc.SQL_CHAR, encoding='utf-8')
-    conn.setdecoding(odbc.SQL_WCHAR, encoding='utf-8')
-    conn.setencoding(encoding='utf-8')
+    EMOJI_MAP = {
+        'present':  '✅',
+        'absent':   '❌',
+        'locked':   '🔒',
+        'open':     '⬜️',
+    }
+
+    def map_prs(val, locked=False, open_=False):
+        if val:      return EMOJI_MAP['present']
+        if locked:   return EMOJI_MAP['locked']
+        if open_:    return EMOJI_MAP['open']
+        return EMOJI_MAP['absent']
 
     query_abs = f"SELECT Dept, Grp, MemberCode FROM CodeyEduAbsentees('{edutype}') WHERE Attendance = 'Abs' AND {filt} LIKE '{gd}'"
     query_nr  = f"SELECT Dept, Grp, MemberCode FROM CodeyEduAbsentees('{edutype}') WHERE Attendance = 'NoReport' AND {filt} LIKE '{gd}'"
@@ -4856,6 +4866,17 @@ def eduabs(gd,edutype,filt):
     result = re.sub(r'\[1\] ', r'', result)
     return result
 
+    
+# --- Kamau Adjustment #2/3 Start for Unicode Issue
+def map_emoji(val, col=None):
+    mapping = {
+        1: '✅',
+        2: '🔒',
+        3: '⬜️',
+        0: '❌',
+    }
+    return mapping.get(int(val), '❌')
+# --- Kamau Adjustment #1/3 End
 
 def hspreport(g, d, access):
     
@@ -4865,7 +4886,36 @@ def hspreport(g, d, access):
     grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth')
     
     conn = odbc.connect(conn_str)
+    
+    # --- Kamau Adjustment #2/3 Start for Unicode Issue
 
+    # hsp_mem = f"""
+    # WITH Days AS
+    # (SELECT CONVERT(DATE, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')TD,
+    #     StartDate W1,
+    #     DATEADD(DAY,2,StartDate)F1,
+    #     DATEADD(DAY,6,StartDate)T2,
+    #     DATEADD(DAY,9,StartDate)F2,
+    #     DATEADD(DAY,10,StartDate)S2,
+    #     DATEADD(DAY,11,StartDate)U2
+    #     FROM NewEduGroupTable
+    #     WHERE CONVERT(DATE, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') BETWEEN StartDate AND EndDate)
+    # SELECT MemberCode,
+    #     CASE WHEN WedPrs != 0 THEN N'✅' ELSE N'❌' END WedPrs,
+    #     CASE WHEN Fri1Prs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F1 FROM Days) THEN N'🔒' ELSE N'❌' END Fri1Prs,
+    #     CASE WHEN DropInPrs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT T2 FROM Days) THEN N'🔒' WHEN (SELECT TD FROM Days) < (SELECT S2 FROM Days) THEN N'⬜️' ELSE N'❌' END DropInPrs,
+    #     CASE WHEN Fri2Prs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN N'🔒' ELSE N'❌' END Fri2Prs,
+    #     CASE WHEN ISNULL(VidSubmitted,0) != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN N'⬜️' ELSE N'❌' END VidSubmitted,
+    #     CASE WHEN ISNULL(ExamScore,0) != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT U2 FROM Days) THEN N'🔒' ELSE N'❌' END ExamScore
+    # FROM HSPMemberCodey
+    # WHERE Dept LIKE '{d}'
+    #     AND Grp LIKE '{g}'
+    # ORDER BY Pos, MemberCode
+    # """
+    # print("Member Query:")
+    # print(hsp_mem)
+    
+    
     hsp_mem = f"""
     WITH Days AS
     (SELECT CONVERT(DATE, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')TD,
@@ -4878,19 +4928,30 @@ def hspreport(g, d, access):
         FROM NewEduGroupTable
         WHERE CONVERT(DATE, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') BETWEEN StartDate AND EndDate)
     SELECT MemberCode,
-        CASE WHEN WedPrs != 0 THEN N'✅' ELSE N'❌' END WedPrs,
-        CASE WHEN Fri1Prs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F1 FROM Days) THEN N'🔒' ELSE N'❌' END Fri1Prs,
-        CASE WHEN DropInPrs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT T2 FROM Days) THEN N'🔒' WHEN (SELECT TD FROM Days) < (SELECT S2 FROM Days) THEN N'⬜️' ELSE N'❌' END DropInPrs,
-        CASE WHEN Fri2Prs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN N'🔒' ELSE N'❌' END Fri2Prs,
-        CASE WHEN ISNULL(VidSubmitted,0) != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN N'⬜️' ELSE N'❌' END VidSubmitted,
-        CASE WHEN ISNULL(ExamScore,0) != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT U2 FROM Days) THEN N'🔒' ELSE N'❌' END ExamScore
+        CASE WHEN WedPrs   != 0 THEN 1 ELSE 0 END WedPrs,
+        CASE WHEN Fri1Prs  != 0 THEN 1
+            WHEN (SELECT TD FROM Days) < (SELECT F1 FROM Days) THEN 2
+            ELSE 0 END Fri1Prs,
+        CASE WHEN DropInPrs != 0 THEN 1
+            WHEN (SELECT TD FROM Days) < (SELECT T2 FROM Days) THEN 2
+            WHEN (SELECT TD FROM Days) < (SELECT S2 FROM Days) THEN 3
+            ELSE 0 END DropInPrs,
+        CASE WHEN Fri2Prs  != 0 THEN 1
+            WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN 2
+            ELSE 0 END Fri2Prs,
+        CASE WHEN ISNULL(VidSubmitted,0) != 0 THEN 1
+            WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN 3
+            ELSE 0 END VidSubmitted,
+        CASE WHEN ISNULL(ExamScore,0)    != 0 THEN 1
+            WHEN (SELECT TD FROM Days) < (SELECT U2 FROM Days) THEN 2
+            ELSE 0 END ExamScore
     FROM HSPMemberCodey
     WHERE Dept LIKE '{d}'
         AND Grp LIKE '{g}'
     ORDER BY Pos, MemberCode
     """
-    # print("Member Query:")
-    # print(hsp_mem)
+    
+    # --- Kamau Adjustment #2/3 End
     
     hsp_group = f"""
     SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, VideoSubmit, ExamSubmit, Members
@@ -4933,6 +4994,12 @@ def hspreport(g, d, access):
     dg.columns = ['Grp','WD','F1','DI','F2','VS','EX','TT']
     dd.columns = ['Dept','WD','F1','DI','F2','VS','EX','TT']
     dy.columns = ['WD','F1','DI','F2','VS','EX','TT']
+    
+    
+    # --- Kamau Adjustment #3/3 Start for Unicode Issue
+    for col in ['WD', 'F1', 'DI', 'F2', 'VS', 'EX']:
+        dm[col] = dm[col].apply(map_emoji)
+    # --- Kamau Adjustment #3/3 End
     
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     

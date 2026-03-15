@@ -4664,3 +4664,336 @@ def aprilbbtmission(access):
     summary = re.sub(totalrow,f"\n{totalrow}",summary)
     summary = f"<b><u>April CT BBT Mission</u></b>\n\n<pre>Dept     [BBT|TGW|Mm|0P|1P| FE]\n\n{summary}"
     return summary
+
+
+
+
+
+def secondedu(g, d, sid, standard, ct, access):
+
+    views = {'bbt':'FnBbtSE','leaf':'FnLeafSE','all':'FnSE'}
+    view = views[standard]
+    r = {'Physical + Online':'%','Physical':'Melbourne','Online':'Online'}[ct]
+    
+    name = 'BBTCode' if access == 'Group' else 'BBTGrp'
+        
+    g = g if access == 'Group' else '%'
+    d = d.capitalize().replace('d','D')
+    grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth')
+    
+    conn = odbc.connect(conn_str)
+    bb_mem = f"SELECT Dept, Grp, {name}, X, P, FE, SE FROM {view}('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID, {name}"
+    bb_group = f"SELECT Grp, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
+    bb_dept = f"SELECT Dept, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
+    bb_youth = f"SELECT SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+    seasons = f"SELECT SeasonName FROM EVSeason WHERE ID BETWEEN 87 AND 91 AND Region LIKE '{r}'"
+
+    print(bb_group)
+    
+    dm = pd.read_sql(bb_mem, conn)
+    dg = pd.read_sql(bb_group, conn)
+    dd = pd.read_sql(bb_dept, conn)
+    dy = pd.read_sql(bb_youth, conn)
+    ds = pd.read_sql(seasons, conn)
+    dm.columns = ['Dept','Grp','BBT','X','P','FE','SE']
+    dg.columns = ['Grp','X','P','FE','SE']
+    dd.columns = ['Dept','X','P','FE','SE']
+    dy.columns = ['X','P','FE','SE']
+    ds.columns = ['SeasonName']
+        
+    conn.cursor().close()
+
+    seasonlist = ds['SeasonName'].str.cat(sep=', ').replace('Yr 43 ','').replace('Feb CT Online','FebONL').replace('Feb CT','Feb').replace('Apr CT Online ','AprONL').replace('Apr CT','Apr').replace('Apr SE CT','AprMW')
+
+    member = str()
+    if not d.endswith('D[0-9]%'):
+        for r in range(len(dm)):
+            bbt =   str(dm.loc[r,'BBT'][:5]) + ' '*(5-len(str(dm.loc[r,'BBT'][:5])))
+            x = ' '*(3-len(str(dm.loc[r,'X']))) + str(dm.loc[r,'X'])
+            p  = ' '*(3-len(str(dm.loc[r,'P']))) + str(dm.loc[r,'P'])
+            f  = ' '*(3-len(str(dm.loc[r,'FE']))) + str(dm.loc[r,'FE'])
+            s  = ' '*(3-len(str(dm.loc[r,'SE']))) + str(dm.loc[r,'SE'])
+            member = f'{member}{bbt}[{x}|{p}|{f}|{s}]\n'        
+        member = member + '\n'
+            
+    group = str() 
+    for r in range(len(dg)):
+        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        x = ' '*(3-len(str(dg.loc[r,'X']))) + str(dg.loc[r,'X'])
+        p  = ' '*(3-len(str(dg.loc[r,'P']))) + str(dg.loc[r,'P'])
+        f  = ' '*(3-len(str(dg.loc[r,'FE']))) + str(dg.loc[r,'FE'])
+        s  = ' '*(3-len(str(dg.loc[r,'SE']))) + str(dg.loc[r,'SE'])
+        group = f'{group}{grp}[{x}|{p}|{f}|{s}]\n'
+    group = group + '\n'
+            
+    dept = str()  
+    if access != 'Group':  
+        for r in range(len(dd)):
+            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            x = ' '*(3-len(str(dd.loc[r,'X']))) + str(dd.loc[r,'X'])
+            p  = ' '*(3-len(str(dd.loc[r,'P']))) + str(dd.loc[r,'P'])
+            f  = ' '*(3-len(str(dd.loc[r,'FE']))) + str(dd.loc[r,'FE'])
+            s  = ' '*(3-len(str(dd.loc[r,'SE']))) + str(dd.loc[r,'SE'])
+            dept = f'{dept}{dpt}[{x}|{p}|{f}|{s}]\n'
+        dept = dept + '\n'
+        
+    total = str()
+    if d == 'D[0-9]%':
+        x = ' '*(3-len(str(dy.loc[0,'X']))) + str(dy.loc[0,'X'])
+        p  = ' '*(3-len(str(dy.loc[0,'P']))) + str(dy.loc[0,'P'])
+        f  = ' '*(3-len(str(dy.loc[0,'FE']))) + str(dy.loc[0,'FE'])
+        s  = ' '*(3-len(str(dy.loc[0,'SE']))) + str(dy.loc[0,'SE'])
+        total = f'Total[{x}|{p}|{f}|{s}]'
+    
+    summary = f"<b><u>{grpdept} Second Edu</u></b>\n<i>Standard = {standard.capitalize().replace('All','Leaf + BBT')}\n{ct} CT\n{seasonlist}</i>\n\n<pre>     [ X | P | FE| SE]\n\n{member}{group}{dept}{total}</pre>"
+    summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
+    summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
+    return summary
+
+
+
+
+def svcabs(gd,svctype,filt):
+    # THIS FUNCTION IS WRITTEN IN MARKDOWNV2, NOT HTML LIKE ALL OTHER FUNCTIONS.
+    # (TECHNICALLY MOST OF IT IS HTML EXCEPT <pre>Absentees AND <pre>Not_Reported, BUT MAIN.PY WILL CONVERT IT TO MARKDOWNV2)
+    # THE REASON FOR THIS IS THAT ONLY MARKDOWNV2 ALLOWS CUSTOM CODE BLOCK LABELS.
+    # TO SET PARSE MODE TO MARKDOWNV2, ENSURE RESPONSES.PY RETURNS STRING "MARKDOWNV2" IN FRONT OF THIS FUNCTION'S RETURN
+
+    gd = gd.capitalize()
+    svctype = svctype.capitalize()
+          
+    conn = odbc.connect(conn_str)   
+
+    query_abs = f"SELECT Dept, Grp, MemberCode FROM CodeyServiceAbsentees('{svctype}') WHERE Attendance = 'Abs' AND {filt} LIKE '{gd}'"
+    query_nr  = f"SELECT Dept, Grp, MemberCode FROM CodeyServiceAbsentees('{svctype}') WHERE Attendance = 'NoReport' AND {filt} LIKE '{gd}'"
+
+    print(query_abs)
+
+    dAB = pd.read_sql(query_abs, conn)                
+    dNR = pd.read_sql(query_nr, conn)
+
+    dAB.columns = ['Dept','Grp','MemberCode']
+    dNR.columns = ['Dept','Grp','MemberCode']
+
+    conn.cursor().close()
+    ab = "" # "<i><b><u>Absentees</u></b></i>\n"
+    nr = "" # "<i><b><u>Not Reported</u></b></i>\n"
+
+    if len(dAB) == 0:
+        ab = f"{ab}<b>Absentees</b>\n<i>No Members</i>"
+    else:
+        ab = f"{ab}<pre>Absentees\n"
+        for r in range(len(dAB)):
+            ab = f"{ab}{r+1}.{' '*(3-len(str(r+1)))}{dAB.loc[r,'Dept']} {dAB.loc[r,'Grp']} {dAB.loc[r,'MemberCode']}\n"
+        ab = f"{ab}</pre>"
+
+    if len(dNR) == 0:
+        nr = f"{nr}<b>Not Reported</b>\n<i>No Members</i>"
+    else:
+        nr = f'{nr}<pre>NotReported\n'
+        for r in range(len(dNR)):
+            nr = f"{nr}{r+1}.{' '*(3-len(str(r+1)))}{dNR.loc[r,'Dept']} {dNR.loc[r,'Grp']} {dNR.loc[r,'MemberCode']}\n"
+        nr = f"{nr}</pre>"
+
+    result = f"<b>{gd} {svctype} Service Absentee List</b>\n\n{ab}\n{nr}"
+    result = re.sub(r'\.0',r'',result)
+    result = re.sub(r' \(\)',r'',result)
+    result = re.sub(r'\((\d+)\)', r'(G\1)', result)
+    result = re.sub(r'\[1\] ', r'', result)
+    return result
+
+
+
+def eduabs(gd,edutype,filt):
+    # THIS FUNCTION IS WRITTEN IN MARKDOWNV2, NOT HTML LIKE ALL OTHER FUNCTIONS.
+    # (TECHNICALLY MOST OF IT IS HTML EXCEPT <pre>Absentees AND <pre>Not_Reported, BUT MAIN.PY WILL CONVERT IT TO MARKDOWNV2)
+    # THE REASON FOR THIS IS THAT ONLY MARKDOWNV2 ALLOWS CUSTOM CODE BLOCK LABELS.
+    # TO SET PARSE MODE TO MARKDOWNV2, ENSURE RESPONSES.PY RETURNS STRING "MARKDOWNV2" IN FRONT OF THIS FUNCTION'S RETURN
+
+    gd = gd.capitalize()
+    edutype = edutype.capitalize()
+          
+    conn = odbc.connect(conn_str)   
+
+    query_abs = f"SELECT Dept, Grp, MemberCode FROM CodeyEduAbsentees('{edutype}') WHERE Attendance = 'Abs' AND {filt} LIKE '{gd}'"
+    query_nr  = f"SELECT Dept, Grp, MemberCode FROM CodeyEduAbsentees('{edutype}') WHERE Attendance = 'NoReport' AND {filt} LIKE '{gd}'"
+
+    print(query_abs)
+
+    dAB = pd.read_sql(query_abs, conn)                
+    dNR = pd.read_sql(query_nr, conn)
+
+    dAB.columns = ['Dept','Grp','MemberCode']
+    dNR.columns = ['Dept','Grp','MemberCode']
+
+    conn.cursor().close()
+    ab = "" # "<i><b><u>Absentees</u></b></i>\n"
+    nr = "" # "<i><b><u>Not Reported</u></b></i>\n"
+
+    if len(dAB) == 0:
+        ab = f"{ab}<i>No Members</i>"
+    else:
+        ab = f"{ab}<pre>Absentees\n"
+        for r in range(len(dAB)):
+            ab = f"{ab}{r+1}.{' '*(3-len(str(r+1)))}{dAB.loc[r,'Dept']} {dAB.loc[r,'Grp']} {dAB.loc[r,'MemberCode']}\n"
+        ab = f"{ab}</pre>"
+
+    if len(dNR) == 0:
+        nr = f"{nr}<i>No Members</i>"
+    else:
+        nr = f'{nr}<pre>NotReported\n'
+        for r in range(len(dNR)):
+            nr = f"{nr}{r+1}.{' '*(3-len(str(r+1)))}{dNR.loc[r,'Dept']} {dNR.loc[r,'Grp']} {dNR.loc[r,'MemberCode']}\n"
+        nr = f"{nr}</pre>"
+
+    result = f"*<b>{gd} {edutype} Edu Absentee List</b>*\n\n{ab}\n{nr}"
+    result = re.sub(r'\.0',r'',result)
+    result = re.sub(r' \(\)',r'',result)
+    result = re.sub(r'\((\d+)\)', r'(G\1)', result)
+    result = re.sub(r'\[1\] ', r'', result)
+    return result
+
+
+def hspreport(g, d, access):
+    
+    g = g if access == 'Group' else '%'
+    d = d.capitalize().replace('d','D')
+
+    grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth')
+    
+    conn = odbc.connect(conn_str)
+
+    hsp_mem = f"""
+    WITH Days AS
+    (SELECT CONVERT(DATE, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')TD,
+        StartDate W1,
+        DATEADD(DAY,2,StartDate)F1,
+        DATEADD(DAY,6,StartDate)T2,
+        DATEADD(DAY,9,StartDate)F2,
+        DATEADD(DAY,10,StartDate)S2,
+        DATEADD(DAY,11,StartDate)U2
+        FROM NewEduGroupTable
+        WHERE CONVERT(DATE, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') BETWEEN StartDate AND EndDate)
+    SELECT MemberCode,
+        CASE WHEN WedPrs != 0 THEN N'✅' ELSE N'❌' END WedPrs,
+        CASE WHEN Fri1Prs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F1 FROM Days) THEN N'🔒' ELSE N'❌' END Fri1Prs,
+        CASE WHEN DropInPrs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT T2 FROM Days) THEN N'🔒' WHEN (SELECT TD FROM Days) < (SELECT S2 FROM Days) THEN N'⬜️' ELSE N'❌' END DropInPrs,
+        CASE WHEN Fri2Prs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN N'🔒' ELSE N'❌' END Fri2Prs,
+        CASE WHEN ISNULL(VidSubmitted,0) != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN N'⬜️' ELSE N'❌' END VidSubmitted,
+        CASE WHEN ISNULL(ExamScore,0) != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT U2 FROM Days) THEN N'🔒' ELSE N'❌' END ExamScore
+    FROM HSPMemberCodey
+    WHERE Dept LIKE '{d}'
+        AND Grp LIKE '{g}'
+    ORDER BY Pos, MemberCode
+    """
+    # print("Member Query:")
+    # print(hsp_mem)
+    
+    hsp_group = f"""
+    SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, VideoSubmit, ExamSubmit, Members
+    FROM HSPCodey
+    WHERE Dept LIKE '{d}'
+        AND Grp LIKE '{g}'
+    ORDER BY GID
+    """
+    # print("Group Query:")
+    # print(hsp_group)
+    
+    hsp_dept = f"""
+    SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
+        SUM(VideoSubmit)VideoSubmit, SUM(ExamSubmit)ExamSubmit, SUM(Members)Total
+    FROM HSPCodey
+    WHERE Dept LIKE '{d}'
+        AND Grp LIKE '{g}'
+    GROUP BY Dept, DID
+    ORDER BY DID
+    """
+    # print("Department Query:")
+    # print(hsp_dept)
+    
+    hsp_total = f"""
+    SELECT SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
+        SUM(VideoSubmit)VideoSubmit, SUM(ExamSubmit)ExamSubmit, SUM(Members)Total
+    FROM HSPCodey
+    WHERE Dept LIKE '{d}'
+        AND Grp LIKE '{g}'
+    """
+    # print("Total Query:")
+    # print(hsp_total)
+       
+    dm = pd.read_sql(hsp_mem, conn)
+    dg = pd.read_sql(hsp_group, conn)
+    dd = pd.read_sql(hsp_dept, conn)
+    dy = pd.read_sql(hsp_total, conn)
+
+    dm.columns = ['Member','WD','F1','DI','F2','VS','EX']
+    dg.columns = ['Grp','WD','F1','DI','F2','VS','EX','TT']
+    dd.columns = ['Dept','WD','F1','DI','F2','VS','EX','TT']
+    dy.columns = ['WD','F1','DI','F2','VS','EX','TT']
+    
+    dd.replace(r' Dept',r'', regex = True, inplace = True)
+    
+    conn.cursor().close()
+
+    member = str()
+    if access == 'Group':
+        member = '1⃣2⃣3⃣4⃣5⃣6⃣\n'
+        for r in range(len(dm)):
+            mem = str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
+            wp  = str(dm.loc[r,'WD'])
+            f1  = str(dm.loc[r,'F1'])
+            di  = str(dm.loc[r,'DI'])
+            f2  = str(dm.loc[r,'F2'])
+            vs  = str(dm.loc[r,'VS'])
+            ex  = str(dm.loc[r,'EX'])
+            member = f'{member}{wp}{f1}{di}{f2}{vs}{ex}{mem}\n'        
+        member = f'</pre>{member}\n'
+    
+    s = 2 if access == 'Group' else 3  
+    group = str()    
+    for r in range(len(dg)):
+        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        wp  = ' '*(s-len(str(dg.loc[r,'WD']))) + str(dg.loc[r,'WD'])
+        f1  = ' '*(s-len(str(dg.loc[r,'F1']))) + str(dg.loc[r,'F1'])
+        di  = ' '*(s-len(str(dg.loc[r,'DI']))) + str(dg.loc[r,'DI'])
+        f2  = ' '*(s-len(str(dg.loc[r,'F2']))) + str(dg.loc[r,'F2'])
+        vs  = ' '*(s-len(str(dg.loc[r,'VS']))) + str(dg.loc[r,'VS'])
+        ex  = ' '*(s-len(str(dg.loc[r,'EX']))) + str(dg.loc[r,'EX'])
+        tt  = ' '*(s-len(str(dg.loc[r,'TT']))) + str(dg.loc[r,'TT'])
+        group = f'{group}{grp}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]\n' if access != 'Group' else f'<b>{group}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}]</b>\n(<i>{tt} members)</i><pre>\n'
+    group = group + '\n'
+      
+    dept = str()  
+    if access != 'Group':
+        for r in range(len(dd)):
+            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            wp  = ' '*(3-len(str(dd.loc[r,'WD']))) + str(dd.loc[r,'WD'])
+            f1  = ' '*(3-len(str(dd.loc[r,'F1']))) + str(dd.loc[r,'F1'])
+            di  = ' '*(3-len(str(dd.loc[r,'DI']))) + str(dd.loc[r,'DI'])
+            f2  = ' '*(3-len(str(dd.loc[r,'F2']))) + str(dd.loc[r,'F2'])
+            vs  = ' '*(3-len(str(dd.loc[r,'VS']))) + str(dd.loc[r,'VS'])
+            ex  = ' '*(3-len(str(dd.loc[r,'EX']))) + str(dd.loc[r,'EX'])
+            tt  = ' '*(3-len(str(dd.loc[r,'TT']))) + str(dd.loc[r,'TT'])
+            dept = f'{dept}{dpt}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]\n'
+        dept = dept + '\n'
+    
+    total = str()
+    if d == 'D[0-9]%':
+        wp  = ' '*(3-len(str(dy.loc[0,'WD']))) + str(dy.loc[0,'WD'])
+        f1  = ' '*(3-len(str(dy.loc[0,'F1']))) + str(dy.loc[0,'F1'])
+        di  = ' '*(3-len(str(dy.loc[0,'DI']))) + str(dy.loc[0,'DI'])
+        f2  = ' '*(3-len(str(dy.loc[0,'F2']))) + str(dy.loc[0,'F2'])
+        vs  = ' '*(3-len(str(dy.loc[0,'VS']))) + str(dy.loc[0,'VS'])
+        ex  = ' '*(3-len(str(dy.loc[0,'EX']))) + str(dy.loc[0,'EX'])
+        tt  = ' '*(3-len(str(dy.loc[0,'TT']))) + str(dy.loc[0,'TT'])
+        total = f'Total[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]'
+    now = datetime.now().strftime('%Y-%m-%d, %H:%M:%S')
+    # now = datetime.now(ZoneInfo("Australia/Melbourne")).strftime('%a %d %b, %I:%M %p')
+    header = f"<b><u>{grpdept} HSP EDU REPORTING</u></b>\n<i>{now}</i>\n\n"
+    header = header if access != 'Group' else f"{header}1⃣ Wed\n2⃣ Friday 1\n3⃣ Drop-in \n4⃣ Friday 2\n5⃣ Video Submission\n6⃣ Exam\n\n🔒Reporting Not Open\n⬜️Reporting Open\n❌Absent\n✅Attend\n\n"
+    columns = '' if access == 'Group' else '     [WED|FR1|DPN|FR2|VID|EXM|TOT]\n\n'
+    table = f"<pre>{columns}{member}{group}{dept}{total}</pre>"
+    table = re.sub(r'\.0',r'  ',table) if access != 'Group' else table # Replaces '.0' with empty space
+    table = re.sub(r'(\D)0([^.])',r'\1-\2',table) if access != 'Group' else table   # Replaces lone '0' with '-'
+    summary = f"{header}{table}"
+    return summary

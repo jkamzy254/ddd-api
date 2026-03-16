@@ -64,6 +64,7 @@ def bot_responses(id,tname,input_text):
                 print('//')
                 command,d = user_message.split('//')
                 d = d.capitalize() if d.startswith('d') else d.replace('sft','SFT').replace('inner','Inner')
+                d = 'D[0-9]%' if d.lower() == 'youth' else d
                 access = d if access not in ('MT','EDU') else access
                 print(f"command = {command}, d = {d}, access = {access}")
             except ValueError:

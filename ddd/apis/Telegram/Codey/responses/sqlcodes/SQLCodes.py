@@ -4586,7 +4586,7 @@ def bbstatusdate(g, d, ssn, dt, access):
 def bbtmission(sid, d, g, access):
 
     g = g if access == 'Group' else '%'
-    grpdept = f"{g.capitalize()} " if access == 'Group' else f"{d.replace('D[0-9]%','Youth ').replace('%','')}"
+    grpdept = f'{g} ' if access == 'Group' else f'{d} '.replace('D[0-9]%','Youth').replace('% ','')
     filt = 0 if access in ('IT','EDU','All') else 1
     gd = 'Dept' if access in ('IT','EDU','All') else 'Grp '
     d = d.capitalize()

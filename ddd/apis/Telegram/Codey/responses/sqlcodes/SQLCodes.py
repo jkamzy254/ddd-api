@@ -540,7 +540,7 @@ def memberfmp(timerange,g,sid,ss,access):
 
 def deptfmp(task,timerange,d,sid,ss,access):
     
-    displayGroups = False if task == 'dept' and access in ('All','IT') else True
+    displayGroups = False if task == 'dept' and access in ('All','IT','EDU') else True
     topleft = 'Grp ' if displayGroups == True else 'Dept'
     
     if task == 'dept':
@@ -2014,6 +2014,122 @@ def bblist(d,g,sid,access):
 
 
 
+
+def bblist_ChatGPT_Edition(d, g, sid, access):
+
+    d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)', r'\1D\2', d)
+
+    g = '%' if access != 'Group' else g
+
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)', r'\1G\2', g)
+    else:
+        grpdept = str(d).replace('D[0-9]%', 'Youth')
+
+    base_query = f"""
+    FROM CodeyBBList('{sid}') c
+    LEFT JOIN TaskHigh t ON t.UID = c.BBTID
+    WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}')
+      AND (L1D LIKE '{d}' OR L2D LIKE '{d}')
+    """
+
+    sql = f"""
+    SELECT LastClass, BBTN, FruitName, L1N, L2N,
+           LastTopic, NextClassDate, Points, DPoints, NewStatus
+    {base_query}
+    ORDER BY BBTN
+    """
+
+    conn = odbc.connect(conn_str)
+    df = pd.read_sql(sql, conn)
+    conn.close()
+
+    groups = {k: v for k, v in df.groupby("NewStatus")}
+
+    statuses = [
+        ("New P",     "New Picking",           "💛", False),
+        ("Old P",     "Old Picking",           "⛔️", False),
+        ("ABB",       "Active BB",             "🟢", True),
+        ("IBB ME",    "IBB Missed Education",  "🔴", True),
+        ("IBB FA",    "IBB Fallen",            "⚫️", True),
+        ("Fallen P",  "Fallen Picking",        "❌", False),
+        ("ABB CCT",   "CCT ABB",               "⭐️", True),
+        ("IBB CCT",   "CCT IBB",               "⭐️", True),
+    ]
+
+    if access == 'Group':
+        pt = "Points"
+    elif d != 'D[0-9]%':
+        pt = "DPoints"
+    else:
+        pt = None
+
+    blocks = []
+    pts = []
+
+    def format_block(df, title, emoji, topic):
+
+        if df is None or df.empty:
+            pts.append(0)
+            return ""
+
+        if pt:
+            p = int(df[pt].sum())
+        else:
+            p = len(df)
+
+        pts.append(p)
+
+        lines = []
+
+        for i, row in enumerate(df.itertuples(), 1):
+
+            if pt:
+                point_val = getattr(row, pt)
+            else:
+                point_val = '1'
+
+            base = (
+                f"{emoji}{i}. "
+                f"[{row.LastClass}] "
+                f"[{point_val}] "
+                f"{row.FruitName[:8]} - "
+                f"{row.L1N}{row.L2N} - "
+                f"({row.BBTN})"
+            )
+
+            if topic:
+                base += f" - {row.LastTopic} → [{row.NextClassDate}]"
+
+            lines.append(base)
+
+        return (
+            f"<i><b><u>{title} ({p} Pt)</u></b></i>\n"
+            "<pre>\n"
+            + "\n".join(lines)
+            + "\n</pre>\n"
+        )
+
+    for status, title, emoji, topic in statuses:
+        block = format_block(groups.get(status), title, emoji, topic)
+        blocks.append(block)
+
+    result = (
+        f"<b><u>📚{grpdept} BB Fruit List📚</u></b>\n\n"
+        "<i>▫️Status▫️\n"
+        "#. [LastClassDate] [Pts] - Fruit - L1 / L2 - BBT - LastTopic → [NextClassDate]</i>\n\n"
+        + "".join(blocks)
+        + f"<b><i><u>Total: {sum(pts)} Pts</u></i></b>"
+    )
+
+    result = re.sub(r'\.0', r'', result)
+    result = re.sub(r' \(\)', r'', result)
+    result = re.sub(r'\((\d+)\)', r'(G\1)', result)
+    result = re.sub(r'\[1\] ', r'', result)
+
+    return result
 
 
 
@@ -4467,9 +4583,16 @@ def bbstatusdate(g, d, ssn, dt, access):
 
 
 
-def bbtmission(sid):        
+def bbtmission(sid, d, g, access):
+
+    g = g if access == 'Group' else '%'
+    grpdept = f"{g.capitalize()} " if access == 'Group' else f"{d.replace('D[0-9]%','Youth ').replace('%','')}"
+    filt = 0 if access in ('IT','EDU','All') else 1
+    gd = 'Dept' if access in ('IT','EDU','All') else 'Grp '
+    d = d.capitalize()
+
     conn = odbc.connect(conn_str)
-    sql  = f"SELECT Dept, ActiveBBTs, TotalBBTs, PercentActive FROM ActiveBBTsFn('{sid}')"
+    sql  = f"SELECT Grp, ActiveBBTs, TotalBBTs, PercentActive FROM ActiveBBTsFn('{sid}',{filt}) WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
     print(sql)
     ds = pd.read_sql(sql, conn)
     ds.columns = ['Dept','ActiveBBTs','TotalBBTs','PercentActive']
@@ -4481,17 +4604,15 @@ def bbtmission(sid):
 
     table = ''
     for r in range(len(ds)):
-        dp =   str(ds.loc[r,'Dept']) + ' '*(6-len(str(ds.loc[r,'Dept'])))
-        pa  = ' '*(5-len(str(ds.loc[r,'PercentActive'])))  + str(ds.loc[r,'PercentActive'])
-        ab  = ' '*(3-len(str(ds.loc[r,'ActiveBBTs']))) + '(' + str(ds.loc[r,'ActiveBBTs']) + '/'
+        dp =   str(ds.loc[r,'Dept'])[:5] + ' '*(5-len(str(ds.loc[r,'Dept'])))
+        pa  = ' '*(4-len(str(ds.loc[r,'PercentActive'])))  + str(ds.loc[r,'PercentActive'])
+        ab  = '  (' + ' '*(2-len(str(ds.loc[r,'ActiveBBTs']))) + str(ds.loc[r,'ActiveBBTs']) + '/'
         tb  = ' '*(2-len(str(ds.loc[r,'TotalBBTs']))) + str(ds.loc[r,'TotalBBTs']) + ')'
         table = f'{table}{dp}{pa}{ab}{tb}\n'
     
-    summary = f"<b><u>Active BBT Rate</u></b>\n\n<pre>Dept  Prcnt  (A/TT)\n\n{table}</pre>"
+    summary = f"<b><u>{grpdept}Active BBT Rate</u></b>\n\n<pre>{gd} Prct  (AC/TT)\n\n{table}</pre>"
     summary = re.sub(r'(?<=\D)0\.0%',r'-   ',summary)
     return summary
-
-
 
 
 
@@ -4600,7 +4721,7 @@ def test2():
 
 def aprilmission(access):
     
-    d = '%' if access in ('All','IT') else access.capitalize().replace('d','D')
+    d = '%' if access in ('All','IT', 'EDU') else access.capitalize().replace('d','D')
     conn = odbc.connect(conn_str)
     q = f"AprilCtMission '{d}'"
     print(q)
@@ -4621,7 +4742,7 @@ def aprilmission(access):
         dept = f'{dept}{dp}[{tt}|{tg}|{mm}|{np}|{pk}|{fe}]\n'
     dept = dept + '\n'
 
-    totalrow = 'Total' if access in ('All','IT') else d
+    totalrow = 'Total' if access in ('All','IT','EDU') else d
 
     summary = f"{dept}</pre>" # Not putting header yet, so re.sub does not affect the "0 P"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
@@ -4635,7 +4756,7 @@ def aprilmission(access):
 
 def aprilbbtmission(access):
     
-    d = '%' if access in ('All','IT') else access.capitalize().replace('d','D')
+    d = '%' if access in ('All','IT', 'EDU') else access.capitalize().replace('d','D')
     conn = odbc.connect(conn_str)
     q = f"AprilCtBbtMission '{d}'"
     print(q)
@@ -4656,7 +4777,7 @@ def aprilbbtmission(access):
         dept = f'{dept}{dp}[{tt}|{tg}|{mm}|{np}|{pk}|{fe}]\n'
     dept = dept + '\n'
 
-    totalrow = 'Total' if access in ('All','IT') else d
+    totalrow = 'Total' if access in ('All','IT','EDU') else d
 
     summary = f"{dept}</pre>" # Not putting header yet, so re.sub does not affect the "0 P"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
@@ -4664,6 +4785,9 @@ def aprilbbtmission(access):
     summary = re.sub(totalrow,f"\n{totalrow}",summary)
     summary = f"<b><u>April CT BBT Mission</u></b>\n\n<pre>Dept     [BBT|TGW|Mm|0P|1P| FE]\n\n{summary}"
     return summary
+
+
+
 
 
 

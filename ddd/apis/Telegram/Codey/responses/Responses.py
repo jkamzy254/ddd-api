@@ -30,13 +30,7 @@ def bot_responses(id,tname,input_text):
     ssn = 'phys'
     uid,name,access,g,d,r,fmp_sid,fmp_ss,bb_sid,bb_ss,phys_sid,on_sid = SQLCodes.teledata(id).split('/')
     original_uid,original_name,original_access = uid,name,access
-    print(f"""TELEDATA:
-          uid - {uid}
-          name - {name}
-          access - {access}
-          g - {g} | d - {d} | r - {r}
-          fmp_sid - {fmp_sid} | fmp_ss - {fmp_ss} | bb_sid - {bb_sid} | bb_ss - {bb_ss}
-          phys_sid - {phys_sid} | on_sid - {on_sid}""")
+    print(f"TELEDATA: {uid}/{name}/{d}/{g} -- {access}")
     
     user_message = str(input_text).lower().replace(' ','')
         
@@ -45,17 +39,10 @@ def bot_responses(id,tname,input_text):
             user_message,user_name = input_text.split('|')
             user_message = user_message.lower()
             uid,name,access,g,d,r,fmp_sid,fmp_ss,bb_sid,bb_ss = SQLCodes.namedata(user_name).split('/')
-            print(f"""NAMEDATA:
-                  uid - {uid}
-                  name - {name}
-                  access - {access}
-                  g - {g} | d - {d} | r - {r}
-                  fmp_sid - {fmp_sid} | fmp_ss - {fmp_ss} | bb_sid - {bb_sid} | bb_ss - {bb_ss}
-                  phys_sid - {phys_sid} | on_sid - {on_sid}""")
+            print(f"USING CODEY AS: {uid}/{name}/{d}/{g} -- {access}")
                         
     if access == 'None':
         return '-'
-
     
     if access in ['All','IT','MT','EDU']:
         d = f'D[0-9]%' if access not in ('MT','EDU') else '%'
@@ -145,20 +132,12 @@ def bot_responses(id,tname,input_text):
 
     SQLCodes.functionlog(original_uid, original_name, input_text, command)
     
-    # print(f"""Final parameters before command call:
-    #       uid - {uid}
-    #       name - {name}
-    #       access - {access}
-    #       g - {g}
-    #       d - {d}
-    #       r - {r}
-    #       fmp_sid - {fmp_sid}
-    #       fmp_ss - {fmp_ss}
-    #       bb_sid - {bb_sid}
-    #       bb_ss - {bb_ss}""")
-    
-    # if r in ('Geelong','Darwin'):
-    #     r = 'Online'
+    print(f"""Final parameters before command call:
+          UID {original_uid} --> {uid}
+          NAME: {original_name} --> {name}
+          ACCESS: {original_access} --> {access} //{d} /{g}
+          fmp_sid: {fmp_sid} | fmp_ss: {fmp_ss} | bb_sid: {bb_sid} | bb_ss: {bb_ss}
+          phys_sid: {phys_sid} | on_sid: {on_sid}""")
         
     if command.startswith('all'):
         ssn = 'all'
@@ -205,6 +184,12 @@ def bot_responses(id,tname,input_text):
             if access in ('All','IT','MT','EDU') and '/' not in user_message:
                 return f"To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. {command}//D3</i>, or group with <code>/G#</code> <i>e.g. {command}/G10</i>"
             return SQLCodes.bblist(d,g,bb_sid,access)
+        
+
+        if command == 'bblist2':
+            if access in ('All','IT','MT','EDU') and '/' not in user_message:
+                return f"To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. {command}//D3</i>, or group with <code>/G#</code> <i>e.g. {command}/G10</i>"
+            return SQLCodes.bblist_ChatGPT_Edition(d,g,bb_sid,access)
         
         if command == 'bblists':
             if access in ('All','IT','MT','EDU') and '/' not in user_message:
@@ -321,12 +306,15 @@ def bot_responses(id,tname,input_text):
 
         if command == 'hspreport':
             return SQLCodes.hspreport(g, d, access)
+        
+        if command == 'bbtmission':
+            return SQLCodes.bbtmission(bb_sid,d,g,access)
     
     
     
     
     # Dept and above functions
-    if access in ['D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','¹','²','All','IT']:
+    if access in ['%','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','¹','²','All','IT']:
         
         for task in ['youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(task):
@@ -361,12 +349,10 @@ def bot_responses(id,tname,input_text):
             a,userUID,telID,i = command.split('#')
             return SQLCodes.approve_new_user_request(userUID,telID)
         
-        if access in ['¹','²','All','IT']:
+        if original_access in ['¹','²','All','IT']:
             if command == 'deptphone':
                 return SQLCodes.deptphone(d)
 
-            if command == 'bbtmission':
-                return SQLCodes.bbtmission(bb_sid)
             # if command == 'bbtdept':
             #     return SQLCodes.bbtdept(d,bb_sid)
             

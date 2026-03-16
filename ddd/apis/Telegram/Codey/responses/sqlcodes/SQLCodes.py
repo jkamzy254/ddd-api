@@ -4592,7 +4592,7 @@ def bbtmission(sid, d, g, access):
     d = d.capitalize()
 
     conn = odbc.connect(conn_str)
-    sql  = f"SELECT Grp, ActiveBBTs, TotalBBTs, PercentActive FROM ActiveBBTsFn('{sid}',{filt}) WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
+    sql  = f"SELECT Grp, ActiveBBTs, TotalBBTs, PercentActive FROM ActiveBBTsFn('{sid}',{filt}) WHERE (Dept LIKE '{d}' AND Grp LIKE '{g}') OR Dept = ''"
     print(sql)
     ds = pd.read_sql(sql, conn)
     ds.columns = ['Dept','ActiveBBTs','TotalBBTs','PercentActive']
@@ -4612,6 +4612,7 @@ def bbtmission(sid, d, g, access):
     
     summary = f"<b><u>{grpdept}Active BBT Rate</u></b>\n\n<pre>{gd} Prct  (AC/TT)\n\n{table}</pre>"
     summary = re.sub(r'(?<=\D)0\.0%',r'-   ',summary)
+    summary = summary.replace('           ( 0/ 0)','').replace('\n\n\n','\n\n')
     return summary
 
 

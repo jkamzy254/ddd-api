@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from .sqlcodes import SQLCodes
 
 def bot_responses(id,tname,input_text):
@@ -14,6 +15,11 @@ def bot_responses(id,tname,input_text):
         input_text = input_text[8:].strip() # The [8:] removes the 'markdown' part and .strip() removes any leading/trailing spaces
         print(f'Markdown detected. New input_text: {input_text}')
         pm = 'Markdown@@'
+
+    if input_text.lower() == 'now': # test function to check if codey can return current time in melbourne
+            melbourne_tz = ZoneInfo("Australia/Melbourne")
+            now = datetime.now(melbourne_tz)
+            return now.strftime("%a %d %b, %I:%M %p")
     
     if id == 659275499: # Test functions - Returns string without connecting to database. Only works for ID 659275499.
         if input_text == 'Approve: #A0052#659275499#':

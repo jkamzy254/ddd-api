@@ -4612,7 +4612,7 @@ def bbtmission(sid, d, g, standard, ct, access):
         tb  = ' '*(2-len(str(ds.loc[r,'TotalBBTs']))) + str(ds.loc[r,'TotalBBTs']) + ')'
         table = f'{table}{dp}{pa}{ab}{tb}\n'
 
-    timestamp = now = datetime.now().strftime("%a %d %b, %I:%M %p")
+    timestamp = datetime.now(ZoneInfo("Australia/Melbourne")).strftime("%a %d %b, %I:%M %p")
     bbtstandard = {'pick': 'Active BBT Standard: <b>Picking</b>', 'se': 'Active BBT Standard: <b>Second Edu</b>'}[standard]
     ctstandard = f'CT Standard: <b>{ct}</b>'
     info = f"<i>🕐{timestamp}\n🏃‍♀️{bbtstandard}\n👨‍🏫{ctstandard}</i>"

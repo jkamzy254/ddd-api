@@ -4583,7 +4583,9 @@ def bbstatusdate(g, d, ssn, dt, access):
 
 
 
-def bbtmission(sid, d, g, access):
+def bbtmission(sid, d, g, standard, ct, access):
+
+    print(f"bbtmission parameters:   sid = '{sid}'   g = '{g}'   d = '{d}'   standard = '{standard}'   ct = '{ct}'   access = '{access}'")
 
     g = g if access == 'Group' else '%'
     grpdept = f'{g} ' if access == 'Group' else f'{d} '.replace('D[0-9]%','Youth').replace('% ','')
@@ -4592,7 +4594,7 @@ def bbtmission(sid, d, g, access):
     d = d.capitalize()
 
     conn = odbc.connect(conn_str)
-    sql  = f"SELECT Grp, ActiveBBTs, TotalBBTs, PercentActive FROM ActiveBBTsFn('{sid}',{filt}) WHERE (Dept LIKE '{d}' AND Grp LIKE '{g}') OR Dept = ''"
+    sql  = f"SELECT Grp, ActiveBBTs, TotalBBTs, PercentActive FROM ActiveBBTsFn('{sid}',{filt},'{standard}') WHERE (Dept LIKE '{d}' AND Grp LIKE '{g}') OR Dept = ''"
     print(sql)
     ds = pd.read_sql(sql, conn)
     ds.columns = ['Dept','ActiveBBTs','TotalBBTs','PercentActive']
@@ -4609,8 +4611,13 @@ def bbtmission(sid, d, g, access):
         ab  = '  (' + ' '*(2-len(str(ds.loc[r,'ActiveBBTs']))) + str(ds.loc[r,'ActiveBBTs']) + '/'
         tb  = ' '*(2-len(str(ds.loc[r,'TotalBBTs']))) + str(ds.loc[r,'TotalBBTs']) + ')'
         table = f'{table}{dp}{pa}{ab}{tb}\n'
+
+    timestamp = now = datetime.now().strftime("%a %d %b, %I:%M %p")
+    bbtstandard = {'pick': 'Active BBT Standard: <b>Picking</b>', 'se': 'Active BBT Standard: <b>Second Edu</b>'}[standard]
+    ctstandard = f'CT Standard: <b>{ct}</b>'
+    info = f"<i>🕐{timestamp}\n🏃‍♀️{bbtstandard}\n👨‍🏫{ctstandard}</i>"
     
-    summary = f"<b><u>{grpdept}Active BBT Rate</u></b>\n\n<pre>{gd} Prct  (AC/TT)\n\n{table}</pre>"
+    summary = f"<b><u>{grpdept}Active BBT Rate</u></b>\n{info}\n\n<pre>{gd} Prct  (AC/TT)\n\n{table}</pre>"
     summary = re.sub(r'(?<=\D)0\.0%',r'-   ',summary)
     summary = summary.replace('           ( 0/ 0)','').replace('\n\n\n','\n\n')
     return summary
@@ -4766,7 +4773,7 @@ def aprilbbtmission(access):
     dq.replace(r' Dept',r'', regex = True, inplace = True)
     conn.cursor().close()
         
-    dept = str()  
+    dept = str()
     for r in range(len(dq)):
         dp =   str(dq.loc[r,'Dept']) + ' '*(9-len(str(dq.loc[r,'Dept'])))
         tt  = ' '*(3-len(str(dq.loc[r,'Total'])))   + str(dq.loc[r,'Total'])
@@ -4785,6 +4792,7 @@ def aprilbbtmission(access):
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     summary = re.sub(totalrow,f"\n{totalrow}",summary)
     summary = f"<b><u>April CT BBT Mission</u></b>\n\n<pre>Dept     [BBT|TGW|Mm|0P|1P| FE]\n\n{summary}"
+    summary = summary.replace('D[--9]%','\nYouth  ')
     return summary
 
 

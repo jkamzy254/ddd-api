@@ -45,8 +45,8 @@ def bot_responses(id,tname,input_text):
         return '-'
     
     if access in ['All','IT','MT','EDU']:
-        d = f'D[0-9]%' if access not in ('MT','EDU') else '%'
-        g = '%' if access in ('MT','EDU') else g
+        d = f'D[0-9]%' if access not in ('MT') else '%' # Edu used to also be '%' but better for most functions to show youth by default. Can specify church with //%
+        g = '%' if access in ('MT') else g
         # if '//r' in user_message.lower():
         #     try:
         #         print('//r')
@@ -65,6 +65,7 @@ def bot_responses(id,tname,input_text):
                 command,d = user_message.split('//')
                 d = d.capitalize() if d.startswith('d') else d.replace('sft','SFT').replace('inner','Inner')
                 d = 'D[0-9]%' if d.lower() == 'youth' else d
+                d = '%' if d.lower() == 'church' else d
                 access = d if access not in ('MT') else access
                 print(f"command = {command}, d = {d}, access = {access}")
             except ValueError:
@@ -161,6 +162,8 @@ def bot_responses(id,tname,input_text):
                    bb_sid - {bb_sid}""")
         command = command[4:]
     
+    ct = {'%':'Physical + Online',phys_sid:'Physical',on_sid:'Online'}[bb_sid]
+
     # GYJN and above (except MT) functions:
     if access != 'MT':
         if 'phonenumber' in str(user_message):
@@ -290,7 +293,7 @@ def bot_responses(id,tname,input_text):
             standard = 'leaf' if standard == '' else standard
             if standard not in ['bbt','leaf','all','']:
                 return "must select secondedu (leaf standard), secondedubbt (bbt standard) or secondeduall (leaf+bbt standard)"
-            ct = {'%':'Physical + Online',phys_sid:'Physical',on_sid:'Online'}[bb_sid]
+            # ct = {'%':'Physical + Online',phys_sid:'Physical',on_sid:'Online'}[bb_sid] # This has been defined earlier
             return SQLCodes.secondedu(g,d,bb_sid,standard,ct,access)
         
         if command == 'classtoday':
@@ -309,13 +312,18 @@ def bot_responses(id,tname,input_text):
             return SQLCodes.hspreport(g, d, access)
         
         if command == 'bbtmission':
-            return SQLCodes.bbtmission(bb_sid,d,g,access)
+            d = '%' if access == 'EDU' else d # for this function, edu needs to see whole church. //Church for all groups. //Youth for youth.
+            return SQLCodes.bbtmission(bb_sid,d,g,'se',ct,access)
+        
+        if command == 'bbtmissionpick':
+            d = '%' if access == 'EDU' else d # for this function, edu needs to see whole church. //Church for all groups. //Youth for youth.
+            return SQLCodes.bbtmission(bb_sid,d,g,'pick',ct,access)
     
     
     
     
     # Dept and above functions
-    if access in ['%','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','¹','²','All','IT']:
+    if access in ['%','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','¹','²','All','EDU','IT']:
         
         for task in ['youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(task):
@@ -350,14 +358,14 @@ def bot_responses(id,tname,input_text):
             a,userUID,telID,i = command.split('#')
             return SQLCodes.approve_new_user_request(userUID,telID)
         
-        if original_access in ['¹','²','All','IT']:
+        if original_access in ['¹','²','All','EDU','IT']:
             if command == 'deptphone':
                 return SQLCodes.deptphone(d)
 
             # if command == 'bbtdept':
             #     return SQLCodes.bbtdept(d,bb_sid)
             
-            # if access in ('All','IT'):
+            # if access in ('All','EDU','IT'):
             #     if command == 'bbtbtmstatus':
             #         return SQLCodes.bbtbtmstatus()
     

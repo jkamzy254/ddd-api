@@ -620,7 +620,7 @@ def deptfmp(task,timerange,d,sid,ss,access):
     #         region = f'{region}{reg}[{f}|{m}|{p}|{fe}]\n'
     #     region = region + '\n'
 
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
         p  = ' '*(spc[3]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
@@ -727,7 +727,7 @@ def taskfmp(task,timerange,d,sid,ss,access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
         p  = ' '*(spc[3]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
@@ -1080,7 +1080,7 @@ def bbstatus(g, d, sid, access, v2=False):
         dept = dept + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(4-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -1128,7 +1128,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False):
     bbttype,query = bbtvalues[i]
     
     codeybbtstatusmembers = 'CodeyBBTStatusMembers2' if v2 else 'CodeyBBTStatusMembers'
-    # d_filt = '%' if v2 and d == 'D[0-9]%' else d
+    # d_filt = '%' if v2 and d in ('D[0-9]%','%') else d
     d_filt = d
     fe_col = ', FE' if v2 else ''
     fe_sum = ', SUM(FE)FE' if v2 else ''
@@ -1219,7 +1219,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False):
         dept = dept + '\n'
         
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         pn  = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(3-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -1364,7 +1364,7 @@ def newbbstatus(g, d, sid, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         pf  = ' '*(4-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
@@ -1512,7 +1512,7 @@ def newbbtstatus(q, g, d, sid, access):
     #     region = region + '\n'
         
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         pn  = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         pf  = ' '*(3-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
@@ -3337,7 +3337,7 @@ def bbactive(g, d, sid, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba  = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -3443,7 +3443,7 @@ def bbactive2(g, d, sid, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         fe  = ' '*(5-len(str(dy.loc[0,'FE']))) + str(dy.loc[0,'FE'])
@@ -3566,7 +3566,7 @@ def deptbbactive(d, sid, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba  = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -3669,7 +3669,7 @@ def bbinactive(g, d, sid, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         bm  = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         ci  = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -3734,7 +3734,7 @@ def deptbbinactive(d, sid, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         bm  = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         ci  = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -4359,7 +4359,7 @@ def edu(day, g, d, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         at  = ' '*(2-len(str(dy.loc[0,'Att']))) + str(dy.loc[0,'Att'])
         on  = ' '*(2-len(str(dy.loc[0,'Onl']))) + str(dy.loc[0,'Onl'])
         rp  = ' '*(2-len(str(dy.loc[0,'Rep']))) + str(dy.loc[0,'Rep'])
@@ -4435,7 +4435,7 @@ def edurev(g, d, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         rs  = ' '*(2-len(str(dy.loc[0,'RevS']))) + str(dy.loc[0,'RevS'])
         rn  = ' '*(2-len(str(dy.loc[0,'RevNS']))) + str(dy.loc[0,'RevNS'])
         total = f'Total[{rs}|{rn}]'
@@ -4565,7 +4565,7 @@ def bbstatusdate(g, d, ssn, dt, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(4-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -4692,7 +4692,7 @@ def pickfe(g, d, access):
         dept = dept + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         pp  = ' '*(4-len(str(dy.loc[0,'PhysP'])))  + str(dy.loc[0,'PhysP'])
         pf  = ' '*(4-len(str(dy.loc[0,'PhysFE']))) + str(dy.loc[0,'PhysFE'])
         op  = ' '*(4-len(str(dy.loc[0,'OnP'])))    + str(dy.loc[0,'OnP'])
@@ -4872,7 +4872,7 @@ def secondedu(g, d, sid, standard, ct, access):
         dept = dept + '\n'
         
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         x = ' '*(3-len(str(dy.loc[0,'X']))) + str(dy.loc[0,'X'])
         p  = ' '*(3-len(str(dy.loc[0,'P']))) + str(dy.loc[0,'P'])
         f  = ' '*(3-len(str(dy.loc[0,'FE']))) + str(dy.loc[0,'FE'])
@@ -5182,7 +5182,7 @@ def hspreport(g, d, access):
         dept = dept + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         wp  = ' '*(3-len(str(dy.loc[0,'WD']))) + str(dy.loc[0,'WD'])
         f1  = ' '*(3-len(str(dy.loc[0,'F1']))) + str(dy.loc[0,'F1'])
         di  = ' '*(3-len(str(dy.loc[0,'DI']))) + str(dy.loc[0,'DI'])

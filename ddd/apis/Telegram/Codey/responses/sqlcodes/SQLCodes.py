@@ -1128,7 +1128,8 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False):
     bbttype,query = bbtvalues[i]
     
     codeybbtstatusmembers = 'CodeyBBTStatusMembers2' if v2 else 'CodeyBBTStatusMembers'
-    d_filt = '%' if v2 and d == 'D[0-9]%' else d
+    # d_filt = '%' if v2 and d == 'D[0-9]%' else d
+    d_filt = d
     fe_col = ', FE' if v2 else ''
     fe_sum = ', SUM(FE)FE' if v2 else ''
     

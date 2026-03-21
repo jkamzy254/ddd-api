@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from .sqlcodes import SQLCodes
 
 def bot_responses(id,tname,input_text):
@@ -14,6 +15,11 @@ def bot_responses(id,tname,input_text):
         input_text = input_text[8:].strip() # The [8:] removes the 'markdown' part and .strip() removes any leading/trailing spaces
         print(f'Markdown detected. New input_text: {input_text}')
         pm = 'Markdown@@'
+
+    if input_text.lower() == 'now': # test function to check if codey can return current time in melbourne
+            melbourne_tz = ZoneInfo("Australia/Melbourne")
+            now = datetime.now(melbourne_tz)
+            return now.strftime("%a %d %b, %I:%M %p")
     
     if id == 659275499: # Test functions - Returns string without connecting to database. Only works for ID 659275499.
         if input_text == 'Approve: #A0052#659275499#':
@@ -30,13 +36,7 @@ def bot_responses(id,tname,input_text):
     ssn = 'phys'
     uid,name,access,g,d,r,fmp_sid,fmp_ss,bb_sid,bb_ss,phys_sid,on_sid = SQLCodes.teledata(id).split('/')
     original_uid,original_name,original_access = uid,name,access
-    print(f"""TELEDATA:
-          uid - {uid}
-          name - {name}
-          access - {access}
-          g - {g} | d - {d} | r - {r}
-          fmp_sid - {fmp_sid} | fmp_ss - {fmp_ss} | bb_sid - {bb_sid} | bb_ss - {bb_ss}
-          phys_sid - {phys_sid} | on_sid - {on_sid}""")
+    print(f"TELEDATA: {uid}/{name}/{d}/{g} -- {access}")
     
     user_message = str(input_text).lower().replace(' ','')
         
@@ -45,21 +45,14 @@ def bot_responses(id,tname,input_text):
             user_message,user_name = input_text.split('|')
             user_message = user_message.lower()
             uid,name,access,g,d,r,fmp_sid,fmp_ss,bb_sid,bb_ss = SQLCodes.namedata(user_name).split('/')
-            print(f"""NAMEDATA:
-                  uid - {uid}
-                  name - {name}
-                  access - {access}
-                  g - {g} | d - {d} | r - {r}
-                  fmp_sid - {fmp_sid} | fmp_ss - {fmp_ss} | bb_sid - {bb_sid} | bb_ss - {bb_ss}
-                  phys_sid - {phys_sid} | on_sid - {on_sid}""")
+            print(f"USING CODEY AS: {uid}/{name}/{d}/{g} -- {access}")
                         
     if access == 'None':
         return '-'
-
     
     if access in ['All','IT','MT','EDU']:
-        d = f'D[0-9]%' if access not in ('MT','EDU') else '%'
-        g = '%' if access in ('MT','EDU') else g
+        d = f'D[0-9]%' if access not in ('MT') else '%' # Edu used to also be '%' but better for most functions to show youth by default. Can specify church with //%
+        g = '%' if access in ('MT') else g
         # if '//r' in user_message.lower():
         #     try:
         #         print('//r')
@@ -77,7 +70,9 @@ def bot_responses(id,tname,input_text):
                 print('//')
                 command,d = user_message.split('//')
                 d = d.capitalize() if d.startswith('d') else d.replace('sft','SFT').replace('inner','Inner')
-                access = d if access not in ('MT','EDU') else access
+                d = 'D[0-9]%' if d.lower() == 'youth' else d
+                d = '%' if d.lower() == 'church' else d
+                access = d if access not in ('MT') else access
                 print(f"command = {command}, d = {d}, access = {access}")
             except ValueError:
                     return 'Format error: Too many "/"s'
@@ -145,20 +140,12 @@ def bot_responses(id,tname,input_text):
 
     SQLCodes.functionlog(original_uid, original_name, input_text, command)
     
-    # print(f"""Final parameters before command call:
-    #       uid - {uid}
-    #       name - {name}
-    #       access - {access}
-    #       g - {g}
-    #       d - {d}
-    #       r - {r}
-    #       fmp_sid - {fmp_sid}
-    #       fmp_ss - {fmp_ss}
-    #       bb_sid - {bb_sid}
-    #       bb_ss - {bb_ss}""")
-    
-    # if r in ('Geelong','Darwin'):
-    #     r = 'Online'
+    print(f"""Final parameters before command call:
+          UID {original_uid} --> {uid}
+          NAME: {original_name} --> {name}
+          ACCESS: {original_access} --> {access} //{d} /{g}
+          fmp_sid: {fmp_sid} | fmp_ss: {fmp_ss} | bb_sid: {bb_sid} | bb_ss: {bb_ss}
+          phys_sid: {phys_sid} | on_sid: {on_sid}""")
         
     if command.startswith('all'):
         ssn = 'all'
@@ -181,6 +168,8 @@ def bot_responses(id,tname,input_text):
                    bb_sid - {bb_sid}""")
         command = command[4:]
     
+    ct = {'%':'Physical + Online',phys_sid:'Physical',on_sid:'Online'}[bb_sid]
+
     # GYJN and above (except MT) functions:
     if access != 'MT':
         if 'phonenumber' in str(user_message):
@@ -205,6 +194,12 @@ def bot_responses(id,tname,input_text):
             if access in ('All','IT','MT','EDU') and '/' not in user_message:
                 return f"To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. {command}//D3</i>, or group with <code>/G#</code> <i>e.g. {command}/G10</i>"
             return SQLCodes.bblist(d,g,bb_sid,access)
+        
+
+        if command == 'bblist2':
+            if access in ('All','IT','MT','EDU') and '/' not in user_message:
+                return f"To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. {command}//D3</i>, or group with <code>/G#</code> <i>e.g. {command}/G10</i>"
+            return SQLCodes.bblist_ChatGPT_Edition(d,g,bb_sid,access)
         
         if command == 'bblists':
             if access in ('All','IT','MT','EDU') and '/' not in user_message:
@@ -304,7 +299,7 @@ def bot_responses(id,tname,input_text):
             standard = 'leaf' if standard == '' else standard
             if standard not in ['bbt','leaf','all','']:
                 return "must select secondedu (leaf standard), secondedubbt (bbt standard) or secondeduall (leaf+bbt standard)"
-            ct = {'%':'Physical + Online',phys_sid:'Physical',on_sid:'Online'}[bb_sid]
+            # ct = {'%':'Physical + Online',phys_sid:'Physical',on_sid:'Online'}[bb_sid] # This has been defined earlier
             return SQLCodes.secondedu(g,d,bb_sid,standard,ct,access)
         
         if command == 'classtoday':
@@ -321,12 +316,20 @@ def bot_responses(id,tname,input_text):
 
         if command == 'hspreport':
             return SQLCodes.hspreport(g, d, access)
+        
+        if command == 'bbtmission':
+            d = '%' if access == 'EDU' else d # for this function, edu needs to see whole church. //Church for all groups. //Youth for youth.
+            return SQLCodes.bbtmission(bb_sid,d,g,'se',ct,access)
+        
+        if command == 'bbtmissionpick':
+            d = '%' if access == 'EDU' else d # for this function, edu needs to see whole church. //Church for all groups. //Youth for youth.
+            return SQLCodes.bbtmission(bb_sid,d,g,'pick',ct,access)
     
     
     
     
     # Dept and above functions
-    if access in ['D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','¹','²','All','IT']:
+    if access in ['%','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','¹','²','All','EDU','IT']:
         
         for task in ['youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(task):
@@ -361,16 +364,14 @@ def bot_responses(id,tname,input_text):
             a,userUID,telID,i = command.split('#')
             return SQLCodes.approve_new_user_request(userUID,telID)
         
-        if access in ['¹','²','All','IT']:
+        if original_access in ['¹','²','All','EDU','IT']:
             if command == 'deptphone':
                 return SQLCodes.deptphone(d)
 
-            if command == 'bbtmission':
-                return SQLCodes.bbtmission(bb_sid)
             # if command == 'bbtdept':
             #     return SQLCodes.bbtdept(d,bb_sid)
             
-            # if access in ('All','IT'):
+            # if access in ('All','EDU','IT'):
             #     if command == 'bbtbtmstatus':
             #         return SQLCodes.bbtbtmstatus()
     

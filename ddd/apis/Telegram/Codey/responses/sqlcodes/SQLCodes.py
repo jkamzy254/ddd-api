@@ -540,7 +540,7 @@ def memberfmp(timerange,g,sid,ss,access):
 
 def deptfmp(task,timerange,d,sid,ss,access):
     
-    displayGroups = False if task == 'dept' and access in ('All','IT') else True
+    displayGroups = False if task == 'dept' and access in ('All','IT','EDU') else True
     topleft = 'Grp ' if displayGroups == True else 'Dept'
     
     if task == 'dept':
@@ -620,7 +620,7 @@ def deptfmp(task,timerange,d,sid,ss,access):
     #         region = f'{region}{reg}[{f}|{m}|{p}|{fe}]\n'
     #     region = region + '\n'
 
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
         p  = ' '*(spc[3]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
@@ -727,7 +727,7 @@ def taskfmp(task,timerange,d,sid,ss,access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
         p  = ' '*(spc[3]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
@@ -1080,7 +1080,7 @@ def bbstatus(g, d, sid, access, v2=False):
         dept = dept + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(4-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -1128,7 +1128,8 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False):
     bbttype,query = bbtvalues[i]
     
     codeybbtstatusmembers = 'CodeyBBTStatusMembers2' if v2 else 'CodeyBBTStatusMembers'
-    d_filt = '%' if v2 and d == 'D[0-9]%' else d
+    # d_filt = '%' if v2 and d in ('D[0-9]%','%') else d
+    d_filt = d
     fe_col = ', FE' if v2 else ''
     fe_sum = ', SUM(FE)FE' if v2 else ''
     
@@ -1218,7 +1219,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False):
         dept = dept + '\n'
         
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         pn  = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(3-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -1363,7 +1364,7 @@ def newbbstatus(g, d, sid, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         pf  = ' '*(4-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
@@ -1511,7 +1512,7 @@ def newbbtstatus(q, g, d, sid, access):
     #     region = region + '\n'
         
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         pn  = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         pf  = ' '*(3-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
@@ -2014,6 +2015,122 @@ def bblist(d,g,sid,access):
 
 
 
+
+def bblist_ChatGPT_Edition(d, g, sid, access):
+
+    d = d.capitalize()
+    d = re.sub(r'(¹|²)d([0-9]*)', r'\1D\2', d)
+
+    g = '%' if access != 'Group' else g
+
+    if access == 'Group':
+        grpdept = g.capitalize()
+        grpdept = re.sub(r'(¹|²)g([0-9]*)', r'\1G\2', g)
+    else:
+        grpdept = str(d).replace('D[0-9]%', 'Youth')
+
+    base_query = f"""
+    FROM CodeyBBList('{sid}') c
+    LEFT JOIN TaskHigh t ON t.UID = c.BBTID
+    WHERE (L1G LIKE '{g}' OR L2G LIKE '{g}')
+      AND (L1D LIKE '{d}' OR L2D LIKE '{d}')
+    """
+
+    sql = f"""
+    SELECT LastClass, BBTN, FruitName, L1N, L2N,
+           LastTopic, NextClassDate, Points, DPoints, NewStatus
+    {base_query}
+    ORDER BY BBTN
+    """
+
+    conn = odbc.connect(conn_str)
+    df = pd.read_sql(sql, conn)
+    conn.close()
+
+    groups = {k: v for k, v in df.groupby("NewStatus")}
+
+    statuses = [
+        ("New P",     "New Picking",           "💛", False),
+        ("Old P",     "Old Picking",           "⛔️", False),
+        ("ABB",       "Active BB",             "🟢", True),
+        ("IBB ME",    "IBB Missed Education",  "🔴", True),
+        ("IBB FA",    "IBB Fallen",            "⚫️", True),
+        ("Fallen P",  "Fallen Picking",        "❌", False),
+        ("ABB CCT",   "CCT ABB",               "⭐️", True),
+        ("IBB CCT",   "CCT IBB",               "⭐️", True),
+    ]
+
+    if access == 'Group':
+        pt = "Points"
+    elif d != 'D[0-9]%':
+        pt = "DPoints"
+    else:
+        pt = None
+
+    blocks = []
+    pts = []
+
+    def format_block(df, title, emoji, topic):
+
+        if df is None or df.empty:
+            pts.append(0)
+            return ""
+
+        if pt:
+            p = int(df[pt].sum())
+        else:
+            p = len(df)
+
+        pts.append(p)
+
+        lines = []
+
+        for i, row in enumerate(df.itertuples(), 1):
+
+            if pt:
+                point_val = getattr(row, pt)
+            else:
+                point_val = '1'
+
+            base = (
+                f"{emoji}{i}. "
+                f"[{row.LastClass}] "
+                f"[{point_val}] "
+                f"{row.FruitName[:8]} - "
+                f"{row.L1N}{row.L2N} - "
+                f"({row.BBTN})"
+            )
+
+            if topic:
+                base += f" - {row.LastTopic} → [{row.NextClassDate}]"
+
+            lines.append(base)
+
+        return (
+            f"<i><b><u>{title} ({p} Pt)</u></b></i>\n"
+            "<pre>\n"
+            + "\n".join(lines)
+            + "\n</pre>\n"
+        )
+
+    for status, title, emoji, topic in statuses:
+        block = format_block(groups.get(status), title, emoji, topic)
+        blocks.append(block)
+
+    result = (
+        f"<b><u>📚{grpdept} BB Fruit List📚</u></b>\n\n"
+        "<i>▫️Status▫️\n"
+        "#. [LastClassDate] [Pts] - Fruit - L1 / L2 - BBT - LastTopic → [NextClassDate]</i>\n\n"
+        + "".join(blocks)
+        + f"<b><i><u>Total: {sum(pts)} Pts</u></i></b>"
+    )
+
+    result = re.sub(r'\.0', r'', result)
+    result = re.sub(r' \(\)', r'', result)
+    result = re.sub(r'\((\d+)\)', r'(G\1)', result)
+    result = re.sub(r'\[1\] ', r'', result)
+
+    return result
 
 
 
@@ -3220,7 +3337,7 @@ def bbactive(g, d, sid, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba  = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -3326,7 +3443,7 @@ def bbactive2(g, d, sid, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         fe  = ' '*(5-len(str(dy.loc[0,'FE']))) + str(dy.loc[0,'FE'])
@@ -3449,7 +3566,7 @@ def deptbbactive(d, sid, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba  = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -3552,7 +3669,7 @@ def bbinactive(g, d, sid, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         bm  = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         ci  = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -3617,7 +3734,7 @@ def deptbbinactive(d, sid, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         bm  = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         ci  = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -4242,7 +4359,7 @@ def edu(day, g, d, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         at  = ' '*(2-len(str(dy.loc[0,'Att']))) + str(dy.loc[0,'Att'])
         on  = ' '*(2-len(str(dy.loc[0,'Onl']))) + str(dy.loc[0,'Onl'])
         rp  = ' '*(2-len(str(dy.loc[0,'Rep']))) + str(dy.loc[0,'Rep'])
@@ -4318,7 +4435,7 @@ def edurev(g, d, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         rs  = ' '*(2-len(str(dy.loc[0,'RevS']))) + str(dy.loc[0,'RevS'])
         rn  = ' '*(2-len(str(dy.loc[0,'RevNS']))) + str(dy.loc[0,'RevNS'])
         total = f'Total[{rs}|{rn}]'
@@ -4448,7 +4565,7 @@ def bbstatusdate(g, d, ssn, dt, access):
     #     region = region + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(4-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -4467,9 +4584,18 @@ def bbstatusdate(g, d, ssn, dt, access):
 
 
 
-def bbtmission(sid):        
+def bbtmission(sid, d, g, standard, ct, access):
+
+    print(f"bbtmission parameters:   sid = '{sid}'   g = '{g}'   d = '{d}'   standard = '{standard}'   ct = '{ct}'   access = '{access}'")
+
+    g = g if access == 'Group' else '%'
+    grpdept = f'{g} ' if access == 'Group' else f'{d} '.replace('D[0-9]%','Youth').replace('% ','')
+    filt = 0 if access in ('IT','EDU','All') else 1
+    gd = 'Dept' if access in ('IT','EDU','All') else 'Grp '
+    d = d.capitalize()
+
     conn = odbc.connect(conn_str)
-    sql  = f"SELECT Dept, ActiveBBTs, TotalBBTs, PercentActive FROM ActiveBBTsFn('{sid}')"
+    sql  = f"SELECT Grp, ActiveBBTs, TotalBBTs, PercentActive FROM ActiveBBTsFn('{sid}',{filt},'{standard}') WHERE (Dept LIKE '{d}' AND Grp LIKE '{g}') OR Dept = ''"
     print(sql)
     ds = pd.read_sql(sql, conn)
     ds.columns = ['Dept','ActiveBBTs','TotalBBTs','PercentActive']
@@ -4481,17 +4607,21 @@ def bbtmission(sid):
 
     table = ''
     for r in range(len(ds)):
-        dp =   str(ds.loc[r,'Dept']) + ' '*(6-len(str(ds.loc[r,'Dept'])))
-        pa  = ' '*(5-len(str(ds.loc[r,'PercentActive'])))  + str(ds.loc[r,'PercentActive'])
-        ab  = ' '*(3-len(str(ds.loc[r,'ActiveBBTs']))) + '(' + str(ds.loc[r,'ActiveBBTs']) + '/'
+        dp =   str(ds.loc[r,'Dept'])[:5] + ' '*(5-len(str(ds.loc[r,'Dept'])))
+        pa  = ' '*(4-len(str(ds.loc[r,'PercentActive'])))  + str(ds.loc[r,'PercentActive'])
+        ab  = '  (' + ' '*(2-len(str(ds.loc[r,'ActiveBBTs']))) + str(ds.loc[r,'ActiveBBTs']) + '/'
         tb  = ' '*(2-len(str(ds.loc[r,'TotalBBTs']))) + str(ds.loc[r,'TotalBBTs']) + ')'
         table = f'{table}{dp}{pa}{ab}{tb}\n'
+
+    timestamp = datetime.now(ZoneInfo("Australia/Melbourne")).strftime("%a %d %b, %I:%M %p")
+    bbtstandard = {'pick': 'Active BBT Standard: <b>Picking</b>', 'se': 'Active BBT Standard: <b>Second Edu</b>'}[standard]
+    ctstandard = f'CT Standard: <b>{ct}</b>'
+    info = f"<i>🕐{timestamp}\n🏃‍♀️{bbtstandard}\n👨‍🏫{ctstandard}</i>"
     
-    summary = f"<b><u>Active BBT Rate</u></b>\n\n<pre>Dept  Prcnt  (A/TT)\n\n{table}</pre>"
+    summary = f"<b><u>{grpdept}Active BBT Rate</u></b>\n{info}\n\n<pre>{gd} Prct  (AC/TT)\n\n{table}</pre>"
     summary = re.sub(r'(?<=\D)0\.0%',r'-   ',summary)
+    summary = summary.replace('           ( 0/ 0)','').replace('\n\n\n','\n\n')
     return summary
-
-
 
 
 
@@ -4562,7 +4692,7 @@ def pickfe(g, d, access):
         dept = dept + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         pp  = ' '*(4-len(str(dy.loc[0,'PhysP'])))  + str(dy.loc[0,'PhysP'])
         pf  = ' '*(4-len(str(dy.loc[0,'PhysFE']))) + str(dy.loc[0,'PhysFE'])
         op  = ' '*(4-len(str(dy.loc[0,'OnP'])))    + str(dy.loc[0,'OnP'])
@@ -4586,7 +4716,7 @@ def test2():
 
 
 
-    # return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    # return datetime.now(ZoneInfo("Australia/Melbourne")).strftime("%a %d %b, %I:%M %p")
 
 
 
@@ -4600,7 +4730,7 @@ def test2():
 
 def aprilmission(access):
     
-    d = '%' if access in ('All','IT') else access.capitalize().replace('d','D')
+    d = '%' if access in ('All','IT', 'EDU') else access.capitalize().replace('d','D')
     conn = odbc.connect(conn_str)
     q = f"AprilCtMission '{d}'"
     print(q)
@@ -4621,7 +4751,7 @@ def aprilmission(access):
         dept = f'{dept}{dp}[{tt}|{tg}|{mm}|{np}|{pk}|{fe}]\n'
     dept = dept + '\n'
 
-    totalrow = 'Total' if access in ('All','IT') else d
+    totalrow = 'Total' if access in ('All','IT','EDU') else d
 
     summary = f"{dept}</pre>" # Not putting header yet, so re.sub does not affect the "0 P"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
@@ -4635,7 +4765,7 @@ def aprilmission(access):
 
 def aprilbbtmission(access):
     
-    d = '%' if access in ('All','IT') else access.capitalize().replace('d','D')
+    d = '%' if access in ('All','IT', 'EDU') else access.capitalize().replace('d','D')
     conn = odbc.connect(conn_str)
     q = f"AprilCtBbtMission '{d}'"
     print(q)
@@ -4644,7 +4774,7 @@ def aprilbbtmission(access):
     dq.replace(r' Dept',r'', regex = True, inplace = True)
     conn.cursor().close()
         
-    dept = str()  
+    dept = str()
     for r in range(len(dq)):
         dp =   str(dq.loc[r,'Dept']) + ' '*(9-len(str(dq.loc[r,'Dept'])))
         tt  = ' '*(3-len(str(dq.loc[r,'Total'])))   + str(dq.loc[r,'Total'])
@@ -4656,14 +4786,18 @@ def aprilbbtmission(access):
         dept = f'{dept}{dp}[{tt}|{tg}|{mm}|{np}|{pk}|{fe}]\n'
     dept = dept + '\n'
 
-    totalrow = 'Total' if access in ('All','IT') else d
+    totalrow = 'Total' if access in ('All','IT','EDU') else d
 
     summary = f"{dept}</pre>" # Not putting header yet, so re.sub does not affect the "0 P"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     summary = re.sub(totalrow,f"\n{totalrow}",summary)
     summary = f"<b><u>April CT BBT Mission</u></b>\n\n<pre>Dept     [BBT|TGW|Mm|0P|1P| FE]\n\n{summary}"
+    summary = summary.replace('D[--9]%','\nYouth  ')
     return summary
+
+
+
 
 
 
@@ -4738,7 +4872,7 @@ def secondedu(g, d, sid, standard, ct, access):
         dept = dept + '\n'
         
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         x = ' '*(3-len(str(dy.loc[0,'X']))) + str(dy.loc[0,'X'])
         p  = ' '*(3-len(str(dy.loc[0,'P']))) + str(dy.loc[0,'P'])
         f  = ' '*(3-len(str(dy.loc[0,'FE']))) + str(dy.loc[0,'FE'])
@@ -5019,7 +5153,7 @@ def hspreport(g, d, access):
         dept = dept + '\n'
     
     total = str()
-    if d == 'D[0-9]%':
+    if d in ('D[0-9]%','%'):
         wp  = ' '*(3-len(str(dy.loc[0,'WD']))) + str(dy.loc[0,'WD'])
         f1  = ' '*(3-len(str(dy.loc[0,'F1']))) + str(dy.loc[0,'F1'])
         di  = ' '*(3-len(str(dy.loc[0,'DI']))) + str(dy.loc[0,'DI'])
@@ -5028,7 +5162,7 @@ def hspreport(g, d, access):
         ex  = ' '*(3-len(str(dy.loc[0,'EX']))) + str(dy.loc[0,'EX'])
         tt  = ' '*(3-len(str(dy.loc[0,'TT']))) + str(dy.loc[0,'TT'])
         total = f'Total[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]'
-    now = datetime.now().strftime('%Y-%m-%d, %H:%M:%S')
+    now = datetime.now(ZoneInfo("Australia/Melbourne")).strftime("%a %d %b, %I:%M %p")
     # now = datetime.now(ZoneInfo("Australia/Melbourne")).strftime('%a %d %b, %I:%M %p')
     header = f"<b><u>{grpdept} HSP EDU REPORTING</u></b>\n<i>{now}</i>\n\n"
     header = header if access != 'Group' else f"{header}1⃣ Wed\n2⃣ Friday 1\n3⃣ Drop-in \n4⃣ Friday 2\n5⃣ Video Submission\n6⃣ Exam\n\n🔒Reporting Not Open\n⬜️Reporting Open\n❌Absent\n✅Attend\n\n"

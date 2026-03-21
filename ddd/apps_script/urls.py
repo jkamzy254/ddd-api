@@ -97,6 +97,6 @@ urlpatterns = [
  
 	#MLT
 	path('mltGetMember/', mlt.MLTGetMemberViewSet.as_view()), 
-	path('mltGetMaterial/', ep.MLTGetMaterialViewSet.as_view()),
+	path('mltGetMaterial/', mlt.MLTGetMaterialViewSet.as_view()),
  
 ]

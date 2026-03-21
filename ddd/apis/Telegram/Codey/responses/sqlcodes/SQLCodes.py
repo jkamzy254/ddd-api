@@ -4867,7 +4867,7 @@ def eduabs(gd,edutype,filt):
     return result
 
     
-# --- Kamau Adjustment #2/3 Start for Unicode Issue
+# --- Kamau Adjustment #1/3 Start for Unicode Issue
 def map_emoji(val, col=None):
     mapping = {
         1: '✅',
@@ -4888,34 +4888,6 @@ def hspreport(g, d, access):
     conn = odbc.connect(conn_str)
     
     # --- Kamau Adjustment #2/3 Start for Unicode Issue
-
-    # hsp_mem = f"""
-    # WITH Days AS
-    # (SELECT CONVERT(DATE, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')TD,
-    #     StartDate W1,
-    #     DATEADD(DAY,2,StartDate)F1,
-    #     DATEADD(DAY,6,StartDate)T2,
-    #     DATEADD(DAY,9,StartDate)F2,
-    #     DATEADD(DAY,10,StartDate)S2,
-    #     DATEADD(DAY,11,StartDate)U2
-    #     FROM NewEduGroupTable
-    #     WHERE CONVERT(DATE, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time') BETWEEN StartDate AND EndDate)
-    # SELECT MemberCode,
-    #     CASE WHEN WedPrs != 0 THEN N'✅' ELSE N'❌' END WedPrs,
-    #     CASE WHEN Fri1Prs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F1 FROM Days) THEN N'🔒' ELSE N'❌' END Fri1Prs,
-    #     CASE WHEN DropInPrs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT T2 FROM Days) THEN N'🔒' WHEN (SELECT TD FROM Days) < (SELECT S2 FROM Days) THEN N'⬜️' ELSE N'❌' END DropInPrs,
-    #     CASE WHEN Fri2Prs != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN N'🔒' ELSE N'❌' END Fri2Prs,
-    #     CASE WHEN ISNULL(VidSubmitted,0) != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN N'⬜️' ELSE N'❌' END VidSubmitted,
-    #     CASE WHEN ISNULL(ExamScore,0) != 0 THEN N'✅' WHEN (SELECT TD FROM Days) < (SELECT U2 FROM Days) THEN N'🔒' ELSE N'❌' END ExamScore
-    # FROM HSPMemberCodey
-    # WHERE Dept LIKE '{d}'
-    #     AND Grp LIKE '{g}'
-    # ORDER BY Pos, MemberCode
-    # """
-    # print("Member Query:")
-    # print(hsp_mem)
-    
-    
     hsp_mem = f"""
     WITH Days AS
     (SELECT CONVERT(DATE, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')TD,
@@ -4950,7 +4922,6 @@ def hspreport(g, d, access):
         AND Grp LIKE '{g}'
     ORDER BY Pos, MemberCode
     """
-    
     # --- Kamau Adjustment #2/3 End
     
     hsp_group = f"""

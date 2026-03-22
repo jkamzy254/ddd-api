@@ -324,6 +324,10 @@ def bot_responses(id,tname,input_text):
         if command == 'bbtmissionpick':
             d = '%' if access == 'EDU' else d # for this function, edu needs to see whole church. //Church for all groups. //Youth for youth.
             return SQLCodes.bbtmission(bb_sid,d,g,'pick',ct,access)
+        
+        if command == 'bmt': # stands for Bbt Mission Tiebreaker
+            d = '%' if access == 'EDU' else d # for this function, edu needs to see whole church. //Church for all groups. //Youth for youth.
+            return SQLCodes.bbtmission(bb_sid,d,g,'tie',ct,access)
     
     
     

@@ -4594,11 +4594,13 @@ def bbtmission(sid, d, g, standard, ct, access):
     gd = 'Dept' if access in ('IT','EDU','All') else 'Grp '
     d = d.capitalize()
 
-    conn = odbc.connect(conn_str)
-    sql  = f"SELECT Grp, ActiveBBTs, TotalBBTs, PercentActive FROM ActiveBBTsFn('{sid}',{filt},'{standard}') WHERE (Dept LIKE '{d}' AND Grp LIKE '{g}') OR Dept = ''"
+    sqlfn = f"ABB, P FROM BBTMissionTieBreaker('{sid}',{filt})" if standard == 'tie' else f"ActiveBBTs, TotalBBTs FROM ActiveBBTsFn('{sid}',{filt},'{standard}')"
+    sql = f"SELECT Dept, PercentActive, {sqlfn} WHERE (Dept LIKE '{d}' AND Grp LIKE '{g}') OR Dept = ''"
     print(sql)
+
+    conn = odbc.connect(conn_str)
     ds = pd.read_sql(sql, conn)
-    ds.columns = ['Dept','ActiveBBTs','TotalBBTs','PercentActive']
+    ds.columns = ['Dept','PercentActive','ActiveBBTs','TotalBBTs']
     ds.replace(r' Dept',r'', regex = True, inplace = True)
     ds.replace(r'InnerSFT',r'InSFT', regex = True, inplace = True)
     ds.replace(r'Culture',r'Cul', regex = True, inplace = True)
@@ -4614,11 +4616,17 @@ def bbtmission(sid, d, g, standard, ct, access):
         table = f'{table}{dp}{pa}{ab}{tb}\n'
 
     timestamp = datetime.now(ZoneInfo("Australia/Melbourne")).strftime("%a %d %b, %I:%M %p")
-    bbtstandard = {'pick': 'Active BBT Standard: <b>Picking</b>', 'se': 'Active BBT Standard: <b>Second Edu</b>'}[standard]
-    ctstandard = f'CT Standard: <b>{ct}</b>'
-    info = f"<i>🕐{timestamp}\n🏃‍♀️{bbtstandard}\n👨‍🏫{ctstandard}</i>"
-    
-    summary = f"<b><u>{grpdept}Active BBT Rate</u></b>\n{info}\n\n<pre>{gd} Prct  (AC/TT)\n\n{table}</pre>"
+
+    bbtstandard = {'pick': '🏃‍♀️Active BBT Standard: <b>Picking</b>',
+                   'se': '🏃‍♀️Active BBT Standard: <b>Second Edu</b>',
+                   'tie': '📏Standard: <b>Total SE / Total P</b>'}[standard]
+    st = '' if standard == 'tie' else ' Standard'
+    ctstandard = f'CT{st}: <b>{ct}</b>'
+    info = f"<i>🕐{timestamp}\n{bbtstandard}\n👨‍🏫{ctstandard}</i>"
+
+    title = 'BBT Mission Tiebreaker' if standard == 'tie' else 'Active BBT Rate'
+    cols = 'SE/TP' if standard == 'tie' else 'AC/BT'
+    summary = f"<b><u>{grpdept}{title}</u></b>\n{info}\n\n<pre>{gd} Prct  ({cols})\n\n{table}</pre>"
     summary = re.sub(r'(?<=\D)0\.0%',r'-   ',summary)
     summary = summary.replace('           ( 0/ 0)','').replace('\n\n\n','\n\n')
     return summary

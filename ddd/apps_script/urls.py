@@ -7,6 +7,7 @@ from .views import ct_attendance as ca
 from .views import edu_player as ep
 from .views import edu_dept_bbt as eb
 from .views import tribe_exam as ex
+from .views import mlt as mlt
 from django.views.generic.base import TemplateView
 
 from django.urls import path
@@ -93,5 +94,10 @@ urlpatterns = [
 	path('examGetMyGroup/', ex.GetMyGroupViewSet.as_view()),
 	path('examUpdateScore/', ex.UpdateExamScoreViewSet.as_view()),
 	path('examUpdateScoreSheets/', ex.UpdateExamScoreSheetsViewSet.as_view()),
+ 
+	#MLT
+	path('mltGetMember/', mlt.MLTGetMemberViewSet.as_view()), 
+	path('mltGetMaterial/', mlt.MLTGetMaterialViewSet.as_view()),
+	path('mltFetchFile/', mlt.MLTFetchFileViewSet.as_view()), 
  
 ]

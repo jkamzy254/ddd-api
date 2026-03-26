@@ -70,19 +70,24 @@ async def handle_message(update, context):
             await update.message.reply_text(response, parse_mode='HTML') 
     elif len(response) <= 49152:
         print('Splitting message into chunks of 4096 characters due to Telegram limit')
-        response = response.replace('<b>','').replace('</b>','').replace('<i>','').replace('</i>','').replace('<u>','').replace('</u>','').replace('<pre>','').replace('</pre>','')
-        await update.message.reply_text(f'<pre>{response[:4096]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[4096:8192]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[8192:12288]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[12288:16384]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[16384:20480]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[20480:24576]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[24576:28672]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[28672:32768]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[32768:36864]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[36864:40960]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[40960:45056]}</pre>', parse_mode='HTML')
-        await update.message.reply_text(f'<pre>{response[45056:]}</pre>', parse_mode='HTML')
+        
+        #/*------------ Kamau Edit 2026-03-26-------------*/
+        # response = response.replace('<b>','').replace('</b>','').replace('<i>','').replace('</i>','').replace('<u>','').replace('</u>','').replace('<pre>','').replace('</pre>','')
+        # await update.message.reply_text(f'<pre>{response[:4096]}</pre>', parse_mode='HTML')
+        # await update.message.reply_text(f'<pre>{response[4096:8192]}</pre>', parse_mode='HTML')
+        # await update.message.reply_text(f'<pre>{response[8192:12288]}</pre>', parse_mode='HTML')
+        # await update.message.reply_text(f'<pre>{response[12288:16384]}</pre>', parse_mode='HTML')
+        # await update.message.reply_text(f'<pre>{response[16384:20480]}</pre>', parse_mode='HTML')
+        # await update.message.reply_text(f'<pre>{response[20480:24576]}</pre>', parse_mode='HTML')
+        # await update.message.reply_text(f'<pre>{response[24576:28672]}</pre>', parse_mode='HTML')
+        # await update.message.reply_text(f'<pre>{response[28672:32768]}</pre>', parse_mode='HTML')
+        # await update.message.reply_text(f'<pre>{response[32768:36864]}</pre>', parse_mode='HTML')
+        # await update.message.reply_text(f'<pre>{response[36864:40960]}</pre>', parse_mode='HTML')
+        # await update.message.reply_text(f'<pre>{response[40960:45056]}</pre>', parse_mode='HTML')
+        # await update.message.reply_text(f'<pre>{response[45056:]}</pre>', parse_mode='HTML')
+        
+        for i in range(0, min(len(response), 49152), 4096):
+            await update.message.reply_text(f'<pre>{response[i:i+4096]}</pre>', parse_mode='HTML')
     else:
         await update.message.reply_text("Maximum character limit (49152) exceeeded", parse_mode='HTML')
 
@@ -92,7 +97,7 @@ def main():
     """Start the bot."""
     # Create the Application and pass it your bot's token.
     token = os.environ.get('CODEY_BOT_TOKEN')
-    application = Application.builder().token(token).build()
+    application = Application.builder().token(token).concurrent_updates(True).build()
 
     # on different commands - answer in Telegram
     # application.add_handler(CommandHandler("start", start))

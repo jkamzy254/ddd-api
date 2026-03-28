@@ -158,6 +158,7 @@ DATABASES = {
 
         'OPTIONS': {
             'driver': 'ODBC Driver 18 for SQL Server',
+            'extra_params': 'MARS_Connection=Yes',  # Multiple Active Result Sets
         },
     },
 }

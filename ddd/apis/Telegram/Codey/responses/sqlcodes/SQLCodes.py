@@ -2024,7 +2024,7 @@ def bblistold(d,g,sid,access): # BB FUNCTIONS
 
 
 
-def bblist(d, g, sid, access):
+def bblist(d, g, sid, access): # BB FUNCTIONS
     d = d.capitalize()
     g = '%' if access != 'Group' else g
     if access == 'Group':
@@ -2279,7 +2279,7 @@ def bblistsold(d,g,physical,online,access): # BB FUNCTIONS
 
 
 
-def bblists(d, g, physical, online, access):
+def bblists(d, g, physical, online, access): # BB FUNCTIONS
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)', r'\1D\2', d)
     g = '%' if access != 'Group' else g

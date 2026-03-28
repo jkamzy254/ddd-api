@@ -2034,7 +2034,7 @@ def bblist(d, g, sid, access): # BB FUNCTIONS
 
     conn = odbc.connect(conn_str)
     df = pd.read_sql(
-        f"EXEC CodeyBBList2 @sid='{sid}', @g='{g}', @d='{d}'",
+        f"SET NOCOUNT ON; EXEC CodeyBBList2 @sid='{sid}', @g='{g}', @d='{d}'",
         conn,
     )
     conn.close()
@@ -2290,8 +2290,8 @@ def bblists(d, g, physical, online, access): # BB FUNCTIONS
         grpdept = str(d).replace('D[0-9]%', 'Youth')
 
     conn = odbc.connect(conn_str)
-    dfP = pd.read_sql(f"EXEC CodeyBBList2 @sid='{physical}', @g='{g}', @d='{d}'", conn)
-    dfO = pd.read_sql(f"EXEC CodeyBBList2 @sid='{online}', @g='{g}', @d='{d}'", conn)
+    dfP = pd.read_sql(f"SET NOCOUNT ON; EXEC CodeyBBList2 @sid='{physical}', @g='{g}', @d='{d}'", conn)
+    dfO = pd.read_sql(f"SET NOCOUNT ON; EXEC CodeyBBList2 @sid='{online}', @g='{g}', @d='{d}'", conn)
     conn.close()
 
     dfP.columns = ['FruitName','L1N','L1G','L1D','L2N','L2G','L2D','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','DPoints','UID','BBTID','LastClass','LastTopic','NextClassDate']

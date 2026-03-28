@@ -86,7 +86,7 @@ def bot_responses(id,tname,input_text):
             d,fmp_sid,fmp_ss,bb_sid,bb_ss = SQLCodes.groupinfo(g).split('/')
         else:
             command = user_message
-        print(f'after: command = {command}, g = {g}, d = {d}, access = {access}')
+        # print(f'after: command = {command}, g = {g}, d = {d}, access = {access}')
             
     # elif access in ['¹','²']:
     #     d = f'{access}D[0-9]%'
@@ -188,18 +188,22 @@ def bot_responses(id,tname,input_text):
             return SQLCodes.memberfmp(timerange,g,fmp_sid,fmp_ss,access)
             
         if command == 'fmstatus':
-            return SQLCodes.fmstatus(d,g,'2020-01-01',access) # date is a dummy variable here
+            return SQLCodes.fmstatus(d,g,'2020-01-01',access) # date is arbitrary as fmstatus function does not use it as a filter, but requires it as an input. It is currently set to show all-time fmstatus, but can be changed to show fmstatus for a specific time period if needed.
             
+        if command == 'bblistold':
+            if access in ('All','IT','MT','EDU') and '/' not in user_message:
+                return f"To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. {command}//D3</i>, or group with <code>/G#</code> <i>e.g. {command}/G10</i>"
+            return SQLCodes.bblistold(d,g,bb_sid,access)
+        
+        if command == 'bblistsold':
+            if access in ('All','IT','MT','EDU') and '/' not in user_message:
+                return f"To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. {command}//D3</i>, or group with <code>/G#</code> <i>e.g. {command}/G10</i>"
+            return SQLCodes.bblistsold(d,g,phys_sid,on_sid,access)
+        
         if command == 'bblist':
             if access in ('All','IT','MT','EDU') and '/' not in user_message:
                 return f"To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. {command}//D3</i>, or group with <code>/G#</code> <i>e.g. {command}/G10</i>"
             return SQLCodes.bblist(d,g,bb_sid,access)
-        
-
-        if command == 'bblist2':
-            if access in ('All','IT','MT','EDU') and '/' not in user_message:
-                return f"To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. {command}//D3</i>, or group with <code>/G#</code> <i>e.g. {command}/G10</i>"
-            return SQLCodes.bblist_ChatGPT_Edition(d,g,bb_sid,access)
         
         if command == 'bblists':
             if access in ('All','IT','MT','EDU') and '/' not in user_message:
@@ -228,30 +232,35 @@ def bot_responses(id,tname,input_text):
         if command == 'bbinactive':
                 return SQLCodes.bbinactive(g, d, bb_sid, access)
             
-        if command == 'newbblist':
+        if command == 'bblistfe':
             if access in ('All','IT','MT','EDU') and '/' not in user_message:
                 return f"To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. {command}//D3</i>, or group with <code>/G#</code> <i>e.g. {command}/G10</i>"
-            return SQLCodes.newbblist(d,g,bb_sid,access)
+            return SQLCodes.bblistfe(d,g,bb_sid,access)
         
         if command == 'newbbstatus':
                 return SQLCodes.newbbstatus(g, d, bb_sid, access)
             
-        if (command.startswith('newbtm') or command.startswith('newbbt') or command.startswith('newgyjnbbt')) and command.endswith('list'):
-            q = command.removesuffix('list')
+        if (command.startswith('newbtm') or command.startswith('newbbt') or command.startswith('newgyjnbbt')) and command.endswith('listubb'):
+            q = command.removesuffix('listubb')
             if access in ('All','IT','MT','EDU') and '/' not in user_message:
                 return f"To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. {command}//D3</i>, or group with <code>/G#</code> <i>e.g. {command}/G10</i>"
-            return SQLCodes.newbbtlist(q,d,g,bb_sid,access)
+            return SQLCodes.bbtlistubb(q,d,g,bb_sid,access)
             
         if (command.startswith('newbtm') or command.startswith('newbbt') or command.startswith('newgyjnbbt')) and command.endswith('status'):
             q,i = command.split('status')
             return SQLCodes.newbbtstatus(q,g,d,bb_sid,access)
-            
-        
+
         if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt') or command.startswith('prebbt')) and command.endswith('list'):
             q = command.removesuffix('list')
             if access in ('All','IT','MT','EDU') and '/' not in user_message:
                 return f"To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. {command}//D3</i>, or group with <code>/G#</code> <i>e.g. {command}/G10</i>"
             return SQLCodes.bbtlist(q,d,g,bb_sid,access)
+        
+        if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt') or command.startswith('prebbt')) and command.endswith('listold'):
+            q = command.removesuffix('listold')
+            if access in ('All','IT','MT','EDU') and '/' not in user_message:
+                return f"To avoid long lists, please specify dept with <code>//D#</code> <i>e.g. {command}//D3</i>, or group with <code>/G#</code> <i>e.g. {command}/G10</i>"
+            return SQLCodes.bbtlistold(q,d,g,bb_sid,access)
             
         if command != 'bbtbtmstatus' and (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt') or command.startswith('prebbt')):
             if command.endswith('status'):
@@ -422,10 +431,6 @@ def bot_responses(id,tname,input_text):
             return SQLCodes.bbfe(g)
         if command == 'fmlist':
             return SQLCodes.fmlist(g)
-
-        if (command.startswith('btm') or command.startswith('bbt') or command.startswith('gyjnbbt')) and command.endswith('listold'):
-            q,i = command.split('listold')
-            return SQLCodes.bbtlistold(q,d)
         
         if command == 'ev':
             i,id = user_message.split('/')

@@ -4636,20 +4636,21 @@ def svcabs(gd,svctype,filt): # MT FUNCTIONS
     gd = gd.capitalize()
     svctype = svctype.capitalize()
           
-    conn = odbc.connect(conn_str)   
+    # conn = odbc.connect(conn_str)   
 
     query_abs = f"SELECT Dept, Grp, MemberCode FROM CodeyServiceAbsentees('{svctype}') WHERE Attendance = 'Abs' AND {filt} LIKE '{gd}'"
     query_nr  = f"SELECT Dept, Grp, MemberCode FROM CodeyServiceAbsentees('{svctype}') WHERE Attendance = 'NoReport' AND {filt} LIKE '{gd}'"
 
     print(query_abs)
 
-    dAB = pd.read_sql(query_abs, conn)                
-    dNR = pd.read_sql(query_nr, conn)
+    with odbc.connect(conn_str) as conn:
+        dAB = pd.read_sql(query_abs, conn)                
+        dNR = pd.read_sql(query_nr, conn)
 
     dAB.columns = ['Dept','Grp','MemberCode']
     dNR.columns = ['Dept','Grp','MemberCode']
 
-    conn.close()
+    # conn.close()
     ab = "" # "<i><b><u>Absentees</u></b></i>\n"
     nr = "" # "<i><b><u>Not Reported</u></b></i>\n"
 
@@ -4688,7 +4689,7 @@ def eduabs(gd,edutype,filt): # EDU FUNCTIONS
     gd = gd.capitalize()
     edutype = edutype.capitalize()
           
-    conn = odbc.connect(conn_str)   
+    # conn = odbc.connect(conn_str)   
     
     EMOJI_MAP = {
         'present':  '✅',
@@ -4708,13 +4709,14 @@ def eduabs(gd,edutype,filt): # EDU FUNCTIONS
 
     print(query_abs)
 
-    dAB = pd.read_sql(query_abs, conn)                
-    dNR = pd.read_sql(query_nr, conn)
+    with odbc.connect(conn_str) as conn:
+        dAB = pd.read_sql(query_abs, conn)                
+        dNR = pd.read_sql(query_nr, conn)
 
     dAB.columns = ['Dept','Grp','MemberCode']
     dNR.columns = ['Dept','Grp','MemberCode']
 
-    conn.close()
+    # conn.close()
     ab = "" # "<i><b><u>Absentees</u></b></i>\n"
     nr = "" # "<i><b><u>Not Reported</u></b></i>\n"
 
@@ -4760,7 +4762,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
 
     grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth')
     
-    conn = odbc.connect(conn_str)
+    # conn = odbc.connect(conn_str)
     
     # --- Kamau Adjustment #2/3 Start for Unicode Issue
 
@@ -4879,7 +4881,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    # conn.close()
 
     member = str()
     if access == 'Group':

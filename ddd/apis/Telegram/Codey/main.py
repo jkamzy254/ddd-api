@@ -1,3 +1,5 @@
+import asyncio
+
 from dotenv import load_dotenv, find_dotenv
 import os
 load_dotenv(find_dotenv())
@@ -45,8 +47,8 @@ async def handle_message(update, context):
     tname = str(update.effective_chat.first_name)
     text = str(update.message.text)
     print(f'[{tname}/{id}] {text}')
-    response = R.bot_responses(id, tname, text)
-
+    # response = R.bot_responses(id,tname,text)
+    response = await asyncio.get_event_loop().run_in_executor(None, R.bot_responses, id, tname, text)
     if isinstance(response, list):
         print(response)
         response, new_message, recipient_id = response

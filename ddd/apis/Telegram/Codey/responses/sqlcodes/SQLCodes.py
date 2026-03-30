@@ -4854,7 +4854,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    # conn.close()
 
     member = str()
     if access == 'Group':

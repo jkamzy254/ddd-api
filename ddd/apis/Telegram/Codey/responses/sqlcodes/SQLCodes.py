@@ -198,10 +198,9 @@ def functionlog(uid, name, input_text, command): # IT FUNCTIONS
 
 
 def teledata(id): # ACCESS FUNCTIONS
-    conn = odbc.connect(conn_str)
-    access = f"SELECT * FROM CodeyTeleData({id})" # Refactoring: Updated new variables
-    da = pd.read_sql(access, conn)
-    conn.close()
+    with odbc.connect(conn_str) as conn:
+        access = f"SELECT * FROM CodeyTeleData({id})" # Refactoring: Updated new variables
+        da = pd.read_sql(access, conn)
     
     if len(da) == 0:
         return "None/None/None/None/None/None/None/None/None/None/None/None"
@@ -1010,18 +1009,17 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
     
     print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'          v2 = {v2}")
     
-    conn = odbc.connect(conn_str)
     bb_mem    = f"SELECT Dept, Grp, MemberCode, pNew, pOld{fe_col}, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM {codeybbstatusmembers}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID"
     bb_group  = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
     bb_dept   = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
     bb_youth  = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
     
     print(bb_group)
-    
-    dm = pd.read_sql(bb_mem, conn)
-    dg = pd.read_sql(bb_group, conn)
-    dd = pd.read_sql(bb_dept, conn)
-    dy = pd.read_sql(bb_youth, conn)
+    with odbc.connect(conn_str) as conn:
+        dm = pd.read_sql(bb_mem, conn)
+        dg = pd.read_sql(bb_group, conn)
+        dd = pd.read_sql(bb_dept, conn)
+        dy = pd.read_sql(bb_youth, conn)
 
     if v2:
         dm.columns = ['Dept','Grp','Member','pNew','pOld','FE','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
@@ -1036,7 +1034,7 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
     
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    # conn.close()
 
     member = str()
     if access == 'Group':
@@ -1143,7 +1141,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     fe_col = ', FE' if v2 else ''
     fe_sum = ', SUM(FE)FE' if v2 else ''
     
-    conn = odbc.connect(conn_str)
+    # conn = odbc.connect(conn_str)
     bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld{fe_col}, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM {codeybbtstatusmembers}('{sid}') WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} ORDER BY GID, {name}"
     bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers}('{sid}') WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} GROUP BY Grp, GID ORDER BY GID"
     bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers}('{sid}') WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} GROUP BY Dept, DID ORDER BY DID"
@@ -1151,10 +1149,11 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     
     print(bb_group)
     
-    dm = pd.read_sql(bb_mem, conn)
-    dg = pd.read_sql(bb_group, conn)
-    dd = pd.read_sql(bb_dept, conn)
-    dy = pd.read_sql(bb_youth, conn)
+    with odbc.connect(conn_str) as conn:
+        dm = pd.read_sql(bb_mem, conn)
+        dg = pd.read_sql(bb_group, conn)
+        dd = pd.read_sql(bb_dept, conn)
+        dy = pd.read_sql(bb_youth, conn)
 
 
     dg.replace(r'MWDept',r'MWDpt', regex = True, inplace = True)
@@ -1175,7 +1174,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    # conn.close()
 
     member = str()
     if bbtdept is False and not d.endswith('D[0-9]%'):
@@ -1273,7 +1272,7 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
     sums = "SUM(pNew)pNew, SUM(pOld)pOld, SUM(pFA)pFA, SUM(FE)FE, SUM(bbA)bbA, SUM(cct1)cct1, SUM(cct2)cct2, SUM(cctI)cctI, SUM(UBB)UBB, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(Total)Total"
     conditions = f"Dept LIKE '{d}' AND Grp LIKE '{g}'"
     
-    conn = odbc.connect(conn_str)
+    # conn = odbc.connect(conn_str)
     bb_mem    = f"SELECT {cols} FROM {table} WHERE {conditions} ORDER BY GID"
     bb_group  = f"SELECT Grp, {sums} FROM {table} WHERE {conditions} GROUP BY Grp, GID ORDER BY GID"
     bb_dept   = f"SELECT Dept, {sums} FROM {table} WHERE {conditions} GROUP BY Dept, DID ORDER BY DID"
@@ -1282,11 +1281,12 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
     
     print(bb_group)
     
-    dm = pd.read_sql(bb_mem, conn)
-    dg = pd.read_sql(bb_group, conn)
-    dd = pd.read_sql(bb_dept, conn)
-    # dr = pd.read_sql(bb_region, conn)
-    dy = pd.read_sql(bb_youth, conn)
+    with odbc.connect(conn_str) as conn:
+        dm = pd.read_sql(bb_mem, conn)
+        dg = pd.read_sql(bb_group, conn)
+        dd = pd.read_sql(bb_dept, conn)
+        # dr = pd.read_sql(bb_region, conn)
+        dy = pd.read_sql(bb_youth, conn)
 
     dm.columns = ['Dept','Grp','Member','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dg.columns = ['Grp','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
@@ -1295,7 +1295,7 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
     dy.columns = ['pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    # conn.close()
 
     member = str()
     if access == 'Group':
@@ -1422,7 +1422,7 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
     sums = "SUM(pNew)pNew, SUM(pOld)pOld, SUM(pFA)pFA, SUM(FE)FE, SUM(bbA)bbA, SUM(cct1)cct1, SUM(cct2)cct2, SUM(cctI)cctI, SUM(UBB)UBB, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(Total)Total"
     conditions = f"Dept LIKE '{d}' AND Grp LIKE '{g}'{query}"
     
-    conn = odbc.connect(conn_str)
+    # conn = odbc.connect(conn_str)
     bb_mem = f"SELECT {cols} FROM {table} WHERE {conditions} ORDER BY GID, {name}"
     bb_group = f"SELECT Grp, {sums} FROM {table} WHERE {conditions} GROUP BY Grp, GID ORDER BY GID"
     bb_dept = f"SELECT Dept, {sums} FROM {table} WHERE {conditions} GROUP BY Dept, DID ORDER BY DID"
@@ -1431,11 +1431,12 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
     
     print(bb_group)
     
-    dm = pd.read_sql(bb_mem, conn)
-    dg = pd.read_sql(bb_group, conn)
-    dd = pd.read_sql(bb_dept, conn)
-    # dr = pd.read_sql(bb_region, conn)
-    dy = pd.read_sql(bb_youth, conn)
+    with odbc.connect(conn_str) as conn:
+        dm = pd.read_sql(bb_mem, conn)
+        dg = pd.read_sql(bb_group, conn)
+        dd = pd.read_sql(bb_dept, conn)
+        # dr = pd.read_sql(bb_region, conn)
+        dy = pd.read_sql(bb_youth, conn)
 
     dm.columns = ['Dept','Grp','Member','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dg.columns = ['Grp','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
@@ -1444,7 +1445,7 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
     dy.columns = ['pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    # conn.close()
 
     member = str()
     if not d.endswith('D[0-9]%'):
@@ -4563,18 +4564,18 @@ def secondedu(g, d, sid, standard, ct, access): # BBT FUNCTIONS
 
     print(bb_group)
     
-    dm = pd.read_sql(bb_mem, conn)
-    dg = pd.read_sql(bb_group, conn)
-    dd = pd.read_sql(bb_dept, conn)
-    dy = pd.read_sql(bb_youth, conn)
-    ds = pd.read_sql(seasons, conn)
+    with odbc.connect(conn_str) as conn:
+        dm = pd.read_sql(bb_mem, conn)
+        dg = pd.read_sql(bb_group, conn)
+        dd = pd.read_sql(bb_dept, conn)
+        dy = pd.read_sql(bb_youth, conn)
+        ds = pd.read_sql(seasons, conn)
     dm.columns = ['Dept','Grp','BBT','X','P','FE','SE']
     dg.columns = ['Grp','X','P','FE','SE']
     dd.columns = ['Dept','X','P','FE','SE']
     dy.columns = ['X','P','FE','SE']
     ds.columns = ['SeasonName']
         
-    conn.close()
 
     seasonlist = ds['SeasonName'].str.cat(sep=', ').replace('Yr 43 ','').replace('Feb CT Online','FebONL').replace('Feb CT','Feb').replace('Apr CT Online ','AprONL').replace('Apr CT','Apr').replace('Apr SE CT','AprMW')
 

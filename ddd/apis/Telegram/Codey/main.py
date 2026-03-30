@@ -5,6 +5,7 @@ load_dotenv(find_dotenv())
 from .responses import Responses as R
 import warnings
 import logging
+import re
 
 from telegram import ForceReply, Update, Bot, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
@@ -36,60 +37,58 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text("Help!")
 
 
+
+
 async def handle_message(update, context):
     warnings.filterwarnings('ignore')
     id = update.message.chat.id
     tname = str(update.effective_chat.first_name)
     text = str(update.message.text)
     print(f'[{tname}/{id}] {text}')
-    response = R.bot_responses(id,tname,text)
+    response = R.bot_responses(id, tname, text)
+
     if isinstance(response, list):
         print(response)
-        response,new_message,recipient_id = response
+        response, new_message, recipient_id = response
         print(response)
         pm = 'Markdown' if new_message.startswith('Telegram user') else 'HTML'
         print(f"Parse_mode = {pm}")
         await bot.sendMessage(chat_id=recipient_id, text=new_message, parse_mode=pm)
     else:
-        PREFIXES = ('Markdown@@','MarkdownV2@@','HTML@@')
+        PREFIXES = ('Markdown@@', 'MarkdownV2@@', 'HTML@@')
         if response.startswith(PREFIXES):
-            pm,_,response = response.partition('@@')
+            pm, _, response = response.partition('@@')
         else:
             pm = 'HTML'
+
     if len(response) <= 4096:
-        if pm == 'Markdown':
-            print('Using Markdown')
-            response = response.replace('<b>','*').replace('</b>','*').replace('<i>','_').replace('</i>','_').replace('<u>','').replace('</u>','').replace('<pre>','```').replace('</pre>','```')
-            await update.message.reply_text(response, parse_mode='Markdown')
-        elif pm == 'MarkdownV2':
-            print('Using MarkdownV2')
-            response = response.replace('<b>','*').replace('</b>','*').replace('<i>','_').replace('</i>','_').replace('<u>','__').replace('</u>','__').replace('<pre>','```').replace('</pre>','```')
-            await update.message.reply_text(response, parse_mode='MarkdownV2')
+        if pm in ('Markdown', 'MarkdownV2'):
+            print(f'Using {pm}')
+            replacements = [('<b>','*'),('</b>','*'),('<i>','_'),('</i>','_'),('<pre>','```'),('</pre>','```')]
+            if pm == 'MarkdownV2':
+                replacements += [('<u>','__'),('</u>','__')]
+            else:
+                replacements += [('<u>',''),('</u>','')]
+            for old, new in replacements:
+                response = response.replace(old, new)
+            await update.message.reply_text(response, parse_mode=pm)
         else:
             print('Using HTML')
-            await update.message.reply_text(response, parse_mode='HTML') 
+            await update.message.reply_text(response, parse_mode='HTML')
+
     elif len(response) <= 49152:
         print('Splitting message into chunks of 4096 characters due to Telegram limit')
-        
-        #/*------------ Kamau Edit 2026-03-26-------------*/
-        # response = response.replace('<b>','').replace('</b>','').replace('<i>','').replace('</i>','').replace('<u>','').replace('</u>','').replace('<pre>','').replace('</pre>','')
-        # await update.message.reply_text(f'<pre>{response[:4096]}</pre>', parse_mode='HTML')
-        # await update.message.reply_text(f'<pre>{response[4096:8192]}</pre>', parse_mode='HTML')
-        # await update.message.reply_text(f'<pre>{response[8192:12288]}</pre>', parse_mode='HTML')
-        # await update.message.reply_text(f'<pre>{response[12288:16384]}</pre>', parse_mode='HTML')
-        # await update.message.reply_text(f'<pre>{response[16384:20480]}</pre>', parse_mode='HTML')
-        # await update.message.reply_text(f'<pre>{response[20480:24576]}</pre>', parse_mode='HTML')
-        # await update.message.reply_text(f'<pre>{response[24576:28672]}</pre>', parse_mode='HTML')
-        # await update.message.reply_text(f'<pre>{response[28672:32768]}</pre>', parse_mode='HTML')
-        # await update.message.reply_text(f'<pre>{response[32768:36864]}</pre>', parse_mode='HTML')
-        # await update.message.reply_text(f'<pre>{response[36864:40960]}</pre>', parse_mode='HTML')
-        # await update.message.reply_text(f'<pre>{response[40960:45056]}</pre>', parse_mode='HTML')
-        # await update.message.reply_text(f'<pre>{response[45056:]}</pre>', parse_mode='HTML')
-        
-        for i in range(0, min(len(response), 49152), 4096):
-            await update.message.reply_text(f'<pre>{response[i:i+4096]}</pre>', parse_mode='HTML')
+        response = re.sub(r'</?(?:b|i|u|pre)>', '', response)
+        # Only send chunks that actually have content
+        for i in range(0, len(response), 4096):
+            chunk = response[i:i+4096]
+            if chunk:
+                await update.message.reply_text(f'<pre>{chunk}</pre>', parse_mode='HTML')
     else:
-        await update.message.reply_text("Maximum character limit (49152) exceeeded", parse_mode='HTML')
+        await update.message.reply_text("Maximum character limit (49152) exceeded", parse_mode='HTML')
+
+
+
 
 
 

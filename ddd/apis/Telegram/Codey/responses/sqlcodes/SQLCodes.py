@@ -2024,7 +2024,7 @@ def bblistold(d,g,sid,access): # BB FUNCTIONS
 
 
 
-def bblist(d, g, sid, access): # BB FUNCTIONS
+def bblist(d, g, sid, access):
     d = d.capitalize()
     g = '%' if access != 'Group' else g
     if access == 'Group':
@@ -2032,14 +2032,24 @@ def bblist(d, g, sid, access): # BB FUNCTIONS
     else:
         grpdept = str(d).replace('D[0-9]%', 'Youth')
 
+    sql = f"SET NOCOUNT ON; EXEC CodeyBBList2 @sid='{sid}'"
+    print(sql)
     conn = odbc.connect(conn_str)
-    df = pd.read_sql(
-        f"SET NOCOUNT ON; EXEC CodeyBBList2 @sid='{sid}', @g='{g}', @d='{d}'",
-        conn,
-    )
+    df = pd.read_sql(sql, conn)
     conn.close()
 
     df.columns = ['FruitName','L1N','L1G','L1D','L2N','L2G','L2D','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','DPoints','UID','BBTID','LastClass','LastTopic','NextClassDate']
+
+    # Filter by group and dept in Python (replaces the slow OR in SQL)
+    if g != '%':
+        df = df[(df['L1G'] == g) | (df['L2G'] == g)]
+    if d != '%':
+        if '%' in d:  # pattern like 'D[0-9]%'
+            pattern = d.replace('[0-9]', r'\d').replace('%', '.*')
+            df = df[df['L1D'].str.match(pattern) | df['L2D'].str.match(pattern)]
+        else:
+            df = df[(df['L1D'] == d) | (df['L2D'] == d)]
+
     df = df[df['NewStatus'].isin(['New P','Old P','ABB','IBB ME','IBB FA','Fallen P','ABB CCT','IBB CCT'])]
 
     # Determine which points column to use
@@ -2279,7 +2289,7 @@ def bblistsold(d,g,physical,online,access): # BB FUNCTIONS
 
 
 
-def bblists(d, g, physical, online, access): # BB FUNCTIONS
+def bblists(d, g, physical, online, access):
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)', r'\1D\2', d)
     g = '%' if access != 'Group' else g
@@ -2290,17 +2300,33 @@ def bblists(d, g, physical, online, access): # BB FUNCTIONS
         grpdept = str(d).replace('D[0-9]%', 'Youth')
 
     conn = odbc.connect(conn_str)
-    dfP = pd.read_sql(f"SET NOCOUNT ON; EXEC CodeyBBList2 @sid='{physical}', @g='{g}', @d='{d}'", conn)
-    dfO = pd.read_sql(f"SET NOCOUNT ON; EXEC CodeyBBList2 @sid='{online}', @g='{g}', @d='{d}'", conn)
+    dfP = pd.read_sql(f"SET NOCOUNT ON; EXEC CodeyBBList2 @sid='{physical}'", conn)
+    dfO = pd.read_sql(f"SET NOCOUNT ON; EXEC CodeyBBList2 @sid='{online}'", conn)
     conn.close()
 
-    dfP.columns = ['FruitName','L1N','L1G','L1D','L2N','L2G','L2D','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','DPoints','UID','BBTID','LastClass','LastTopic','NextClassDate']
-    dfO.columns = ['FruitName','L1N','L1G','L1D','L2N','L2G','L2D','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','DPoints','UID','BBTID','LastClass','LastTopic','NextClassDate']
-    
-    keep_cols = ['NewStatus','LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    cols = ['FruitName','L1N','L1G','L1D','L2N','L2G','L2D','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','DPoints','UID','BBTID','LastClass','LastTopic','NextClassDate']
+    dfP.columns = cols
+    dfO.columns = cols
+
+    # Filter by group and dept in Python (replaces slow OR in SQL)
+    def filter_gd(df, g, d):
+        if g != '%':
+            df = df[(df['L1G'] == g) | (df['L2G'] == g)]
+        if d != '%':
+            if '%' in d:
+                pattern = d.replace('[0-9]', r'\d').replace('%', '.*')
+                df = df[df['L1D'].str.match(pattern) | df['L2D'].str.match(pattern)]
+            else:
+                df = df[(df['L1D'] == d) | (df['L2D'] == d)]
+        return df
+
+    dfP = filter_gd(dfP, g, d)
+    dfO = filter_gd(dfO, g, d)
+
     valid_statuses = ['New P','Old P','ABB','IBB ME','IBB FA','Fallen P','ABB CCT','IBB CCT']
-    dfP = dfP[keep_cols][dfP['NewStatus'].isin(valid_statuses)]
-    dfO = dfO[keep_cols][dfO['NewStatus'].isin(valid_statuses)]
+    keep_cols = ['NewStatus','LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
+    dfP = dfP[dfP['NewStatus'].isin(valid_statuses)][keep_cols]
+    dfO = dfO[dfO['NewStatus'].isin(valid_statuses)][keep_cols]
 
     if access == 'Group':
         pt = 'Points'
@@ -2320,7 +2346,6 @@ def bblists(d, g, physical, online, access): # BB FUNCTIONS
         ('IBB CCT',  'CCT IBB',              '⭐️', True),
     ]
 
-    # --- Helper to format one row ---
     def fmt_row(num, row, emoji, show_topic):
         pts_display = f"[{row[pt]}] " if pt is not None else ""
         line = f"{emoji}{num}. [{row['LastClass']}] {pts_display}{row['FruitName'][:8]} - {row['L1N']}{row['L2N']} - {row['BBTN']}"
@@ -2328,7 +2353,7 @@ def bblists(d, g, physical, online, access): # BB FUNCTIONS
             line += f" - {row['LastTopic']} → [{row['NextClassDate']}]"
         return line
 
-    # --- Physical sections (per-status headers, per-status numbering) ---
+    # --- Physical sections ---
     groupsP = {s: sub for s, sub in dfP.groupby('NewStatus', sort=False)}
     parts = []
     total_phys = 0
@@ -2345,7 +2370,7 @@ def bblists(d, g, physical, online, access): # BB FUNCTIONS
         parts.append('\n'.join(lines))
     phys_body = ''.join(parts)
 
-    # --- Online section (no per-status headers, running counter across all) ---
+    # --- Online section ---
     groupsO = {s: sub for s, sub in dfO.groupby('NewStatus', sort=False)}
     online_lines = []
     total_online = 0
@@ -2377,7 +2402,7 @@ def bblists(d, g, physical, online, access): # BB FUNCTIONS
     result = re.sub(r'\((\d+)\)', r'(G\1)', result)
     result = re.sub(r'\[1\] ', '', result)
     result = re.sub(r'\n<b><i><u>Physical', r'<b><i><u>Physical', result)
-    result = result.replace('<pre>\n','<pre>')
+    result = result.replace('<pre>\n', '<pre>')
     return result
 
 

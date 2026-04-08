@@ -67,7 +67,7 @@ def bot_responses(id, tname, input_text):
         elif '/' in user_message:
             try:
                 command, g = user_message.lower().split('/')
-                g = g.replace('r1', '¹').replace('r2', '²').replace('g', 'G')
+                g = g.replace('g', 'G')
                 access = 'Group' if access != 'MT' else 'MT'
             except ValueError:
                 return 'Format error: Too many "/"s'
@@ -75,11 +75,12 @@ def bot_responses(id, tname, input_text):
         else:
             command = user_message
 
-    elif access in ['D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MT']:
+    elif access in ['D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT']:
         d = access if access != 'Dept' else d
         if '/' in user_message:
             try:
                 command, g = user_message.split('/')
+                g = g.replace('g', 'G')
             except ValueError:
                 return 'Format error: Too many "/"s'
             # Only call groupinfo and deptgroup when actually needed

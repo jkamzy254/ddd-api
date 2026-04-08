@@ -34,6 +34,27 @@ conn_str = """
 # EDU FUNCTIONS
 # MT FUNCTIONS
 
+def format_display_name(value): # EDU FUNCTIONS (used in bb "list" functions that use case-sensitivepandas filtering to avoid the slow "OR" condition filtering in SQL when searching both leaves. Potentially could be used in any bb or fmp function involving both leaf )
+    """Format g or d for display in the header only"""
+    known = {
+        'm&w dept': 'M&W Dept',
+        'ct': 'CT',
+        'innersft': 'InnerSFT',
+        'sft': 'SFT',
+        'mwdept': 'MWDept',
+        'mwscm': 'MWSCM',
+        'hwpl': 'HWPL',
+        'gd': 'GD'
+    }
+    lookup = value.lower()
+    if lookup in known:
+        return known[lookup]
+    if re.match(r'^d\d+$', lookup, re.IGNORECASE):
+        return value.upper()  # D6, D11 etc.
+    if re.match(r'^g\d+$', lookup, re.IGNORECASE):
+        return value.upper()  # G1, G26 etc.
+    return value  # fallback: return as-is
+
 def commands(access): # ACCESS FUNCTIONS
     if access in ('IT','All'):
         return '<b>🤖Using Codey🤖</b>\n____________________________________________________________________\n\n<u>📣General command structure📣</u>\n<b><i>&lt;CT&gt;</i></b><code>&lt;command&gt;</code><b><i>&lt;/g or //D&gt;</i></b>\n\n<u><b>👨‍🏫&lt;CT&gt;</b> = optional <b>prefix👩‍🏫</b></u>\n<i>▪️phys = physical CT (default if omitted)\n▪️sft = online CT\n▪️all = both physical + online</i>\n\n<u><b>👥&lt;/g or //D&gt;</b> = optional <b>suffix👥</b></u>\n<i>▪️/g = filters specific group (e.g. /G1, /EST2)\n▪️//D = filters specific department (e.g. //D1, //SFT, //InnerSFT)</i>\n____________________________________________________________________\n\n<b><i><u>📣Group FMP</u></i></b>\n\n<code>➡️&lt;timespan&gt;fmp\n\n&lt;timespan&gt;</code>\n<i>▪️today\n▪️yesterday\n▪️week\n▪️lastweek\n▪️season\n\ne.g. </i><code>todayfmp</code>\n____________________________________________________________________\n\n<b><u><i>📣Church FMP</i></u></b>\n\n<code>➡️&lt;Division or Task&gt;&lt;Timespan&gt;\n\n&lt;Division or Task&gt;</code>\n<i>▪️youth = all youth\n▪️tgw = all youth TGW only\n▪️member = all youth member only\n▪️gyjn/oev/iev/edu/sv = all youth specific task only\n▪️dept = department totals only\n\n💡Adding //SFT or //InnerSFT will replace youth groups with SFT groups\n\ne.g. </i><code>youthtoday</code>\n____________________________________________________________________\n\n<b><i><u>📣BB Commands</u></i></b>\n\n<code>➡️bb&lt;format&gt;\n\n&lt;format&gt;</code>\n<i>▪️status = table of status numbers per group\n▪️active = table: active statuses only\n▪️inactive = table: inactive statuses only\n▪️list = list of bb fruits\n\n💡Adding /g or //D will also show individual bbt result\n💡Make sure to filter bblist with /g or //D to reduce output\n\ne.g. </i><code>bblist//D1</code>\n____________________________________________________________________\n\n<b><i><u>📣BBT Commands</u></i></b>\n\n<code>➡️&lt;BbtType&gt;&lt;Format&gt;\n\n&lt;BbtType&gt;</code>\n<i>▪️bbt = all bbt + prebbt\n▪️gyjnbbt = all gyjns\n▪️btm# = all bbt/btm from specified btm number\n\ne.g.</i><code> bbtstatus</code>\n____________________________________________________________________\n\n<b><i><u>📣Other Commands</u></i></b>\n\n<code>➡️&lt;0411111111&gt;</code><i> = double fish check</i>'
@@ -80,7 +101,7 @@ def reg_new_user_request(id,tname,user,pw): # ACCESS FUNCTIONS
  
     conn.cursor().execute(insertquery)
     conn.commit()
-    conn.close()
+    conn.cursor().close()
     
     reply_message = f"Codey registration request has been received and is awaiting approval. Please follow up with your department leader."
     bjn_message = f"Telegram user [{tname}](tg://user?id={id}) has requested Codey access as:\n\nName: {name}\nGroup: {grp}\nAccess Level: {access}\n\nIf this is the correct telegram account, please reply with the following text: ```\nApprove: #{uid}#{id}#```"
@@ -105,7 +126,7 @@ def approve_new_user_request(userUID,telID): # ACCESS FUNCTIONS
  
     conn.cursor().execute(updatequery)
     conn.commit()
-    conn.close()
+    conn.cursor().close()
     
     reply_message = "<i>Approved</i>"
     member_message = "<i>You may now use Codey</i>"
@@ -119,7 +140,7 @@ def deptgroup(d): # ACCESS FUNCTIONS
     conn = odbc.connect(conn_str)
     group_query = f"SELECT Grp FROM GroupInfo WHERE Dept LIKE '{d}'"
     ga = pd.read_sql(group_query, conn)
-    conn.close()
+    conn.cursor().close()
     grouplist = []
     for n in range(len(ga)):
         grouplist.append(ga.iloc[n,0].lower())
@@ -132,7 +153,7 @@ def maillist(): # IT FUNCTIONS
     aa = pd.read_sql("SELECT m.Name, t.TelID FROM TelegramBotData t LEFT JOIN MemberData m ON m.UID = t.UID WHERE Access = 'All'", conn)
     ma = pd.read_sql("SELECT m.Name, t.TelID FROM TelegramBotData t LEFT JOIN MemberData m ON m.UID = t.UID WHERE Access = 'M&W Dept'", conn)
     ia = pd.read_sql("SELECT m.Name, t.TelID FROM TelegramBotData t LEFT JOIN MemberData m ON m.UID = t.UID WHERE Access = 'Israel'", conn)
-    conn.close()
+    conn.cursor().close()
     groupid = []
     deptid = []
     allid = []
@@ -180,7 +201,7 @@ def idlist(access,group_or_dept): # ACCESS FUNCTIONS
     filter = 'MemberGroup' if access == 'group' else 'Group_IMWY'
     conn = odbc.connect(conn_str)
     idtable = pd.read_sql(f"SELECT ID FROM MemberData WHERE {filter} = '{group_or_dept}'", conn)
-    conn.close()
+    conn.cursor().close()
     idlist = []
     for r in range(len(idtable)):
         idlist.append(int(idtable.iloc[r,0]))
@@ -194,13 +215,14 @@ def functionlog(uid, name, input_text, command): # IT FUNCTIONS
     logSQL = f"INSERT INTO CodeyFunctionLogs (UID, Name, CommandSent, FunctionName, TStamp) VALUES ('{uid}', '{name}', '{input_text}', '{command}', CONVERT(SmallDateTime, SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time'))"
     conn.cursor().execute(logSQL)
     conn.commit()
-    conn.close()
+    conn.cursor().close()
 
 
 def teledata(id): # ACCESS FUNCTIONS
-    with odbc.connect(conn_str) as conn:
-        access = f"SELECT * FROM CodeyTeleData({id})" # Refactoring: Updated new variables
-        da = pd.read_sql(access, conn)
+    conn = odbc.connect(conn_str)
+    access = f"SELECT * FROM CodeyTeleData({id})" # Refactoring: Updated new variables
+    da = pd.read_sql(access, conn)
+    conn.cursor().close()
     
     if len(da) == 0:
         return "None/None/None/None/None/None/None/None/None/None/None/None"
@@ -211,7 +233,7 @@ def namedata(user_name): # ACCESS FUNCTIONS
     conn = odbc.connect(conn_str)
     access = f"SELECT * FROM CodeyNameData('{user_name}')" # Refactoring: Updated new variables
     da = pd.read_sql(access, conn)
-    conn.close()
+    conn.cursor().close()
     
     if len(da) == 0:
         return "None/None/None/None/None/None/None/None/None/None"
@@ -222,7 +244,7 @@ def groupinfo(g): # ACCESS FUNCTIONS
     conn = odbc.connect(conn_str)
     seasondata = f"SELECT Dept, FMP_SID, FMP_SeasonStart, BB_SID, BB_SeasonStart FROM CodeyTeleDataGroup('{g}')" # Replace the first 'All' with GROUP_IMWY to change M&W season back to M&W CT (Change also on teledata function!)
     dr = pd.read_sql(seasondata, conn)
-    conn.close()
+    conn.cursor().close()
 
     if len(dr) == 0:
         return "None/None/None/None/None"
@@ -250,7 +272,7 @@ def duplicate_check(ph): # FMP FUNCTIONS
     
     dp = pd.read_sql(phonecheck, conn)
     
-    conn.close()
+    conn.cursor().close()
     
     if len(dp) == 0:
         return 'New fish - can proceed'
@@ -280,7 +302,7 @@ def todayfish(g): # FMP FUNCTIONS
         
         pts_result = pd.read_sql(sql_pts, conn).iloc[0,0]
         pts = str(int(pts_result)) if pts_result is not None and not pd.isna(pts_result) else '0'
-        conn.close()
+        conn.cursor().close()
 
         fish = str()
         for r in range(len(dp)):
@@ -307,7 +329,7 @@ def weekfish(g): # FMP FUNCTIONS
         
         pts_result = pd.read_sql(sql_pts, conn).iloc[0,0]
         pts = str(int(pts_result)) if pts_result is not None and not pd.isna(pts_result) else '0'
-        conn.close()
+        conn.cursor().close()
         
         
         
@@ -336,7 +358,7 @@ def seasonpick(g): # FMP FUNCTIONS
         
         pts_result = pd.read_sql(sql_pts, conn).iloc[0,0]
         pts = str(int(pts_result)) if pts_result is not None and not pd.isna(pts_result) else '0'
-        conn.close()
+        conn.cursor().close()
 
         fish = str()
         for r in range(len(dp)):
@@ -364,7 +386,7 @@ def seasonfe(g): # FMP FUNCTIONS
         dp.replace(np.nan, '', regex = True, inplace = True)
         
         pts = str(pd.read_sql(sql_pts, conn).iloc[0,0])
-        conn.close()
+        conn.cursor().close()
 
         fish = str()
         for r in range(len(dp)):
@@ -387,7 +409,7 @@ def todaympfe(g): # FMP FUNCTIONS
     sql_TFE_pts = f"SELECT(ISNULL((SELECT SUM(L1P) FROM ScottTodayFE('{g}') WHERE L1G LIKE '{g}'),0) + ISNULL((SELECT SUM(L2P) FROM ScottTodayFE('{g}') WHERE L2G LIKE '{g}'),0)) AS Points"
     dpfe = pd.read_sql(sql_TFE, conn)
 
-    conn.close()
+    conn.cursor().close()
     g = g.capitalize()
     g = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     
@@ -445,7 +467,7 @@ def weekmpfe(g): # FMP FUNCTIONS
     sql_TFE_pts = f"SELECT (ISNULL((SELECT SUM(L1P) FROM ScottWeekFE('{g}') WHERE L1G LIKE '{g}'),0) + ISNULL((SELECT SUM(L2P) FROM ScottWeekFE('{g}') WHERE L2G LIKE '{g}'),0)) AS Points"
     dpfe = pd.read_sql(sql_TFE, conn)
 
-    conn.close()
+    conn.cursor().close()
     g = g.capitalize()
     g = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     
@@ -520,7 +542,7 @@ def memberfmp(timerange,g,sid,ss,access): # FMP FUNCTIONS
     if len(dm) == 0:
         return "No members found"
     else:  
-        conn.close()
+        conn.cursor().close()
         member = str()
         
         for r in range(len(dm)):
@@ -594,7 +616,7 @@ def deptfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
     dt.columns = ['F','M','P','FE']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
 
-    conn.close()
+    conn.cursor().close()
     
     group = str()
     
@@ -702,7 +724,7 @@ def taskfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
     dt.columns = ['F','M','P','FE']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
 
-    conn.close()
+    conn.cursor().close()
 
     group = str()
     for r in range(len(dm)):
@@ -768,7 +790,7 @@ def youthmxpx(d): # FMP FUNCTIONS
     dy.columns = ['Mx','Px']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
 
-    conn.close()
+    conn.cursor().close()
 
     group = str()
     for r in range(len(dg)):
@@ -809,7 +831,7 @@ def mxlist(g): # FMP FUNCTIONS
     dd5 = pd.read_sql(f"SELECT * FROM ScottFutureMxList WHERE ExpMeet >= DATEADD(DAY,4,CONVERT(DATE,SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')) AND ExpMeet < DATEADD(DAY,5,CONVERT(DATE,SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')) AND (L1G LIKE '{g}' OR L2G LIKE '{g}')", conn)
     dd6 = pd.read_sql(f"SELECT * FROM ScottFutureMxList WHERE ExpMeet >= DATEADD(DAY,5,CONVERT(DATE,SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')) AND ExpMeet < DATEADD(DAY,6,CONVERT(DATE,SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')) AND (L1G LIKE '{g}' OR L2G LIKE '{g}')", conn)
     dd7 = pd.read_sql(f"SELECT * FROM ScottFutureMxList WHERE ExpMeet >= DATEADD(DAY,6,CONVERT(DATE,SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')) AND ExpMeet < DATEADD(DAY,7,CONVERT(DATE,SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')) AND (L1G LIKE '{g}' OR L2G LIKE '{g}')", conn)
-    conn.close()
+    conn.cursor().close()
     
     if len(dd1) == 0:
         mx1 = ''
@@ -905,7 +927,7 @@ def pxlist(g): # FMP FUNCTIONS
     dd5 = pd.read_sql(f"SELECT * FROM ScottFuturePxList WHERE ExpPick >= DATEADD(DAY,4,CONVERT(DATE,SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')) AND ExpPick < DATEADD(DAY,5,CONVERT(DATE,SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')) AND (L1G LIKE '{g}' OR L2G LIKE '{g}')", conn)
     dd6 = pd.read_sql(f"SELECT * FROM ScottFuturePxList WHERE ExpPick >= DATEADD(DAY,5,CONVERT(DATE,SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')) AND ExpPick < DATEADD(DAY,6,CONVERT(DATE,SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')) AND (L1G LIKE '{g}' OR L2G LIKE '{g}')", conn)
     dd7 = pd.read_sql(f"SELECT * FROM ScottFuturePxList WHERE ExpPick >= DATEADD(DAY,6,CONVERT(DATE,SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')) AND ExpPick < DATEADD(DAY,7,CONVERT(DATE,SYSDATETIMEOFFSET() AT TIME ZONE 'AUS Eastern Standard Time')) AND (L1G LIKE '{g}' OR L2G LIKE '{g}')", conn)
-    conn.close()
+    conn.cursor().close()
     
     if len(dd1) == 0:
         px1 = ''
@@ -1009,17 +1031,18 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
     
     print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'          v2 = {v2}")
     
+    conn = odbc.connect(conn_str)
     bb_mem    = f"SELECT Dept, Grp, MemberCode, pNew, pOld{fe_col}, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM {codeybbstatusmembers}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID"
     bb_group  = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
     bb_dept   = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
     bb_youth  = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers}('{sid}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
     
     print(bb_group)
-    with odbc.connect(conn_str) as conn:
-        dm = pd.read_sql(bb_mem, conn)
-        dg = pd.read_sql(bb_group, conn)
-        dd = pd.read_sql(bb_dept, conn)
-        dy = pd.read_sql(bb_youth, conn)
+    
+    dm = pd.read_sql(bb_mem, conn)
+    dg = pd.read_sql(bb_group, conn)
+    dd = pd.read_sql(bb_dept, conn)
+    dy = pd.read_sql(bb_youth, conn)
 
     if v2:
         dm.columns = ['Dept','Grp','Member','pNew','pOld','FE','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
@@ -1034,7 +1057,7 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
     
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    # conn.close()
+    conn.cursor().close()
 
     member = str()
     if access == 'Group':
@@ -1141,7 +1164,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     fe_col = ', FE' if v2 else ''
     fe_sum = ', SUM(FE)FE' if v2 else ''
     
-    # conn = odbc.connect(conn_str)
+    conn = odbc.connect(conn_str)
     bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld{fe_col}, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM {codeybbtstatusmembers}('{sid}') WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} ORDER BY GID, {name}"
     bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers}('{sid}') WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} GROUP BY Grp, GID ORDER BY GID"
     bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers}('{sid}') WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} GROUP BY Dept, DID ORDER BY DID"
@@ -1149,11 +1172,10 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     
     print(bb_group)
     
-    with odbc.connect(conn_str) as conn:
-        dm = pd.read_sql(bb_mem, conn)
-        dg = pd.read_sql(bb_group, conn)
-        dd = pd.read_sql(bb_dept, conn)
-        dy = pd.read_sql(bb_youth, conn)
+    dm = pd.read_sql(bb_mem, conn)
+    dg = pd.read_sql(bb_group, conn)
+    dd = pd.read_sql(bb_dept, conn)
+    dy = pd.read_sql(bb_youth, conn)
 
 
     dg.replace(r'MWDept',r'MWDpt', regex = True, inplace = True)
@@ -1174,7 +1196,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    # conn.close()
+    conn.cursor().close()
 
     member = str()
     if bbtdept is False and not d.endswith('D[0-9]%'):
@@ -1272,7 +1294,7 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
     sums = "SUM(pNew)pNew, SUM(pOld)pOld, SUM(pFA)pFA, SUM(FE)FE, SUM(bbA)bbA, SUM(cct1)cct1, SUM(cct2)cct2, SUM(cctI)cctI, SUM(UBB)UBB, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(Total)Total"
     conditions = f"Dept LIKE '{d}' AND Grp LIKE '{g}'"
     
-    # conn = odbc.connect(conn_str)
+    conn = odbc.connect(conn_str)
     bb_mem    = f"SELECT {cols} FROM {table} WHERE {conditions} ORDER BY GID"
     bb_group  = f"SELECT Grp, {sums} FROM {table} WHERE {conditions} GROUP BY Grp, GID ORDER BY GID"
     bb_dept   = f"SELECT Dept, {sums} FROM {table} WHERE {conditions} GROUP BY Dept, DID ORDER BY DID"
@@ -1281,12 +1303,11 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
     
     print(bb_group)
     
-    with odbc.connect(conn_str) as conn:
-        dm = pd.read_sql(bb_mem, conn)
-        dg = pd.read_sql(bb_group, conn)
-        dd = pd.read_sql(bb_dept, conn)
-        # dr = pd.read_sql(bb_region, conn)
-        dy = pd.read_sql(bb_youth, conn)
+    dm = pd.read_sql(bb_mem, conn)
+    dg = pd.read_sql(bb_group, conn)
+    dd = pd.read_sql(bb_dept, conn)
+    # dr = pd.read_sql(bb_region, conn)
+    dy = pd.read_sql(bb_youth, conn)
 
     dm.columns = ['Dept','Grp','Member','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dg.columns = ['Grp','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
@@ -1295,7 +1316,7 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
     dy.columns = ['pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    # conn.close()
+    conn.cursor().close()
 
     member = str()
     if access == 'Group':
@@ -1422,7 +1443,7 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
     sums = "SUM(pNew)pNew, SUM(pOld)pOld, SUM(pFA)pFA, SUM(FE)FE, SUM(bbA)bbA, SUM(cct1)cct1, SUM(cct2)cct2, SUM(cctI)cctI, SUM(UBB)UBB, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(Total)Total"
     conditions = f"Dept LIKE '{d}' AND Grp LIKE '{g}'{query}"
     
-    # conn = odbc.connect(conn_str)
+    conn = odbc.connect(conn_str)
     bb_mem = f"SELECT {cols} FROM {table} WHERE {conditions} ORDER BY GID, {name}"
     bb_group = f"SELECT Grp, {sums} FROM {table} WHERE {conditions} GROUP BY Grp, GID ORDER BY GID"
     bb_dept = f"SELECT Dept, {sums} FROM {table} WHERE {conditions} GROUP BY Dept, DID ORDER BY DID"
@@ -1431,12 +1452,11 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
     
     print(bb_group)
     
-    with odbc.connect(conn_str) as conn:
-        dm = pd.read_sql(bb_mem, conn)
-        dg = pd.read_sql(bb_group, conn)
-        dd = pd.read_sql(bb_dept, conn)
-        # dr = pd.read_sql(bb_region, conn)
-        dy = pd.read_sql(bb_youth, conn)
+    dm = pd.read_sql(bb_mem, conn)
+    dg = pd.read_sql(bb_group, conn)
+    dd = pd.read_sql(bb_dept, conn)
+    # dr = pd.read_sql(bb_region, conn)
+    dy = pd.read_sql(bb_youth, conn)
 
     dm.columns = ['Dept','Grp','Member','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dg.columns = ['Grp','pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
@@ -1445,7 +1465,7 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
     dy.columns = ['pNew','pOld','pFA','FE','bbA','cct1','cct2','cctI','UBB','bbME','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    # conn.close()
+    conn.cursor().close()
 
     member = str()
     if not d.endswith('D[0-9]%'):
@@ -1570,7 +1590,7 @@ def deptbbtstatus(q, d, r, access): # BBT FUNCTIONS
     dy.columns = ['pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
 
     dept = str()    
     for r in range(len(dd)):
@@ -1646,7 +1666,7 @@ def bbtactive(q, g, d, r, access): # BBT FUNCTIONS
     dy.columns = ['pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
 
     member = str()
     if d != 'D[0-9]%':
@@ -1725,7 +1745,7 @@ def deptbbtactive(q, d, r, access): # BBT FUNCTIONS
     dy.columns = ['pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
     
     dept = str()    
     for r in range(len(dd)):
@@ -1793,7 +1813,7 @@ def bbtinactive(q, g, d, r, access): # BBT FUNCTIONS
     dy.columns = ['pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
 
     member = str()
     if d != 'D[0-9]%':
@@ -1877,7 +1897,7 @@ def deptbbtinactive(q, d, r, access): # BBT FUNCTIONS
     dy.columns = ['pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
     
     dept = str()    
     for r in range(len(dd)):
@@ -1940,7 +1960,7 @@ def bblistold(d,g,sid,access): # BB FUNCTIONS
     dFP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
     dAC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
     dIC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
-    conn.close()
+    conn.cursor().close()
         
     if access == 'Group':
         pts = [dNP['Points'].sum(), dOP['Points'].sum(), dAB['Points'].sum(), dIM['Points'].sum(), dIF['Points'].sum(), dFP['Points'].sum(), dAC['Points'].sum(), dIC['Points'].sum()]
@@ -2026,40 +2046,39 @@ def bblistold(d,g,sid,access): # BB FUNCTIONS
 
 
 def bblist(d, g, sid, access):
-    d = d.capitalize()
     g = '%' if access != 'Group' else g
     if access == 'Group':
-        grpdept = g.capitalize()
+        grpdept = format_display_name(g)
     else:
-        grpdept = str(d).replace('D[0-9]%', 'Youth')
+        grpdept = 'Youth' if '%' in d else format_display_name(d)
 
     sql = f"SET NOCOUNT ON; EXEC CodeyBBList2 @sid='{sid}'"
     print(sql)
     conn = odbc.connect(conn_str)
     df = pd.read_sql(sql, conn)
     conn.close()
-
     df.columns = ['FruitName','L1N','L1G','L1D','L2N','L2G','L2D','L1P','L2P','BBTN','BBTG','BBTD','BbtStatus','BtmNo','NewStatus','Points','DPoints','UID','BBTID','LastClass','LastTopic','NextClassDate']
 
-    # Filter by group and dept in Python (replaces the slow OR in SQL)
+    # Filter by group and dept in Python (case-insensitive)
     if g != '%':
-        df = df[(df['L1G'] == g) | (df['L2G'] == g)]
+        g_lower = g.lower()
+        df = df[(df['L1G'].str.lower() == g_lower) | (df['L2G'].str.lower() == g_lower)]
     if d != '%':
-        if '%' in d:  # pattern like 'D[0-9]%'
+        if '%' in d:
             pattern = d.replace('[0-9]', r'\d').replace('%', '.*')
-            df = df[df['L1D'].str.match(pattern) | df['L2D'].str.match(pattern)]
+            df = df[df['L1D'].str.match(pattern, case=False, na=False) | df['L2D'].str.match(pattern, case=False, na=False)]
         else:
-            df = df[(df['L1D'] == d) | (df['L2D'] == d)]
+            d_lower = d.lower()
+            df = df[(df['L1D'].str.lower() == d_lower) | (df['L2D'].str.lower() == d_lower)]
 
     df = df[df['NewStatus'].isin(['New P','Old P','ABB','IBB ME','IBB FA','Fallen P','ABB CCT','IBB CCT'])]
 
-    # Determine which points column to use
     if access == 'Group':
         pt = 'Points'
-    elif d != 'D[0-9]%':
+    elif d.lower() not in ('d[0-9]%', '%'):
         pt = 'DPoints'
     else:
-        pt = None  # use count instead
+        pt = None
 
     groups = {status: sub for status, sub in df.groupby('NewStatus', sort=False)}
 
@@ -2159,7 +2178,7 @@ def bblistsold(d,g,physical,online,access): # BB FUNCTIONS
     oFP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
     oAC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
     oIC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
-    conn.close()
+    conn.cursor().close()
         
     if access == 'Group':
         pts = [dNP['Points'].sum(), dOP['Points'].sum(), dAB['Points'].sum(), dIM['Points'].sum(), dIF['Points'].sum(), dFP['Points'].sum(), dAC['Points'].sum(), dIC['Points'].sum()]
@@ -2309,29 +2328,27 @@ def bblists(d, g, physical, online, access):
     dfP.columns = cols
     dfO.columns = cols
 
-    # Filter by group and dept in Python (replaces slow OR in SQL)
-    def filter_gd(df, g, d):
-        if g != '%':
-            df = df[(df['L1G'] == g) | (df['L2G'] == g)]
-        if d != '%':
-            if '%' in d:
-                pattern = d.replace('[0-9]', r'\d').replace('%', '.*')
-                df = df[df['L1D'].str.match(pattern) | df['L2D'].str.match(pattern)]
-            else:
-                df = df[(df['L1D'] == d) | (df['L2D'] == d)]
-        return df
+    # Filter by group and dept in Python (case-insensitive)
+    if g != '%':
+        g_lower = g.lower()
+        dfP = dfP[(dfP['L1G'].str.lower() == g_lower) | (dfP['L2G'].str.lower() == g_lower)]
+        dfO = dfO[(dfO['L1G'].str.lower() == g_lower) | (dfO['L2G'].str.lower() == g_lower)]
+    if d != '%':
+        if '%' in d:
+            pattern = d.replace('[0-9]', r'\d').replace('%', '.*')
+            dfP = dfP[dfP['L1D'].str.match(pattern, case=False, na=False) | dfP['L2D'].str.match(pattern, case=False, na=False)]
+            dfO = dfO[dfO['L1D'].str.match(pattern, case=False, na=False) | dfO['L2D'].str.match(pattern, case=False, na=False)]
+        else:
+            d_lower = d.lower()
+            dfP = dfP[(dfP['L1D'].str.lower() == d_lower) | (dfP['L2D'].str.lower() == d_lower)]
+            dfO = dfO[(dfO['L1D'].str.lower() == d_lower) | (dfO['L2D'].str.lower() == d_lower)]
 
-    dfP = filter_gd(dfP, g, d)
-    dfO = filter_gd(dfO, g, d)
-
-    valid_statuses = ['New P','Old P','ABB','IBB ME','IBB FA','Fallen P','ABB CCT','IBB CCT']
-    keep_cols = ['NewStatus','LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
-    dfP = dfP[dfP['NewStatus'].isin(valid_statuses)][keep_cols]
-    dfO = dfO[dfO['NewStatus'].isin(valid_statuses)][keep_cols]
+    dfP = dfP[dfP['NewStatus'].isin(['New P','Old P','ABB','IBB ME','IBB FA','Fallen P','ABB CCT','IBB CCT'])]
+    dfO = dfO[dfO   ['NewStatus'].isin(['New P','Old P','ABB','IBB ME','IBB FA','Fallen P','ABB CCT','IBB CCT'])]
 
     if access == 'Group':
         pt = 'Points'
-    elif d != 'D[0-9]%':
+    elif d.lower() not in ('d[0-9]%', '%'):
         pt = 'DPoints'
     else:
         pt = None
@@ -2450,7 +2467,7 @@ def bbtlistold(q,d,g,sid,access): # BBT FUNCTIONS
     dFP.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
     dAC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
     dIC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate']
-    conn.close()
+    conn.cursor().close()
 
     if len(dNP) == 0:
         np = ''
@@ -2660,7 +2677,7 @@ def bblistfe(d,g,sid,access): # BB FUNCTIONS
     dUB.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
     dME.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
     dFA.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
-    conn.close()
+    conn.cursor().close()
         
     if access == 'Group':
         pts = [dPN['Points'].sum(), dPO['Points'].sum(), dPF['Points'].sum(), dFE['Points'].sum(), dBA['Points'].sum(), dC1['Points'].sum(), dC2['Points'].sum(), dCI['Points'].sum(), dUB['Points'].sum(), dME['Points'].sum(), dFA['Points'].sum()]
@@ -2833,7 +2850,7 @@ def bbtlistubb(q,d,g,sid,access): # BBT FUNCTIONS
     dUB.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
     dME.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
     dFA.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
-    conn.close()
+    conn.cursor().close()
         
 
     if len(dPN) == 0:
@@ -2962,7 +2979,7 @@ def bbpick(g): # BB FUNCTIONS
     df['P_Date'] = df['P_Date'].dt.strftime('%a %d/%m')
     dPts.set_index('P_Status', inplace=True)
         
-    conn.close()
+    conn.cursor().close()
     
     new = ''
     if len(dn) > 0:
@@ -3043,7 +3060,7 @@ LEFT JOIN BBData bb ON bb.UID = b.UID
     dSchd['SchedFEDate'] = dSchd['SchedFEDate'].dt.strftime('%a %d/%m')
     dPts.set_index('FEStatus', inplace=True)
         
-    conn.close()
+    conn.cursor().close()
            
     if len(dFE) == 0:
         fe = ''
@@ -3108,7 +3125,7 @@ def youthfm(d): # FMP FUNCTIONS
     
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
 
     separator = '|'
     
@@ -3178,7 +3195,7 @@ def bbactive(g, d, sid, access): # BB FUNCTIONS
     dy.columns = ['SP','pNew','bbA','cctA']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
 
     member = str()
     if access == 'Group':
@@ -3280,7 +3297,7 @@ def bbactive2(g, d, sid, access): # BB FUNCTIONS
     dy.columns = ['SP','pNew','FE','bbA','cctA']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
 
     member = str()
     if access == 'Group':
@@ -3371,7 +3388,7 @@ def deptbbactive(d, sid, access): # BB FUNCTIONS
     dy.columns = ['SP','pNew','bbA','cctA']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
             
     dept = str()  
     if access != 'Group':
@@ -3448,7 +3465,7 @@ def bbinactive(g, d, sid, access): # BB FUNCTIONS
     dy.columns = ['pOld','bbME','cctI','pFA','bbFA']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
 
     member = str()
     if access == 'Group':
@@ -3537,7 +3554,7 @@ def deptbbinactive(d, sid, access): # BB FUNCTIONS
     dy.columns = ['pOld','bbME','cctI','pFA','bbFA']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
             
     dept = str()  
     if access != 'Group':
@@ -3596,7 +3613,7 @@ def fmlist(g): # FMP FUNCTIONS
     dN['M_TIME'] = pd.to_datetime(dN['M_TIME']).dt.strftime('%a %d/%m')
     dO['M_TIME'] = pd.to_datetime(dO['M_TIME']).dt.strftime('%a %d/%m')
     dPts.set_index('M_Status', inplace=True)
-    conn.close()
+    conn.cursor().close()
     
     nPt,oPt = 0,0
     g = g.capitalize()
@@ -3638,7 +3655,7 @@ def fmstatus(d,g,ssnstart,access): # FMP FUNCTIONS
     dt.columns = ['NewM','OldM']
     g = g.capitalize()
     g = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
-    conn.close()
+    conn.cursor().close()
     
     if len(dm) == 0:
         return "No members found"
@@ -3671,7 +3688,7 @@ WHERE Dept LIKE '{d}'
 GROUP BY Dept WITH ROLLUP"""
     print(bb_dept)
     dd = pd.read_sql(bb_dept, conn)
-    conn.close()
+    conn.cursor().close()
 
     dd.columns = ['Dept','pNew','pOld','bbA','bbME','bbFA','pFA','cctA','cctI','Total']
     
@@ -3714,7 +3731,7 @@ def bbtbtmstatus(r): # BBT FUNCTIONS
                     ) s 
                     ORDER BY Num, BBTStatus"""
     dd = pd.read_sql(bb_dept, conn)
-    conn.close()
+    conn.cursor().close()
     dd = dd.transpose()
     dd.reset_index(inplace=True)
 
@@ -3767,7 +3784,7 @@ def ev(id): # IT FUNCTIONS
     dIC  = pd.read_sql(f"SELECT * FROM ScottNewStatusID({id}) WHERE NewStatus = 'IBB CCT'", conn)
     dpPt = pd.read_sql(f"SELECT NewStatus, SUM(Pts)Pts FROM ScottNewStatusID({id}) GROUP BY NewStatus", conn)
     
-    conn.close()
+    conn.cursor().close()
     
     fish,nm,om,npk,op,ab,im,iff,fp,ac,ic = '','','','','','','','','','',''
     
@@ -3970,7 +3987,7 @@ def classes(g, d, access, time): # BBT FUNCTIONS
     dy.columns = ['Total','Classes']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
 
     member = str()
     if access == 'Group':
@@ -4056,7 +4073,7 @@ def edu(day, g, d, access): # EDU FUNCTIONS
     dy.columns = ['Att','Onl','Rep','Abs']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
           
     group = str()    
     for r in range(len(dg)):
@@ -4138,7 +4155,7 @@ def edurev(g, d, access): # EDU FUNCTIONS
     dy.columns = ['RevS','RevNS']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
           
     group = str()    
     for r in range(len(dg)):
@@ -4230,7 +4247,7 @@ def bbstatusdate(g, d, ssn, dt, access): # BB FUNCTIONS
     dy.columns = ['pNew','pOld','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
 
     member = str()
     if access == 'Group':
@@ -4337,7 +4354,7 @@ def bbtmission(sid, d, g, standard, ct, access): # BBT FUNCTIONS
     ds.replace(r'InnerSFT',r'InSFT', regex = True, inplace = True)
     ds.replace(r'Culture',r'Cul', regex = True, inplace = True)
     ds.replace(r'Serving',r'Sv', regex = True, inplace = True)
-    conn.close()
+    conn.cursor().close()
 
     table = ''
     for r in range(len(ds)):
@@ -4397,7 +4414,7 @@ def pickfe(g, d, access): # FMP FUNCTIONS
     
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    conn.close()
+    conn.cursor().close()
 
     member = str()
     if access == 'Group':
@@ -4477,7 +4494,7 @@ def aprilmission(access): # BB FUNCTIONS
     dq = pd.read_sql(q, conn)
     dq.columns = ['Dept','Total','TGW','Member','0 P','1 P+','1 FE+']
     dq.replace(r' Dept',r'', regex = True, inplace = True)
-    conn.close()
+    conn.cursor().close()
         
     dept = str()  
     for r in range(len(dq)):
@@ -4512,7 +4529,7 @@ def aprilbbtmission(access): # BBT FUNCTIONS
     dq = pd.read_sql(q, conn)
     dq.columns = ['Dept','Total','TGW','Member','0 P','1 P+','1 FE+']
     dq.replace(r' Dept',r'', regex = True, inplace = True)
-    conn.close()
+    conn.cursor().close()
         
     dept = str()
     for r in range(len(dq)):
@@ -4564,18 +4581,18 @@ def secondedu(g, d, sid, standard, ct, access): # BBT FUNCTIONS
 
     print(bb_group)
     
-    with odbc.connect(conn_str) as conn:
-        dm = pd.read_sql(bb_mem, conn)
-        dg = pd.read_sql(bb_group, conn)
-        dd = pd.read_sql(bb_dept, conn)
-        dy = pd.read_sql(bb_youth, conn)
-        ds = pd.read_sql(seasons, conn)
+    dm = pd.read_sql(bb_mem, conn)
+    dg = pd.read_sql(bb_group, conn)
+    dd = pd.read_sql(bb_dept, conn)
+    dy = pd.read_sql(bb_youth, conn)
+    ds = pd.read_sql(seasons, conn)
     dm.columns = ['Dept','Grp','BBT','X','P','FE','SE']
     dg.columns = ['Grp','X','P','FE','SE']
     dd.columns = ['Dept','X','P','FE','SE']
     dy.columns = ['X','P','FE','SE']
     ds.columns = ['SeasonName']
         
+    conn.cursor().close()
 
     seasonlist = ds['SeasonName'].str.cat(sep=', ').replace('Yr 43 ','').replace('Feb CT Online','FebONL').replace('Feb CT','Feb').replace('Apr CT Online ','AprONL').replace('Apr CT','Apr').replace('Apr SE CT','AprMW')
 
@@ -4637,21 +4654,20 @@ def svcabs(gd,svctype,filt): # MT FUNCTIONS
     gd = gd.capitalize()
     svctype = svctype.capitalize()
           
-    # conn = odbc.connect(conn_str)   
+    conn = odbc.connect(conn_str)   
 
     query_abs = f"SELECT Dept, Grp, MemberCode FROM CodeyServiceAbsentees('{svctype}') WHERE Attendance = 'Abs' AND {filt} LIKE '{gd}'"
     query_nr  = f"SELECT Dept, Grp, MemberCode FROM CodeyServiceAbsentees('{svctype}') WHERE Attendance = 'NoReport' AND {filt} LIKE '{gd}'"
 
     print(query_abs)
 
-    with odbc.connect(conn_str) as conn:
-        dAB = pd.read_sql(query_abs, conn)                
-        dNR = pd.read_sql(query_nr, conn)
+    dAB = pd.read_sql(query_abs, conn)                
+    dNR = pd.read_sql(query_nr, conn)
 
     dAB.columns = ['Dept','Grp','MemberCode']
     dNR.columns = ['Dept','Grp','MemberCode']
 
-    # conn.close()
+    conn.cursor().close()
     ab = "" # "<i><b><u>Absentees</u></b></i>\n"
     nr = "" # "<i><b><u>Not Reported</u></b></i>\n"
 
@@ -4690,7 +4706,7 @@ def eduabs(gd,edutype,filt): # EDU FUNCTIONS
     gd = gd.capitalize()
     edutype = edutype.capitalize()
           
-    # conn = odbc.connect(conn_str)   
+    conn = odbc.connect(conn_str)   
     
     EMOJI_MAP = {
         'present':  '✅',
@@ -4710,14 +4726,13 @@ def eduabs(gd,edutype,filt): # EDU FUNCTIONS
 
     print(query_abs)
 
-    with odbc.connect(conn_str) as conn:
-        dAB = pd.read_sql(query_abs, conn)                
-        dNR = pd.read_sql(query_nr, conn)
+    dAB = pd.read_sql(query_abs, conn)                
+    dNR = pd.read_sql(query_nr, conn)
 
     dAB.columns = ['Dept','Grp','MemberCode']
     dNR.columns = ['Dept','Grp','MemberCode']
 
-    # conn.close()
+    conn.cursor().close()
     ab = "" # "<i><b><u>Absentees</u></b></i>\n"
     nr = "" # "<i><b><u>Not Reported</u></b></i>\n"
 
@@ -4763,7 +4778,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
 
     grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth')
     
-    # conn = odbc.connect(conn_str)
+    conn = odbc.connect(conn_str)
     
     # --- Kamau Adjustment #2/3 Start for Unicode Issue
 
@@ -4862,12 +4877,11 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     """
     # print("Total Query:")
     # print(hsp_total)
-    
-    with odbc.connect(conn_str) as conn:
-        dm = pd.read_sql(hsp_mem, conn)
-        dg = pd.read_sql(hsp_group, conn)
-        dd = pd.read_sql(hsp_dept, conn)
-        dy = pd.read_sql(hsp_total, conn)
+       
+    dm = pd.read_sql(hsp_mem, conn)
+    dg = pd.read_sql(hsp_group, conn)
+    dd = pd.read_sql(hsp_dept, conn)
+    dy = pd.read_sql(hsp_total, conn)
 
     dm.columns = ['Member','WD','F1','DI','F2','VS','EX']
     dg.columns = ['Grp','WD','F1','DI','F2','VS','EX','TT']
@@ -4882,7 +4896,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
-    # conn.close()
+    conn.cursor().close()
 
     member = str()
     if access == 'Group':

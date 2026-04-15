@@ -4776,7 +4776,16 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     g = g if access == 'Group' else '%'
     d = d.capitalize().replace('d','D')
 
-    grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth')
+    deptfilter = f"Dept LIKE '{d}'"
+
+    if access in ['IT','All','EDU','D[0-9]%','mw','24']:
+        deptfilter = {
+            "d[0-9]%": "Dept LIKE 'D[0-9]%' OR Dept = 'InnerSFT'",
+            "mw": "Dept IN ('Men','Women')",
+            "24": "Dept IN ('Serving','Culture','GD','HWPL','SFT')"
+        }[d.lower()]
+
+    grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth').replace('Mw','MW').replace('24','24 Dept')
     
     conn = odbc.connect(conn_str)
     
@@ -4839,7 +4848,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
             WHEN (SELECT TD FROM Days) < (SELECT U2 FROM Days) THEN 2
             ELSE 0 END ExamScore
     FROM HSPMemberCodey
-    WHERE Dept LIKE '{d}'
+    WHERE {deptfilter}
         AND Grp LIKE '{g}'
     ORDER BY Pos, MemberCode
     """
@@ -4849,7 +4858,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     hsp_group = f"""
     SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, VideoSubmit, ExamSubmit, Members
     FROM HSPCodey
-    WHERE Dept LIKE '{d}'
+    WHERE {deptfilter}
         AND Grp LIKE '{g}'
     ORDER BY GID
     """
@@ -4860,7 +4869,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
         SUM(VideoSubmit)VideoSubmit, SUM(ExamSubmit)ExamSubmit, SUM(Members)Total
     FROM HSPCodey
-    WHERE Dept LIKE '{d}'
+    WHERE {deptfilter}
         AND Grp LIKE '{g}'
     GROUP BY Dept, DID
     ORDER BY DID
@@ -4872,7 +4881,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     SELECT SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
         SUM(VideoSubmit)VideoSubmit, SUM(ExamSubmit)ExamSubmit, SUM(Members)Total
     FROM HSPCodey
-    WHERE Dept LIKE '{d}'
+    WHERE {deptfilter}
         AND Grp LIKE '{g}'
     """
     # print("Total Query:")
@@ -4913,18 +4922,19 @@ def hspreport(g, d, access): # EDU FUNCTIONS
         member = f'</pre>{member}\n'
     
     s = 2 if access == 'Group' else 3  
-    group = str()    
-    for r in range(len(dg)):
-        grp =   str(dg.loc[r,'Grp'][:5]) + ' '*(5-len(str(dg.loc[r,'Grp'])))
-        wp  = ' '*(s-len(str(dg.loc[r,'WD']))) + str(dg.loc[r,'WD'])
-        f1  = ' '*(s-len(str(dg.loc[r,'F1']))) + str(dg.loc[r,'F1'])
-        di  = ' '*(s-len(str(dg.loc[r,'DI']))) + str(dg.loc[r,'DI'])
-        f2  = ' '*(s-len(str(dg.loc[r,'F2']))) + str(dg.loc[r,'F2'])
-        vs  = ' '*(s-len(str(dg.loc[r,'VS']))) + str(dg.loc[r,'VS'])
-        ex  = ' '*(s-len(str(dg.loc[r,'EX']))) + str(dg.loc[r,'EX'])
-        tt  = ' '*(s-len(str(dg.loc[r,'TT']))) + str(dg.loc[r,'TT'])
-        group = f'{group}{grp}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]\n' if access != 'Group' else f'<b>{group}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}]</b>\n(<i>{tt} members)</i><pre>\n'
-    group = group + '\n'
+    group = str()
+    if d != 'Mw':    
+        for r in range(len(dg)):
+            grp =   str(dg.loc[r,'Grp'][:5]) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+            wp  = ' '*(s-len(str(dg.loc[r,'WD']))) + str(dg.loc[r,'WD'])
+            f1  = ' '*(s-len(str(dg.loc[r,'F1']))) + str(dg.loc[r,'F1'])
+            di  = ' '*(s-len(str(dg.loc[r,'DI']))) + str(dg.loc[r,'DI'])
+            f2  = ' '*(s-len(str(dg.loc[r,'F2']))) + str(dg.loc[r,'F2'])
+            vs  = ' '*(s-len(str(dg.loc[r,'VS']))) + str(dg.loc[r,'VS'])
+            ex  = ' '*(s-len(str(dg.loc[r,'EX']))) + str(dg.loc[r,'EX'])
+            tt  = ' '*(s-len(str(dg.loc[r,'TT']))) + str(dg.loc[r,'TT'])
+            group = f'{group}{grp}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]\n' if access != 'Group' else f'<b>{group}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}]</b>\n(<i>{tt} members)</i><pre>\n'
+        group = group + '\n'
       
     dept = str()  
     if access != 'Group':
@@ -4941,7 +4951,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
         dept = dept + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('D[0-9]%','%','Mw','24'):
         wp  = ' '*(3-len(str(dy.loc[0,'WD']))) + str(dy.loc[0,'WD'])
         f1  = ' '*(3-len(str(dy.loc[0,'F1']))) + str(dy.loc[0,'F1'])
         di  = ' '*(3-len(str(dy.loc[0,'DI']))) + str(dy.loc[0,'DI'])

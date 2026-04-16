@@ -4937,7 +4937,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
         group = group + '\n'
       
     dept = str()  
-    if access != 'Group':
+    if access not in ('Group','24'):
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept'][:5]) + ' '*(5-len(str(dd.loc[r,'Dept'])))
             wp  = ' '*(3-len(str(dd.loc[r,'WD']))) + str(dd.loc[r,'WD'])

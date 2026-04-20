@@ -24,17 +24,7 @@ conn_str = """
     Pwd={5};
 """.format(DRIVER,HOST,DBPORT,DB,DB_USER,PASS)
 
-# All functions categorised as:
-
-# IT FUNCTIONS
-# ACCESS FUNCTIONS
-# FMP FUNCTIONS
-# BB FUNCTIONS
-# BBT FUNCTIONS
-# EDU FUNCTIONS
-# MT FUNCTIONS
-
-def format_display_name(value): # EDU FUNCTIONS (used in bb "list" functions that use case-sensitivepandas filtering to avoid the slow "OR" condition filtering in SQL when searching both leaves. Potentially could be used in any bb or fmp function involving both leaf )
+def format_display_name(value): # EDU FUNCTIONS (used in bb "list" functions that use case-sensitive pandas filtering to avoid the slow "OR" condition filtering in SQL when searching both leaves. Potentially could be used in any bb or fmp function involving both leaf )
     """Format g or d for display in the header only"""
     known = {
         'm&w dept': 'M&W Dept',
@@ -1155,7 +1145,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
                  'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
     
     codeybbtstatusmembers = 'CodeyBBTStatusMembers2' if v2 else 'CodeyBBTStatusMembers'
@@ -1435,7 +1425,7 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
     bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
                  'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
     
     table = f"CodeyBBTStatusMembersUBB('{sid}')"
@@ -1576,7 +1566,7 @@ def deptbbtstatus(q, d, r, access): # BBT FUNCTIONS
     bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
                  'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
@@ -1646,7 +1636,7 @@ def bbtactive(q, g, d, r, access): # BBT FUNCTIONS
     bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
                  'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
@@ -1731,7 +1721,7 @@ def deptbbtactive(q, d, r, access): # BBT FUNCTIONS
     bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
                  'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
@@ -1793,7 +1783,7 @@ def bbtinactive(q, g, d, r, access): # BBT FUNCTIONS
     bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
                  'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
@@ -1883,7 +1873,7 @@ def deptbbtinactive(q, d, r, access): # BBT FUNCTIONS
     bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
                  'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
@@ -2434,7 +2424,7 @@ def bbtlistold(q,d,g,sid,access): # BBT FUNCTIONS
     bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
                  'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
 
     g = '%' if access != 'Group' else g
@@ -2807,7 +2797,7 @@ def bbtlistubb(q,d,g,sid,access): # BBT FUNCTIONS
     bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
                  'pre' : [q.upper(), f" AND BtmNo = '{q[6:]}' AND BBTStatus = 'Pre-BBT'"],
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
-                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}'"]}
+                 'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
 
     g = '%' if access != 'Group' else g

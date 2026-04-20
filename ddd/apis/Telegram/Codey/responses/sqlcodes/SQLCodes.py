@@ -4550,7 +4550,7 @@ def aprilbbtmission(access): # BBT FUNCTIONS
 
 
 
-def secondedu(g, d, sid, standard, ct, access): # BBT FUNCTIONS
+def bbmission(g, d, standard, ct, access): # BB FUNCTIONS, BBT FUNCTIONS
 
     views = {'bbt':'FnBbtSE','leaf':'FnLeafSE','all':'FnSE'}
     view = views[standard]
@@ -4567,7 +4567,7 @@ def secondedu(g, d, sid, standard, ct, access): # BBT FUNCTIONS
     bb_group = f"SELECT Grp, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
     bb_dept = f"SELECT Dept, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
     bb_youth = f"SELECT SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'"
-    seasons = f"SELECT SeasonName FROM EVSeason WHERE ID BETWEEN 87 AND 91 AND Region LIKE '{r}'"
+    seasons = f"SELECT SeasonName FROM EVSeason WHERE GETDATE() BETWEEN StartDate AND EndDate AND Region LIKE '{r}'"
 
     print(bb_group)
     
@@ -4626,7 +4626,7 @@ def secondedu(g, d, sid, standard, ct, access): # BBT FUNCTIONS
         s  = ' '*(3-len(str(dy.loc[0,'SE']))) + str(dy.loc[0,'SE'])
         total = f'Total[{x}|{p}|{f}|{s}]'
     
-    summary = f"<b><u>{grpdept} Second Edu</u></b>\n<i>Standard = {standard.capitalize().replace('All','Leaf + BBT')}\n{ct} CT\n{seasonlist}</i>\n\n<pre>     [ X | P | FE| SE]\n\n{member}{group}{dept}{total}</pre>"
+    summary = f"<b><u>{grpdept} BB Mission</u></b>\n<i>Standard = {standard.capitalize().replace('All','Leaf + BBT')}\n{ct} CT\n{seasonlist}</i>\n\n<pre>     [ X | P | FE| SE]\n\n{member}{group}{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     return summary

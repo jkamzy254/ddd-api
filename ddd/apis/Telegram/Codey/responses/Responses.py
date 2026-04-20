@@ -265,12 +265,13 @@ def bot_responses(id, tname, input_text):
             i, q = q.split('dept')
             return SQLCodes.deptbbtinactive(q, d, r, access)
 
-        if command.startswith('secondedu'):
-            standard = command.removeprefix('secondedu')
+        if command.startswith('bbmission'):
+            standard = command.removeprefix('bbmission')
             standard = 'leaf' if standard == '' else standard
             if standard not in ['bbt','leaf','all','']:
-                return "must select secondedu (leaf standard), secondedubbt (bbt standard) or secondeduall (leaf+bbt standard)"
-            return SQLCodes.secondedu(g, d, bb_sid, standard, ct, access)
+                return "must select bbmission (leaf standard), bbt (bbt standard) or bbmissionall (leaf+bbt standard)"
+            print(f"Calling bbmission with g={g}, d={d}, standard={standard}, ct={ct}, access={access}")
+            return SQLCodes.bbmission(g, d, standard, ct, access)
 
         if command == 'classtoday':
             return SQLCodes.classes(g, d, access, 'today')

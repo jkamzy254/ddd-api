@@ -320,12 +320,14 @@ def bot_responses(id, tname, input_text):
 
         if command in ['youthmxpx','deptmxpx']:
             return SQLCodes.youthmxpx(d)
+        
+        if command == 'ctmission':
+            print(f"Calling ctmission with access={access}")
+            return SQLCodes.ctmission(access)
 
-        if command == 'aprilmission':
-            return SQLCodes.aprilmission(access)
-
-        if command == 'aprilbbtmission':
-            return SQLCodes.aprilbbtmission(access)
+        if command == 'ctbbtmission':
+            print(f"Calling ctbbtmission with access={access}")
+            return SQLCodes.ctbbtmission(access)
 
         if command.startswith('approve'):
             a, userUID, telID, i = command.split('#')

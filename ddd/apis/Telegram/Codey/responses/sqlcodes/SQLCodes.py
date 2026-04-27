@@ -4475,20 +4475,11 @@ def test2(): # IT FUNCTIONS
     # return datetime.now(ZoneInfo("Australia/Melbourne")).strftime("%a %d %b, %I:%M %p")
 
 
-
-
-
-
-
-
-
-
-
-def aprilmission(access): # BB FUNCTIONS
+def ctmission(access): # BB FUNCTIONS
     
     d = '%' if access in ('All','IT', 'EDU') else access.capitalize().replace('d','D')
     conn = odbc.connect(conn_str)
-    q = f"AprilCtMission '{d}'"
+    q = f"CTMission '{d}'"
     print(q)
     dq = pd.read_sql(q, conn)
     dq.columns = ['Dept','Total','TGW','Member','0 P','1 P+','1 FE+']
@@ -4497,7 +4488,7 @@ def aprilmission(access): # BB FUNCTIONS
         
     dept = str()  
     for r in range(len(dq)):
-        dp =   str(dq.loc[r,'Dept']) + ' '*(9-len(str(dq.loc[r,'Dept'])))
+        dp =   str(dq.loc[r,'Dept'][:9]) + ' '*(9-len(str(dq.loc[r,'Dept'])))
         tt  = ' '*(4-len(str(dq.loc[r,'Total'])))   + str(dq.loc[r,'Total'])
         tg  = ' '*(3-len(str(dq.loc[r,'TGW'])))     + str(dq.loc[r,'TGW'])
         mm  = ' '*(3-len(str(dq.loc[r,'Member'])))  + str(dq.loc[r,'Member'])
@@ -4513,17 +4504,17 @@ def aprilmission(access): # BB FUNCTIONS
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     summary = re.sub(totalrow,f"\n{totalrow}",summary)
-    summary = f"<b><u>April CT Mission</u></b>\n\n<pre>Dept     [ Tot|TGW|Mem|0 P|1P+|FE+]\n\n{summary}"
+    summary = f"<b><u>CT Mission</u></b>\n\n<pre>Dept     [ Tot|TGW|Mem|0 P|1P+|FE+]\n\n{summary}"
     return summary
 
 
 
 
-def aprilbbtmission(access): # BBT FUNCTIONS
+def ctbbtmission(access): # BBT FUNCTIONS
     
     d = '%' if access in ('All','IT', 'EDU') else access.capitalize().replace('d','D')
     conn = odbc.connect(conn_str)
-    q = f"AprilCtBbtMission '{d}'"
+    q = f"CTBbtMission '{d}'"
     print(q)
     dq = pd.read_sql(q, conn)
     dq.columns = ['Dept','Total','TGW','Member','0 P','1 P+','1 FE+']
@@ -4532,11 +4523,11 @@ def aprilbbtmission(access): # BBT FUNCTIONS
         
     dept = str()
     for r in range(len(dq)):
-        dp =   str(dq.loc[r,'Dept']) + ' '*(9-len(str(dq.loc[r,'Dept'])))
+        dp =   str(dq.loc[r,'Dept'][:9]) + ' '*(9-len(str(dq.loc[r,'Dept'])))
         tt  = ' '*(3-len(str(dq.loc[r,'Total'])))   + str(dq.loc[r,'Total'])
         tg  = ' '*(3-len(str(dq.loc[r,'TGW'])))     + str(dq.loc[r,'TGW'])
         mm  = ' '*(2-len(str(dq.loc[r,'Member'])))  + str(dq.loc[r,'Member'])
-        np  = ' '*(2-len(str(dq.loc[r,'0 P'])))     + str(dq.loc[r,'0 P'])
+        np  = ' '*(3-len(str(dq.loc[r,'0 P'])))     + str(dq.loc[r,'0 P'])
         pk  = ' '*(2-len(str(dq.loc[r,'1 P+'])))    + str(dq.loc[r,'1 P+'])
         fe  = ' '*(3-len(str(dq.loc[r,'1 FE+'])))   + str(dq.loc[r,'1 FE+'])
         dept = f'{dept}{dp}[{tt}|{tg}|{mm}|{np}|{pk}|{fe}]\n'
@@ -4548,13 +4539,9 @@ def aprilbbtmission(access): # BBT FUNCTIONS
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     summary = re.sub(totalrow,f"\n{totalrow}",summary)
-    summary = f"<b><u>April CT BBT Mission</u></b>\n\n<pre>Dept     [BBT|TGW|Mm|0P|1P| FE]\n\n{summary}"
+    summary = f"<b><u>CT BBT Mission</u></b>\n\n<pre>Dept     [BBT|TGW|Mm|0 P|1P| FE]\n\n{summary}"
     summary = summary.replace('D[--9]%','\nYouth  ')
     return summary
-
-
-
-
 
 
 

@@ -298,7 +298,6 @@ def bot_responses(id, tname, input_text):
             return SQLCodes.deptbbtinactive(q, d, r, access)
 
         if command.startswith('bbmission'):
-            return "This function is no longer in use"
             standard = command.removeprefix('bbmission')
             standard = 'leaf' if standard == '' else standard
             if standard not in ['bbt','leaf','all','']:

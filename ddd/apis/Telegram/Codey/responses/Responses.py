@@ -337,13 +337,16 @@ def bot_responses(id, tname, input_text):
             return SQLCodes.bbtmission(bb_sid, d, g, 'tie', ct, access)
 
         if command.startswith('ctmission'):
+            plus = 0
+            if '+' in command:
+                command,plus = command.replace('+',''),1
             suffix = command.removeprefix('ctmission')
             leafbbt = {'all': (1,1),
                         'leaf': (1,0),
                         'bbt': (0,1),
                         '': (1,1)}.get(suffix, (1,1))
-            print(f"Calling ctmissionnew with bb_sid={bb_sid}, leaf={leafbbt[0]}, bbt={leafbbt[1]}, access={access}, d={d}, g={g}, ct={ct}")
-            return SQLCodes.ctmissionnew(bb_sid, leafbbt[0], leafbbt[1], access, d, g, ct)
+            print(f"Calling ctmissionnew with bb_sid={bb_sid}, leaf={leafbbt[0]}, bbt={leafbbt[1]}, access={access}, d={d}, g={g}, ct={ct}, plus={plus}")
+            return SQLCodes.ctmissionnew(bb_sid, leafbbt[0], leafbbt[1], access, d, g, ct, plus)
         
     # Dept and above functions
     if access in ['%','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','¹','²','All','EDU','IT']:

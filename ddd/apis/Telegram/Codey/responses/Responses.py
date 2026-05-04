@@ -298,6 +298,7 @@ def bot_responses(id, tname, input_text):
             return SQLCodes.deptbbtinactive(q, d, r, access)
 
         if command.startswith('bbmission'):
+            return "This function is no longer in use"
             standard = command.removeprefix('bbmission')
             standard = 'leaf' if standard == '' else standard
             if standard not in ['bbt','leaf','all','']:
@@ -322,16 +323,19 @@ def bot_responses(id, tname, input_text):
             return SQLCodes.hspreport(g, d, access)
 
         if command == 'bbtmission':
+            return "This function is no longer in use"
             d = '%' if access == 'EDU' else d
             print(f"Calling bbtmission with bb_sid={bb_sid}, d={d}, g={g}, type=se, ct={ct}, access={access}")
             return SQLCodes.bbtmission(bb_sid, d, g, 'se', ct, access)
 
         if command == 'bbtmissionpick':
+            return "This function is no longer in use"
             d = '%' if access == 'EDU' else d
             print(f"Calling bbtmission with bb_sid={bb_sid}, d={d}, g={g}, type=pick, ct={ct}, access={access}")
             return SQLCodes.bbtmission(bb_sid, d, g, 'pick', ct, access)
 
         if command == 'bmt':
+            return "This function is no longer in use"
             d = '%' if access == 'EDU' else d
             print(f"Calling bbtmission with bb_sid={bb_sid}, d={d}, g={g}, type=tie, ct={ct}, access={access}")
             return SQLCodes.bbtmission(bb_sid, d, g, 'tie', ct, access)
@@ -376,10 +380,12 @@ def bot_responses(id, tname, input_text):
             return SQLCodes.deptbbinactive(d, bb_sid, access)
 
         if command in ['youthmxpx','deptmxpx']:
+            return "This function is no longer in use"
             print(f"Calling youthmxpx with d={d}")
             return SQLCodes.youthmxpx(d)
 
         if command == 'ctbbtmission':
+            return "This function is no longer in use"
             print(f"Calling ctbbtmission with access={access}")
             return SQLCodes.ctbbtmission(access)
 

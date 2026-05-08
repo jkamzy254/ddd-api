@@ -154,6 +154,11 @@ def bot_responses(id, tname, input_text):
             print(f"Calling memberfmp with timerange={timerange}, g={g}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, access={access}")
             return SQLCodes.memberfmp(timerange, g, fmp_sid, fmp_ss, access)
 
+        if command in ['todaypp','yesterdaypp','weekpp','lastweekpp','seasonpp']:
+            timerange = command[:-2]
+            print(f"Calling memberpp with timerange={timerange}, g={g}, pp_sid={fmp_sid}, pp_ss={fmp_ss}, access={access}")
+            return SQLCodes.memberpp(timerange, g, fmp_sid, fmp_ss, access)
+        
         if command == 'fmstatus':
             print(f"Calling fmstatus with d={d}, g={g}, access={access}")
             return SQLCodes.fmstatus(d, g, '2020-01-01', access)
@@ -298,6 +303,7 @@ def bot_responses(id, tname, input_text):
             return SQLCodes.deptbbtinactive(q, d, r, access)
 
         if command.startswith('bbmission'):
+            return "This function is no longer in use"
             standard = command.removeprefix('bbmission')
             standard = 'leaf' if standard == '' else standard
             if standard not in ['bbt','leaf','all','']:
@@ -365,6 +371,17 @@ def bot_responses(id, tname, input_text):
                         print(f"Calling taskfmp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, access={access}")
                         return SQLCodes.taskfmp(task, timerange, d, fmp_sid, fmp_ss, access)
 
+        for task in ['youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
+            if command.startswith(f'pp{task}'):
+                timerange = command[len(f'pp{task}'):]
+                if timerange in ['today','yesterday','week','lastweek','season']:
+                    if task in ['youth','dept','tgw','member']:
+                        print(f"Calling deptpp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, access={access}")
+                        return SQLCodes.deptpp(task, timerange, d, fmp_sid, fmp_ss, access)
+                    if task in ['gyjn','oev','iev','edu','sv']:
+                        print(f"Calling taskpp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, access={access}")
+                        return SQLCodes.taskpp(task, timerange, d, fmp_sid, fmp_ss, access)
+                    
         if command in ('youthfm','deptfm'):
             print(f"Calling youthfm with d={d}")
             return SQLCodes.youthfm(d)

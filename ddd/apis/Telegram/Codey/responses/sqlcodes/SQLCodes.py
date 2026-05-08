@@ -5019,3 +5019,218 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     table = re.sub(r'(\D)0([^.])',r'\1-\2',table) if access != 'Group' else table   # Replaces lone '0' with '-'
     summary = f"{header}{table}"
     return summary
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def memberpp(timerange,g,sid,ss,access): # BBT FUNCTIONS
+    
+    name = 'Member' if access == 'IT' else 'MemberCode'
+  
+    timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
+                  'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
+                  'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
+                  'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
+                  'season':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season'],
+                  'lastseason':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season']}
+   
+    s,e,title = timevalues[timerange]
+        
+    memberQ = f"SELECT {name}, PP FROM CodeyPP('{sid}', ({s}), ({e})) WHERE Grp LIKE '{g}'"
+    totalQ  = f"SELECT SUM(PP)PP FROM CodeyPP('{sid}', ({s}), ({e})) WHERE Grp LIKE '{g}'"
+    print(memberQ)
+    
+    with odbc.connect(conn_str) as conn:
+        dm = pd.read_sql(memberQ, conn)
+        dt = pd.read_sql(totalQ, conn)
+
+    dm.columns = ['Member','PP']
+    dt.columns = ['PP']
+    g = g.capitalize()
+    g = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
+    if len(dm) == 0:
+        return "No members found"
+    else:  
+        member = str()
+        
+        for r in range(len(dm)):
+            mem = str(dm.loc[r,'Member'])[:8] + ' '*(8-len(str(dm.loc[r,'Member'])[:8]))
+            pp     = ' '*(3-len(str(dm.loc[r,'PP']))) + str(dm.loc[r,'PP'])      
+            member = f'{member}{mem}[{pp}]\n'
+            
+        pp     = ' '*(3-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
+        
+        total = f'Total   [{pp}]'
+        
+        member = f'<b><u>{g} PP : {title}</u></b>\n\n<pre>Member  [PP ]\n\n{member}\n{total}</pre>'
+        member = re.sub(r'\.0',r'  ',member) # Replaces '.0' with empty space
+        member = re.sub(r'(\D)0([^.])',r'\1-\2',member)   # Replaces lone '0' with '-'
+        return member
+    
+
+# UNIVERSAL DEPT PP FUNCTION:
+
+def deptpp(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
+    
+    displayGroups = False if task == 'dept' and access in ('All','IT','EDU') else True
+    topleft = 'Grp ' if displayGroups == True else 'Dept'
+    
+    if task == 'dept':
+        task = 'youth'
+    
+    taskvalues = {'youth' : [''       , ''            ],
+                  'tgw'   : [' TGW'   , " AND Title IN ('TJN','GYJN')"],
+                  'member': [' Member', " AND (Title IS NULL OR Title NOT IN ('TJN','GYJN'))"]}
+    tasktitle = taskvalues[task][0]
+    taskQ = taskvalues[task][1]
+  
+    if timerange in {'today','yesterday'}:
+        spc = [6,5,4,4,4,4,f'{topleft}  [PP  ]',   'Total ']
+    if timerange in {'week','lastweek'}:
+        spc = [5,5,5,4,4,4,f'{topleft} [PP  ]',   'Total']
+    if timerange == 'season':
+        spc = [4,6,6,5,5,5,f'{topleft}[ PP  ]','Tot ']   
+
+    timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
+                  'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
+                  'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
+                  'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
+                  'season':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season']}
+    
+    s,e,timetitle = timevalues[timerange]
+       
+    memberQ = f"SELECT Grp, SUM(PP)PP FROM CodeyPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Grp, GID ORDER BY GID"
+    deptQ   = f"SELECT Dept, SUM(PP)PP FROM CodeyPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept, DID ORDER BY DID"  
+    totalQ  = f"SELECT SUM(PP)PP FROM CodeyPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ}"
+    print(memberQ)
+
+    with odbc.connect(conn_str) as conn:
+        dm = pd.read_sql(memberQ, conn)
+        dd = pd.read_sql(deptQ, conn)
+        dt = pd.read_sql(totalQ, conn)
+
+    dm.columns = ['Grp','PP']
+    dd.columns = ['Dept','PP']
+    dt.columns = ['PP']
+    dd.replace(r' Dept',r'', regex = True, inplace = True)
+    
+    group = str()
+    
+    if displayGroups:
+        for r in range(len(dm)):
+            grp = str(dm.loc[r,'Grp']) + ' '*(spc[0]-len(str(dm.loc[r,'Grp'])))
+            pp = ' '*(spc[3]-len(str(dm.loc[r,'PP']))) + str(dm.loc[r,'PP'])
+            group = f'{group}{grp}[{pp}]\n'
+        group = group + '\n'
+
+    dept = str()    
+    for r in range(len(dd)):
+        dpt = str(dd.loc[r,'Dept']) + ' '*(spc[0]-len(str(dd.loc[r,'Dept'])))
+        pp = ' '*(spc[3]-len(str(dd.loc[r,'PP']))) + str(dd.loc[r,'PP'])
+        dept = f'{dept}{dpt}[{pp}]\n'
+    dept = dept + '\n'
+
+    if d in ('D[0-9]%','%'):
+        pp = ' '*(spc[3]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
+        total = f'{spc[7]}[{pp}]\n'
+    else:
+        total = str()
+        
+    depttitle = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 2')
+
+    fmp = f"<b><u>{depttitle}{tasktitle} FMP : {timetitle}</u></b>\n\n<pre>{spc[6]}\n\n{group}{dept}{total}</pre>"
+    fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
+    fmp = re.sub(r'(\D)0([^.])',r'\1-\2',fmp)   # Replaces lone '0' with '-'
+    return fmp
+
+
+
+def taskpp(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
+    
+    name = 'MemberFull' if access == 'IT' else 'MemberInitial'
+        
+    taskvalues = {'gyjn': [' GYJN'   , " AND Title = 'GYJN'"],
+                  'oev' : [' OEV TJN', " AND Task = 'OEV'"],
+                  'iev' : [' IEV TJN', " AND Task = 'IEV'"],
+                  'edu' : [' EDU TJN', " AND Task = 'EDU'"],
+                  'sv'  : [' SV TJN' , " AND Task = 'SV'"]}
+    tasktitle = taskvalues[task][0]
+    taskquery = taskvalues[task][1]
+    
+    if access == 'IT':
+        if timerange in {'today','yesterday'}:
+            spc = [10,4,4,4,4,4,'TGW       [PP  ]','Total     ']
+        elif timerange in {'week','lastweek'}:
+            spc = [9,5,4,4,4,4,'TGW      [PP  ]','Total    ']
+        elif timerange == 'season':
+            spc = [8,5,5,4,4,4,'TGW     [PP  ]','Total   ']
+    else:
+        if timerange in {'today','yesterday'}:
+            spc = [7,4,4,4,4,4,'TGW    [PP  ]',  'Total  ']
+        elif timerange in {'week','lastweek'}:
+            spc = [7,5,4,4,4,4,'TGW    [PP  ]', 'Total  ']
+        elif timerange == 'season':
+            spc = [7,5,5,4,4,4,'TGW    [PP  ]','Total  ']
+
+    timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
+                  'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
+                  'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
+                  'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
+                  'season':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season']}
+    
+    s,e,timetitle = timevalues[timerange]
+       
+    baseQ   = f"{name}, PP FROM CodeyPP('{sid}', ({s}), ({e})) s WHERE Dept LIKE '{d}'{taskquery}"
+    memberQ = f"SELECT Grp, {baseQ} ORDER BY GID"
+    deptQ   = f"SELECT Dept, SUM(PP)PP FROM (SELECT Dept, DID, {baseQ})b GROUP BY Dept, DID ORDER BY DID"
+    totalQ  = f"SELECT SUM(PP)PP FROM CodeyPP('{sid}', ({s}), ({e})) s WHERE Dept LIKE '{d}'{taskquery}"
+    
+    print(deptQ)
+    
+    with odbc.connect(conn_str) as conn:
+        dm = pd.read_sql(memberQ, conn)
+        dd = pd.read_sql(deptQ, conn)
+        dt = pd.read_sql(totalQ, conn)
+    
+    dm.columns = ['Grp','Member','PP']
+    dd.columns = ['Dept','PP']
+    dt.columns = ['PP']
+    dd.replace(r' Dept',r'', regex = True, inplace = True)
+
+    group = str()
+    for r in range(len(dm)):
+        mem = f"{dm.loc[r,'Member'][:spc[0]]}{' '*(spc[0]-len(dm.loc[r,'Member'][:spc[0]]))}"
+        pp = ' '*(spc[3]-len(str(dm.loc[r,'PP']))) + str(dm.loc[r,'PP'])
+        group = f'{group}{mem}[{pp}]\n'
+    group = group + '\n'
+
+    dept = str()    
+    for r in range(len(dd)):
+        dpt = str(dd.loc[r,'Dept']) + ' '*(spc[0]-len(str(dd.loc[r,'Dept'])))
+        pp = ' '*(spc[3]-len(str(dd.loc[r,'PP']))) + str(dd.loc[r,'PP'])
+        dept = f'{dept}{dpt}[{pp}]\n'
+    dept = dept + '\n'
+
+    total = str()
+    if d in ('D[0-9]%','%'):
+        pp = ' '*(spc[3]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
+        total = f'{spc[7]}[{pp}]\n'
+        
+    depttitle = d.replace('D[0-9]%','Youth').replace('¹D[0-9]%','Region 1').replace('²D[0-9]%','Region 2')
+
+    fmp = f"<b><u>{depttitle}{tasktitle} PP : {timetitle}</u></b>\n\n<pre>{spc[6]}\n\n{group}{dept}{total}</pre>"
+    fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
+    fmp = re.sub(r'(\D)0([^.])',r'\1-\2',fmp)   # Replaces lone '0' with '-'
+    return fmp

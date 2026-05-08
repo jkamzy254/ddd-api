@@ -5035,7 +5035,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
 
 
 
-    def memberpp(timerange,g,sid,ss,access): # BBT FUNCTIONS
+def memberpp(timerange,g,sid,ss,access): # BBT FUNCTIONS
     
     name = 'Member' if access == 'IT' else 'MemberCode'
   

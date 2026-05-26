@@ -24,6 +24,16 @@ conn_str = """
     Pwd={5};
 """.format(DRIVER,HOST,DBPORT,DB,DB_USER,PASS)
 
+# All functions categorised as:
+
+# IT FUNCTIONS
+# ACCESS FUNCTIONS
+# FMP FUNCTIONS
+# BB FUNCTIONS
+# BBT FUNCTIONS
+# EDU FUNCTIONS
+# MT FUNCTIONS
+
 def format_display_name(value): # EDU FUNCTIONS (used in bb "list" functions that use case-sensitive pandas filtering to avoid the slow "OR" condition filtering in SQL when searching both leaves. Potentially could be used in any bb or fmp function involving both leaf )
     """Format g or d for display in the header only"""
     known = {
@@ -4822,7 +4832,7 @@ def map_emoji(val, col=None): # EDU FUNCTIONS
 
 def hspreport(g, d, access): # EDU FUNCTIONS
     
-    g = g if access == 'Group' else '%'
+    g = g if access  in ('Group','GGN') else '%'
     d = d.capitalize().replace('d','D')
 
     deptfilter = f"Dept LIKE '{d}'"
@@ -4834,7 +4844,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
             "24": "Dept IN ('Serving','Culture','GD','HWPL','SFT')"
         }[d.lower()]
 
-    grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth').replace('Mw','MW').replace('24','24 Dept')
+    grpdept = g.capitalize() if access in ('Group','GGN') else d.replace('D[0-9]%','Youth').replace('Mw','MW').replace('24','24 Dept')
     
     conn = odbc.connect(conn_str)
     
@@ -4895,17 +4905,23 @@ def hspreport(g, d, access): # EDU FUNCTIONS
             ELSE 0 END VidSubmitted,
         CASE WHEN ISNULL(ExamScore,0)    != 0 THEN 1
             WHEN (SELECT TD FROM Days) < (SELECT U2 FROM Days) THEN 2
-            ELSE 0 END ExamScore
+            ELSE 0 END ExamScore,
+        CASE WHEN ISNULL(PodcastPrs,0) != 0 THEN 1
+            WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN 3
+            ELSE 0 END PodcastPrs
     FROM HSPMemberCodey
     WHERE {deptfilter}
         AND Grp LIKE '{g}'
     ORDER BY Pos, MemberCode
     """
+
+    print("Member Query:")
+    print(hsp_mem)
     
     # --- Kamau Adjustment #2/3 End
     
     hsp_group = f"""
-    SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, VideoSubmit, ExamSubmit, Members
+    SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, VideoSubmit, ExamSubmit, PodcastPrs, Members
     FROM HSPCodey
     WHERE {deptfilter}
         AND Grp LIKE '{g}'
@@ -4916,7 +4932,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     
     hsp_dept = f"""
     SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
-        SUM(VideoSubmit)VideoSubmit, SUM(ExamSubmit)ExamSubmit, SUM(Members)Total
+        SUM(VideoSubmit)VideoSubmit, SUM(ExamSubmit)ExamSubmit, SUM(PodcastPrs)PodcastPrs, SUM(Members)Total
     FROM HSPCodey
     WHERE {deptfilter}
         AND Grp LIKE '{g}'
@@ -4928,7 +4944,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     
     hsp_total = f"""
     SELECT SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
-        SUM(VideoSubmit)VideoSubmit, SUM(ExamSubmit)ExamSubmit, SUM(Members)Total
+        SUM(VideoSubmit)VideoSubmit, SUM(ExamSubmit)ExamSubmit, SUM(PodcastPrs)PodcastPrs, SUM(Members)Total
     FROM HSPCodey
     WHERE {deptfilter}
         AND Grp LIKE '{g}'
@@ -4941,14 +4957,16 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     dd = pd.read_sql(hsp_dept, conn)
     dy = pd.read_sql(hsp_total, conn)
 
-    dm.columns = ['Member','WD','F1','DI','F2','VS','EX']
-    dg.columns = ['Grp','WD','F1','DI','F2','VS','EX','TT']
-    dd.columns = ['Dept','WD','F1','DI','F2','VS','EX','TT']
-    dy.columns = ['WD','F1','DI','F2','VS','EX','TT']
-    
-    
+    print(dm)
+
+    dm.columns = ['Member','WD','F1','DI','F2','VS','EX','PC']
+    dg.columns = ['Grp','WD','F1','DI','F2','VS','EX','PC','TT']
+    dd.columns = ['Dept','WD','F1','DI','F2','VS','EX','PC','TT']
+    dy.columns = ['WD','F1','DI','F2','VS','EX','PC','TT']
+
+
     # --- Kamau Adjustment #3/3 Start for Unicode Issue
-    for col in ['WD', 'F1', 'DI', 'F2', 'VS', 'EX']:
+    for col in ['WD', 'F1', 'DI', 'F2', 'VS', 'EX', 'PC']:
         dm[col] = dm[col].apply(map_emoji)
     # --- Kamau Adjustment #3/3 End
     
@@ -4957,8 +4975,8 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     conn.cursor().close()
 
     member = str()
-    if access == 'Group':
-        member = '1⃣2⃣3⃣4⃣5⃣6⃣\n'
+    if access in ('Group','GGN'):
+        member = '1⃣2⃣3⃣4⃣5⃣6⃣7⃣\n'
         for r in range(len(dm)):
             mem = str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
             wp  = str(dm.loc[r,'WD'])
@@ -4967,10 +4985,11 @@ def hspreport(g, d, access): # EDU FUNCTIONS
             f2  = str(dm.loc[r,'F2'])
             vs  = str(dm.loc[r,'VS'])
             ex  = str(dm.loc[r,'EX'])
-            member = f'{member}{wp}{f1}{di}{f2}{vs}{ex}{mem}\n'        
+            pc  = str(dm.loc[r,'PC'])
+            member = f'{member}{wp}{f1}{di}{f2}{vs}{ex}{pc}{mem}\n'        
         member = f'</pre>{member}\n'
     
-    s = 2 if access == 'Group' else 3  
+    s = 2 if access in ('Group','GGN') else 3  
     group = str()
     if d != 'Mw':    
         for r in range(len(dg)):
@@ -4981,12 +5000,13 @@ def hspreport(g, d, access): # EDU FUNCTIONS
             f2  = ' '*(s-len(str(dg.loc[r,'F2']))) + str(dg.loc[r,'F2'])
             vs  = ' '*(s-len(str(dg.loc[r,'VS']))) + str(dg.loc[r,'VS'])
             ex  = ' '*(s-len(str(dg.loc[r,'EX']))) + str(dg.loc[r,'EX'])
+            pc  = ' '*(s-len(str(dg.loc[r,'PC']))) + str(dg.loc[r,'PC'])
             tt  = ' '*(s-len(str(dg.loc[r,'TT']))) + str(dg.loc[r,'TT'])
-            group = f'{group}{grp}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]\n' if access != 'Group' else f'<b>{group}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}]</b>\n(<i>{tt} members)</i><pre>\n'
+            group = f'{group}{grp}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}|{tt}]\n' if access not in ('Group','GGN') else f'<b>{group}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}]</b>\n(<i>{tt} members)</i><pre>\n'
         group = group + '\n'
       
     dept = str()  
-    if access not in ('Group','24'):
+    if access not in ('Group','GGN','24'):
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept'][:5]) + ' '*(5-len(str(dd.loc[r,'Dept'])))
             wp  = ' '*(3-len(str(dd.loc[r,'WD']))) + str(dd.loc[r,'WD'])
@@ -4995,8 +5015,9 @@ def hspreport(g, d, access): # EDU FUNCTIONS
             f2  = ' '*(3-len(str(dd.loc[r,'F2']))) + str(dd.loc[r,'F2'])
             vs  = ' '*(3-len(str(dd.loc[r,'VS']))) + str(dd.loc[r,'VS'])
             ex  = ' '*(3-len(str(dd.loc[r,'EX']))) + str(dd.loc[r,'EX'])
+            pc  = ' '*(3-len(str(dd.loc[r,'PC']))) + str(dd.loc[r,'PC'])
             tt  = ' '*(3-len(str(dd.loc[r,'TT']))) + str(dd.loc[r,'TT'])
-            dept = f'{dept}{dpt}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]\n'
+            dept = f'{dept}{dpt}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}|{tt}]\n'
         dept = dept + '\n'
     
     total = str()
@@ -5007,18 +5028,29 @@ def hspreport(g, d, access): # EDU FUNCTIONS
         f2  = ' '*(3-len(str(dy.loc[0,'F2']))) + str(dy.loc[0,'F2'])
         vs  = ' '*(3-len(str(dy.loc[0,'VS']))) + str(dy.loc[0,'VS'])
         ex  = ' '*(3-len(str(dy.loc[0,'EX']))) + str(dy.loc[0,'EX'])
+        pc  = ' '*(3-len(str(dy.loc[0,'PC']))) + str(dy.loc[0,'PC'])
         tt  = ' '*(3-len(str(dy.loc[0,'TT']))) + str(dy.loc[0,'TT'])
-        total = f'Total[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{tt}]'
+        total = f'Total[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}|{tt}]'
     now = datetime.now(ZoneInfo("Australia/Melbourne")).strftime("%a %d %b, %I:%M %p")
     # now = datetime.now(ZoneInfo("Australia/Melbourne")).strftime('%a %d %b, %I:%M %p')
     header = f"<b><u>{grpdept} HSP EDU REPORTING</u></b>\n<i>{now}</i>\n\n"
-    header = header if access != 'Group' else f"{header}1⃣ Wed\n2⃣ Friday 1\n3⃣ Drop-in \n4⃣ Friday 2\n5⃣ Video Submission\n6⃣ Exam\n\n🔒Reporting Not Open\n⬜️Reporting Open\n❌Absent\n✅Attend\n\n"
-    columns = '' if access == 'Group' else '     [WED|FR1|DPN|FR2|VID|EXM|TOT]\n\n'
+    header = header if access not in ('Group','GGN') else f"{header}1⃣ Wed\n2⃣ Friday 1\n3⃣ Drop-in \n4⃣ Friday 2\n5⃣ Video Submission\n6⃣ Exam\n7⃣ Podcast\n\n🔒Reporting Not Open\n⬜️Reporting Open\n❌Absent\n✅Attend\n\n"
+    columns = '' if access in ('Group','GGN') else '     [WED|FR1|DPN|FR2|VID|EXM|PDC|TOT]\n\n'
     table = f"<pre>{columns}{member}{group}{dept}{total}</pre>"
-    table = re.sub(r'\.0',r'  ',table) if access != 'Group' else table # Replaces '.0' with empty space
-    table = re.sub(r'(\D)0([^.])',r'\1-\2',table) if access != 'Group' else table   # Replaces lone '0' with '-'
+    table = re.sub(r'\.0',r'  ',table) if access not in ('Group','GGN') else table # Replaces '.0' with empty space
+    table = re.sub(r'(\D)0([^.])',r'\1-\2',table) if access not in ('Group','GGN') else table   # Replaces lone '0' with '-'
     summary = f"{header}{table}"
     return summary
+
+
+
+
+
+
+
+
+
+
 
 
 

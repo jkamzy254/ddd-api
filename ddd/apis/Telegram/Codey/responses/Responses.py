@@ -75,8 +75,9 @@ def bot_responses(id, tname, input_text):
         else:
             command = user_message
 
-    elif access in ['D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT']:
-        d = access if access != 'Dept' else d
+    elif access in ['GGN','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT']:
+        d = access if access not in ('Dept','GGN') else d
+        access = d if access == 'GGN' else access
         if '/' in user_message:
             try:
                 command, g = user_message.split('/')
@@ -133,8 +134,11 @@ def bot_responses(id, tname, input_text):
 
     ct = {'%': 'Physical + Online', phys_sid: 'Physical', on_sid: 'Online'}[bb_sid]
 
-    # === Everything below is unchanged ===
-    if access != 'MT':
+    if command == 'hspreport':
+        print(f"Calling hspreport with g={g}, d={d}, access={access}")
+        return SQLCodes.hspreport(g, d, access)
+
+    if access not in ('MT','GGN'):
         if 'phonenumber' in str(user_message):
             return "Sorry, 'phonenumber' is not a recognised command. However, to check if someone has been fished before, you may enter their phone number starting with '04' e.g. <pre>0412345678</pre> :)"
         if user_message.startswith('04'):
@@ -323,10 +327,6 @@ def bot_responses(id, tname, input_text):
             print(f"Calling edu with day={day}, g={g}, d={d}, access={access}")
             return SQLCodes.edu(day, g, d, access) if day != 'rev' else SQLCodes.edurev(g, d, access)
 
-        if command == 'hspreport':
-            print(f"Calling hspreport with g={g}, d={d}, access={access}")
-            return SQLCodes.hspreport(g, d, access)
-
         if command == 'bbtmission':
             return "This function is no longer in use"
             d = '%' if access == 'EDU' else d
@@ -358,7 +358,7 @@ def bot_responses(id, tname, input_text):
             return SQLCodes.ctmissionnew(bb_sid, leafbbt[0], leafbbt[1], access, d, g, ct, plus)
         
     # Dept and above functions
-    if access in ['%','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','¹','²','All','EDU','IT']:
+    if original_access != 'GGN' and access in ['%','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','¹','²','All','EDU','IT']:
 
         for task in ['youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(task):

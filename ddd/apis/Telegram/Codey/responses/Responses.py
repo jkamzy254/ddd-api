@@ -47,7 +47,7 @@ def bot_responses(id, tname, input_text):
             uid, name, access, g, d, r, fmp_sid, fmp_ss, bb_sid, bb_ss = SQLCodes.namedata(user_name).split('/')
             print(f"USING CODEY AS: {uid}/{name}/{d}/{g} -- {access}")
 
-    if access == 'None':
+    if access in ('None','GGN'):
         return '-'
 
     if access in ['All', 'IT', 'MT', 'EDU']:
@@ -75,9 +75,8 @@ def bot_responses(id, tname, input_text):
         else:
             command = user_message
 
-    elif access in ['GGN','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT']:
-        d = access if access not in ('Dept','GGN') else d
-        access = d if access == 'GGN' else access
+    elif access in ['D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT']:
+        d = access if access not in ('Dept') else d
         if '/' in user_message:
             try:
                 command, g = user_message.split('/')

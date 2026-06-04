@@ -34,7 +34,7 @@ def bot_responses(id, tname, input_text):
 
     # === Only now do we call teledata ===
     ssn = 'phys'
-    uid, name, access, g, d, r, fmp_sid, fmp_ss, bb_sid, bb_ss, phys_sid, on_sid = SQLCodes.teledata(id).split('/')
+    uid, name, access, g, d, r, fmp_sid, fmp_ss, bb_sid, bb_ss, phys_sid, on_sid, mw_sid = SQLCodes.teledata(id).split('/')
     original_uid, original_name, original_access = uid, name, access
     print(f"TELEDATA: {uid}/{name}/{d}/{g} -- {access}")
 
@@ -44,7 +44,7 @@ def bot_responses(id, tname, input_text):
         if '|' in input_text:
             user_message, user_name = input_text.split('|')
             user_message = user_message.lower()
-            uid, name, access, g, d, r, fmp_sid, fmp_ss, bb_sid, bb_ss = SQLCodes.namedata(user_name).split('/')
+            uid, name, access, g, d, r, fmp_sid, fmp_ss, bb_sid, bb_ss, mw_sid = SQLCodes.namedata(user_name).split('/')
             print(f"USING CODEY AS: {uid}/{name}/{d}/{g} -- {access}")
 
     if access in ('None','GGN'):

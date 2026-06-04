@@ -226,7 +226,7 @@ def teledata(id): # ACCESS FUNCTIONS
     if len(da) == 0:
         return "None/None/None/None/None/None/None/None/None/None/None/None"
     else:
-        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}/{da.iloc[0,8]}/{da.iloc[0,9]}/{da.iloc[0,10]}/{da.iloc[0,11]}"
+        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}/{da.iloc[0,8]}/{da.iloc[0,9]}/{da.iloc[0,10]}/{da.iloc[0,11]}/{da.iloc[0,12]}"
     
 def namedata(user_name): # ACCESS FUNCTIONS
     conn = odbc.connect(conn_str)
@@ -235,9 +235,9 @@ def namedata(user_name): # ACCESS FUNCTIONS
     conn.cursor().close()
     
     if len(da) == 0:
-        return "None/None/None/None/None/None/None/None/None/None"
+        return "None/None/None/None/None/None/None/None/None/None/None/None/None"
     else:
-        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}/{da.iloc[0,8]}/{da.iloc[0,9]}"
+        return f"{da.iloc[0,0]}/{da.iloc[0,1]}/{da.iloc[0,2]}/{da.iloc[0,3]}/{da.iloc[0,4]}/{da.iloc[0,5]}/{da.iloc[0,6]}/{da.iloc[0,7]}/{da.iloc[0,8]}/{da.iloc[0,9]}/{da.iloc[0,10]}/{da.iloc[0,11]}/{da.iloc[0,12]}"
 
 def groupinfo(g): # ACCESS FUNCTIONS
     conn = odbc.connect(conn_str)
@@ -1044,6 +1044,12 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
         dg = pd.read_sql(bb_group, conn)
         dd = pd.read_sql(bb_dept, conn)
         dy = pd.read_sql(bb_youth, conn)
+
+
+    dg.replace(r'MWDept',r'MWDpt', regex = True, inplace = True)
+    dg.replace(r'Serving',r'Sv', regex = True, inplace = True)
+    dg.replace(r'Culture',r'Cul', regex = True, inplace = True)
+    dd.replace(r'InnerSFT',r'InSFT', regex = True, inplace = True)
 
     if v2:
         dm.columns = ['Dept','Grp','Member','pNew','pOld','FE','bbA','cctA','bbME','cctI','pFA','bbFA','Tot']
@@ -4609,7 +4615,7 @@ def ctbbtmission(access): # BBT FUNCTIONS
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     summary = re.sub(totalrow,f"\n{totalrow}",summary)
     summary = f"<b><u>CT BBT Mission</u></b>\n\n<pre>Dept     [BBT|TGW|Mm|0 P|1P| FE]\n\n{summary}"
-    summary = summary.replace('D[--9]%','\nYouth  ')
+    summary = summary.replace('D[--9]%','\nYouth  ').replace('MW[--9]%','\MW  ')
     return summary
 
 
@@ -4837,10 +4843,11 @@ def hspreport(g, d, access): # EDU FUNCTIONS
 
     deptfilter = f"Dept LIKE '{d}'"
 
-    if access in ['IT','All','EDU','D[0-9]%','mw','24']:
+    if access.lower() in ['it','all','edu','d[0-9]%','mw','mw[0-9]%','24']:
         deptfilter = {
             "d[0-9]%": "Dept LIKE 'D[0-9]%' OR Dept = 'InnerSFT'",
             "mw": "Dept IN ('Men','Women')",
+            "mw[0-9]%": "Dept IN ('Men','Women')",
             "24": "Dept IN ('Serving','Culture','GD','HWPL','SFT')"
         }[d.lower()]
 
@@ -4915,20 +4922,20 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     ORDER BY Pos, MemberCode
     """
 
-    print("Member Query:")
-    print(hsp_mem)
+    # print("Member Query:")
+    # print(hsp_mem)
     
     # --- Kamau Adjustment #2/3 End
     
     hsp_group = f"""
     SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, VideoSubmit, ExamSubmit, PodcastPrs, Members
     FROM HSPCodey
-    WHERE {deptfilter}
+    WHERE {deptfilter.replace("Dept IN ('Men','Women')","Grp LIKE 'MW[0-9]%'")}
         AND Grp LIKE '{g}'
     ORDER BY GID
     """
     # print("Group Query:")
-    # print(hsp_group)
+    print(hsp_group)
     
     hsp_dept = f"""
     SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
@@ -4991,19 +4998,18 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     
     s = 2 if access in ('Group','GGN') else 3  
     group = str()
-    if d != 'Mw':    
-        for r in range(len(dg)):
-            grp =   str(dg.loc[r,'Grp'][:5]) + ' '*(5-len(str(dg.loc[r,'Grp'])))
-            wp  = ' '*(s-len(str(dg.loc[r,'WD']))) + str(dg.loc[r,'WD'])
-            f1  = ' '*(s-len(str(dg.loc[r,'F1']))) + str(dg.loc[r,'F1'])
-            di  = ' '*(s-len(str(dg.loc[r,'DI']))) + str(dg.loc[r,'DI'])
-            f2  = ' '*(s-len(str(dg.loc[r,'F2']))) + str(dg.loc[r,'F2'])
-            vs  = ' '*(s-len(str(dg.loc[r,'VS']))) + str(dg.loc[r,'VS'])
-            ex  = ' '*(s-len(str(dg.loc[r,'EX']))) + str(dg.loc[r,'EX'])
-            pc  = ' '*(s-len(str(dg.loc[r,'PC']))) + str(dg.loc[r,'PC'])
-            tt  = ' '*(s-len(str(dg.loc[r,'TT']))) + str(dg.loc[r,'TT'])
-            group = f'{group}{grp}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}|{tt}]\n' if access not in ('Group','GGN') else f'<b>{group}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}]</b>\n(<i>{tt} members)</i><pre>\n'
-        group = group + '\n'
+    for r in range(len(dg)):
+        grp =   str(dg.loc[r,'Grp'][:5]) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        wp  = ' '*(s-len(str(dg.loc[r,'WD']))) + str(dg.loc[r,'WD'])
+        f1  = ' '*(s-len(str(dg.loc[r,'F1']))) + str(dg.loc[r,'F1'])
+        di  = ' '*(s-len(str(dg.loc[r,'DI']))) + str(dg.loc[r,'DI'])
+        f2  = ' '*(s-len(str(dg.loc[r,'F2']))) + str(dg.loc[r,'F2'])
+        vs  = ' '*(s-len(str(dg.loc[r,'VS']))) + str(dg.loc[r,'VS'])
+        ex  = ' '*(s-len(str(dg.loc[r,'EX']))) + str(dg.loc[r,'EX'])
+        pc  = ' '*(s-len(str(dg.loc[r,'PC']))) + str(dg.loc[r,'PC'])
+        tt  = ' '*(s-len(str(dg.loc[r,'TT']))) + str(dg.loc[r,'TT'])
+        group = f'{group}{grp}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}|{tt}]\n' if access not in ('Group','GGN') else f'<b>{group}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}]</b>\n(<i>{tt} members)</i><pre>\n'
+    group = group + '\n'
       
     dept = str()  
     if access not in ('Group','GGN','24'):

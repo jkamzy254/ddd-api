@@ -630,13 +630,13 @@ def deptfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
     
     displayGroups = False if task == 'dept' and access in ('All','IT','EDU') else True
     topleft = 'Grp ' if displayGroups == True else 'Dept'
-    
-    if task == 'dept':
-        task = 'youth'
-    
-    taskvalues = {'youth' : [''       , ''            ],
-                  'tgw'   : [' TGW'   , " AND Title IN ('TJN','GYJN')"],
-                  'member': [' Member', " AND (Title IS NULL OR Title NOT IN ('TJN','GYJN'))"]}
+       
+    taskvalues = {'church' : [''       , ''            ],
+                  'dept'   : [''       , ''            ],
+                  'youth'  : [''       , ''            ],
+                  'mw'     : [''       , ''            ],
+                  'tgw'    : [' TGW'   , " AND Title IN ('TJN','GYJN')"],
+                  'member' : [' Member', " AND (Title IS NULL OR Title NOT IN ('TJN','GYJN'))"]}
     tasktitle = taskvalues[task][0]
     taskQ = taskvalues[task][1]
   
@@ -645,7 +645,7 @@ def deptfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
     if timerange in {'week','lastweek'}:
         spc = [5,5,5,4,4,4,f'{topleft} [  F  |  M  |PP  | P  |FE  ]',   'Total']
     if timerange == 'season':
-        spc = [4,6,6,5,5,5,f'{topleft}[   F  |   M  | PP  |  P  | FE  ]','Tot ']   
+        spc = [4,6,6,5,5,5,f'{topleft}[   F  |   M  | PP  |  P  | FE  ]','Tot ']
 
     timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
                   'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
@@ -655,10 +655,10 @@ def deptfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
     
     s,e,timetitle = timevalues[timerange]
        
-    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    # regionQ = f"SELECT District, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY District ORDER BY District".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")  
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    # regionQ = f"SELECT District, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY District ORDER BY District".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")  
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
     print(memberQ)
 
     with odbc.connect(conn_str) as conn:
@@ -718,7 +718,7 @@ def deptfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
     else:
         total = str()
         
-    depttitle = d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
+    depttitle = d.replace('D[0-9]%','Youth').replace('MW[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
 
     fmp = f"<b><u>{depttitle}{tasktitle} FMP : {timetitle}</u></b>\n\n<pre>{spc[6]}\n\n{group}{dept}{total}</pre>"
     fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space

@@ -677,7 +677,7 @@ def deptfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
     
     if displayGroups:
         for r in range(len(dm)):
-            grp = str(dm.loc[r,'Grp']) + ' '*(spc[0]-len(str(dm.loc[r,'Grp'])))
+            grp = str(dm.loc[r,'Grp'])[:spc[0]] + ' '*(spc[0]-len(str(dm.loc[r,'Grp'])[:spc[0]]))
             f  = ' '*(spc[1]-len(str(dm.loc[r,'F'])))  + str(dm.loc[r,'F'])
             m  = ' '*(spc[2]-len(str(dm.loc[r,'M'])))  + str(dm.loc[r,'M'])
             pp = ' '*(spc[3]-len(str(dm.loc[r,'PP']))) + str(dm.loc[r,'PP'])
@@ -688,7 +688,7 @@ def deptfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
 
     dept = str()    
     for r in range(len(dd)):
-        dpt = str(dd.loc[r,'Dept']) + ' '*(spc[0]-len(str(dd.loc[r,'Dept'])))
+        dpt = str(dd.loc[r,'Dept'][:spc[0]]) + ' '*(spc[0]-len(str(dd.loc[r,'Dept'][:spc[0]])))
         f  = ' '*(spc[1]-len(str(dd.loc[r,'F'])))  + str(dd.loc[r,'F'])
         m  = ' '*(spc[2]-len(str(dd.loc[r,'M'])))  + str(dd.loc[r,'M'])
         pp = ' '*(spc[3]-len(str(dd.loc[r,'PP']))) + str(dd.loc[r,'PP'])
@@ -796,7 +796,7 @@ def taskfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
 
     dept = str()    
     for r in range(len(dd)):
-        dpt = str(dd.loc[r,'Dept']) + ' '*(spc[0]-len(str(dd.loc[r,'Dept'])))
+        dpt = str(dd.loc[r,'Dept'][:spc[0]]) + ' '*(spc[0]-len(str(dd.loc[r,'Dept'][:spc[0]])))
         f  = ' '*(spc[1]-len(str(dd.loc[r,'F'])))  + str(dd.loc[r,'F'])
         m  = ' '*(spc[2]-len(str(dd.loc[r,'M'])))  + str(dd.loc[r,'M'])
         pp = ' '*(spc[3]-len(str(dd.loc[r,'PP']))) + str(dd.loc[r,'PP'])
@@ -1133,7 +1133,7 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
     member = str()
     if access == 'Group':
         for r in range(len(dm)):
-            bbt =   str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
+            bbt =   str(dm.loc[r,'Member'])[:5] + ' '*(5-len(str(dm.loc[r,'Member'])[:5]))
             pn  = ' '*(4-len(str(dm.loc[r,'pNew']))) + str(dm.loc[r,'pNew'])
             po  = ' '*(4-len(str(dm.loc[r,'pOld']))) + str(dm.loc[r,'pOld'])
             ba  = ' '*(4-len(str(dm.loc[r,'bbA'])))  + str(dm.loc[r,'bbA'])
@@ -1150,7 +1150,7 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
             
     group = str()    
     for r in range(len(dg)):
-        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        grp =   str(dg.loc[r,'Grp'])[:5] + ' '*(5-len(str(dg.loc[r,'Grp'])[:5]))
         pn  = ' '*(4-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
         po  = ' '*(4-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
         ba  = ' '*(4-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
@@ -1167,7 +1167,7 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
     dept = str()  
     if access != 'Group':
         for r in range(len(dd)):
-            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            dpt =   str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             pn  = ' '*(4-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
             po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
             ba  = ' '*(4-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
@@ -1271,7 +1271,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     member = str()
     if bbtdept is False and not d.endswith('D[0-9]%'):
         for r in range(len(dm)):
-            bbt =   str(dm.loc[r,'BBT'][:5]) + ' '*(5-len(str(dm.loc[r,'BBT'][:5])))
+            bbt =   str(dm.loc[r,'BBT'])[:5] + ' '*(5-len(str(dm.loc[r,'BBT'])[:5]))
             pn  = ' '*(3-len(str(dm.loc[r,'pNew']))) + str(dm.loc[r,'pNew'])
             po  = ' '*(3-len(str(dm.loc[r,'pOld']))) + str(dm.loc[r,'pOld'])
             ba  = ' '*(3-len(str(dm.loc[r,'bbA'])))  + str(dm.loc[r,'bbA'])
@@ -1288,7 +1288,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     group = str()
     if bbtdept is False:    
         for r in range(len(dg)):
-            grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+            grp =   str(dg.loc[r,'Grp'])[:5] + ' '*(5-len(str(dg.loc[r,'Grp'])[:5]))
             pn  = ' '*(3-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
             po  = ' '*(3-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
             ba  = ' '*(3-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
@@ -1305,7 +1305,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     dept = str()  
     if access != 'Group':  
         for r in range(len(dd)):
-            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            dpt =   str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
             po  = ' '*(3-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
             ba  = ' '*(3-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
@@ -1390,7 +1390,7 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
     member = str()
     if access == 'Group':
         for r in range(len(dm)):
-            bbt =   str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
+            bbt =   str(dm.loc[r,'Member'])[:5] + ' '*(5-len(str(dm.loc[r,'Member'])[:5]))
             pn  = ' '*(4-len(str(dm.loc[r,'pNew']))) + str(dm.loc[r,'pNew'])
             po  = ' '*(4-len(str(dm.loc[r,'pOld']))) + str(dm.loc[r,'pOld'])
             pf  = ' '*(4-len(str(dm.loc[r,'pFA'])))  + str(dm.loc[r,'pFA'])
@@ -1409,7 +1409,7 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
             
     group = str()    
     for r in range(len(dg)):
-        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        grp =   str(dg.loc[r,'Grp'])[:5] + ' '*(5-len(str(dg.loc[r,'Grp'])[:5]))
         pn  = ' '*(4-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
         po  = ' '*(4-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
         pf  = ' '*(4-len(str(dg.loc[r,'pFA'])))  + str(dg.loc[r,'pFA'])
@@ -1428,7 +1428,7 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
     dept = str()  
     if access != 'Group':
         for r in range(len(dd)):
-            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            dpt =   str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             pn  = ' '*(4-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
             po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
             pf  = ' '*(4-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
@@ -1540,7 +1540,7 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
     member = str()
     if not d.endswith('D[0-9]%'):
         for r in range(len(dm)):
-            bbt =   str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
+            bbt =   str(dm.loc[r,'Member'])[:5] + ' '*(5-len(str(dm.loc[r,'Member'])[:5]))
             pn  = ' '*(3-len(str(dm.loc[r,'pNew']))) + str(dm.loc[r,'pNew'])
             po  = ' '*(3-len(str(dm.loc[r,'pOld']))) + str(dm.loc[r,'pOld'])
             pf  = ' '*(3-len(str(dm.loc[r,'pFA'])))  + str(dm.loc[r,'pFA'])
@@ -1558,7 +1558,7 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
             
     group = str()    
     for r in range(len(dg)):
-        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        grp =   str(dg.loc[r,'Grp'])[:5] + ' '*(5-len(str(dg.loc[r,'Grp'])[:5]))
         pn  = ' '*(3-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
         po  = ' '*(3-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
         pf  = ' '*(3-len(str(dg.loc[r,'pFA'])))  + str(dg.loc[r,'pFA'])
@@ -1577,7 +1577,7 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
     dept = str()  
     if access != 'Group':  
         for r in range(len(dd)):
-            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            dpt =   str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
             po  = ' '*(3-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
             pf  = ' '*(3-len(str(dd.loc[r,'pFA'])))  + str(dd.loc[r,'pFA'])
@@ -1665,7 +1665,7 @@ def deptbbtstatus(q, d, r, access): # BBT FUNCTIONS
 
     dept = str()    
     for r in range(len(dd)):
-        dpt =   str(dd.loc[r,'Dept'])[:3] + ' '*(3-len(str(dd.loc[r,'Dept'])[:3]))
+        dpt =   str(dd.loc[r,'Dept'])[:3] + ' '*(3-len(str(dd.loc[r,'Dept'])))[:3]
         pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
         po  = ' '*(3-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
         ba  = ' '*(3-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
@@ -1744,7 +1744,7 @@ def bbtactive(q, g, d, r, access): # BBT FUNCTIONS
     if d != 'D[0-9]%':
         member = '\n'
         for r in range(len(dm)):
-            bbt =   str(dm.loc[r,'BBT'][:5]) + ' '*(5-len(str(dm.loc[r,'BBT'][:5])))
+            bbt =   str(dm.loc[r,'BBT'])[:5] + ' '*(5-len(str(dm.loc[r,'BBT'])[:5]))
             pn  = ' '*(3-len(str(dm.loc[r,'pNew']))) + str(dm.loc[r,'pNew'])
             ba  = ' '*(3-len(str(dm.loc[r,'bbA'])))  + str(dm.loc[r,'bbA'])
             ca  = ' '*(3-len(str(dm.loc[r,'cctA']))) + str(dm.loc[r,'cctA'])
@@ -1754,7 +1754,7 @@ def bbtactive(q, g, d, r, access): # BBT FUNCTIONS
             
     group = str()
     for r in range(len(dg)):
-        grp =    str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        grp =    str(dg.loc[r,'Grp'])[:5] + ' '*(5-len(str(dg.loc[r,'Grp'])[:5]))
         pn  = ' '*(3-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
         ba  = ' '*(3-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
         ca  = ' '*(3-len(str(dg.loc[r,'cctA']))) + str(dg.loc[r,'cctA'])
@@ -1763,7 +1763,7 @@ def bbtactive(q, g, d, r, access): # BBT FUNCTIONS
     dept = str()  
     if access != 'Group':  
         for r in range(len(dd)):
-            dpt = str(dd.loc[r,'Dept'])   + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            dpt = str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
             ba  = ' '*(3-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
             ca  = ' '*(3-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
@@ -1822,7 +1822,7 @@ def deptbbtactive(q, d, r, access): # BBT FUNCTIONS
     
     dept = str()    
     for r in range(len(dd)):
-        dpt = str(dd.loc[r,'Dept'])   + ' '*(4-len(str(dd.loc[r,'Dept'])))
+        dpt = str(dd.loc[r,'Dept'])[:4] + ' '*(4-len(str(dd.loc[r,'Dept'])[:4]))
         pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
         ba  = ' '*(3-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])
         ca  = ' '*(3-len(str(dd.loc[r,'cctA']))) + str(dd.loc[r,'cctA'])
@@ -1893,7 +1893,7 @@ def bbtinactive(q, g, d, r, access): # BBT FUNCTIONS
     if d != 'D[0-9]%':
         member = '\n'
         for r in range(len(dm)):
-            bbt =   str(dm.loc[r,'BBT'][:5]) + ' '*(5-len(str(dm.loc[r,'BBT'][:5])))
+            bbt =   str(dm.loc[r,'BBT'])[:5] + ' '*(5-len(str(dm.loc[r,'BBT'])[:5]))
             po  = ' '*(3-len(str(dm.loc[r,'pOld']))) + str(dm.loc[r,'pOld'])
             bm  = ' '*(3-len(str(dm.loc[r,'bbME']))) + str(dm.loc[r,'bbME'])
             ci  = ' '*(3-len(str(dm.loc[r,'cctI']))) + str(dm.loc[r,'cctI'])
@@ -5176,7 +5176,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     dept = str()  
     if access not in ('Group','GGN','24'):
         for r in range(len(dd)):
-            dpt =   str(dd.loc[r,'Dept'][:5]) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            dpt =   str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             wp  = ' '*(3-len(str(dd.loc[r,'WD']))) + str(dd.loc[r,'WD'])
             f1  = ' '*(3-len(str(dd.loc[r,'F1']))) + str(dd.loc[r,'F1'])
             di  = ' '*(3-len(str(dd.loc[r,'DI']))) + str(dd.loc[r,'DI'])
@@ -5425,7 +5425,7 @@ def taskpp(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
 
     dept = str()    
     for r in range(len(dd)):
-        dpt = str(dd.loc[r,'Dept']) + ' '*(spc[0]-len(str(dd.loc[r,'Dept'])))
+        dpt = str(dd.loc[r,'Dept']) + ' '*(spc[0]-len(str(dd.loc[r,'Dept'])[:spc[0]]))
         pp = ' '*(spc[3]-len(str(dd.loc[r,'PP']))) + str(dd.loc[r,'PP'])
         dept = f'{dept}{dpt}[{pp}]\n'
     dept = dept + '\n'

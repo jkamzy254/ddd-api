@@ -4205,7 +4205,7 @@ def edu(day, g, d, access): # EDU FUNCTIONS
           
     group = str()    
     for r in range(len(dg)):
-        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        grp =   str(dg.loc[r,'Grp'])[:5] + ' '*(5-len(str(dg.loc[r,'Grp'])[:5]))
         at  = ' '*(2-len(str(dg.loc[r,'Att']))) + str(dg.loc[r,'Att'])
         on  = ' '*(2-len(str(dg.loc[r,'Onl']))) + str(dg.loc[r,'Onl'])
         rp  = ' '*(2-len(str(dg.loc[r,'Rep']))) + str(dg.loc[r,'Rep'])
@@ -4216,7 +4216,7 @@ def edu(day, g, d, access): # EDU FUNCTIONS
     dept = str()  
     if access != 'Group':
         for r in range(len(dd)):
-            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            dpt =   str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             at  = ' '*(2-len(str(dd.loc[r,'Att']))) + str(dd.loc[r,'Att'])
             on  = ' '*(2-len(str(dd.loc[r,'Onl']))) + str(dd.loc[r,'Onl'])
             rp  = ' '*(2-len(str(dd.loc[r,'Rep']))) + str(dd.loc[r,'Rep'])
@@ -5161,7 +5161,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     s = 2 if access in ('Group','GGN') else 3  
     group = str()
     for r in range(len(dg)):
-        grp =   str(dg.loc[r,'Grp'][:5]) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        grp =   str(dg.loc[r,'Grp'][:5]) + ' '*(5-len(str(dg.loc[r,'Grp'])[:5]))
         wp  = ' '*(s-len(str(dg.loc[r,'WD']))) + str(dg.loc[r,'WD'])
         f1  = ' '*(s-len(str(dg.loc[r,'F1']))) + str(dg.loc[r,'F1'])
         di  = ' '*(s-len(str(dg.loc[r,'DI']))) + str(dg.loc[r,'DI'])

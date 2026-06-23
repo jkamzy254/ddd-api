@@ -5001,9 +5001,13 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     print(f"\n>>>hspreport: g={g}, d={d}, access={access}")
     
     g = g if access  in ('Group','GGN') else '%'
+    print(f"Group Filter: {g}")
     d = d.capitalize().replace('d','D')
+    print(f"Dept Input: {d}")
 
     deptfilter = f"Dept LIKE '{d}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+
+    print(f"Dept Filter: {deptfilter}")
 
     if access.lower() in ['it','all','edu','d[0-9]%','mw','mw[0-9]%','24']:
         deptfilter = {
@@ -5011,9 +5015,11 @@ def hspreport(g, d, access): # EDU FUNCTIONS
             "mw": "Dept IN ('Men','Women')",
             "mw[0-9]%": "Dept IN ('Men','Women')",
             "24": "Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')"
-        }[d.lower()]
+        }.get(d.lower(), deptfilter)
 
-    grpdept = g.capitalize() if access in ('Group','GGN') else d.replace('D[0-9]%','Youth').replace('Mw','MW').replace('24','24 Dept')
+    print(f"New Dept Filter: {deptfilter}")
+
+    grpdept = g.capitalize() if access in ('Group','GGN') else d.replace('D[0-9]%','Youth').replace('Mw','MW').replace('24','24 Dept').replace('%','Church')
     
     conn = odbc.connect(conn_str)
     
@@ -5126,7 +5132,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     dd = pd.read_sql(hsp_dept, conn)
     dy = pd.read_sql(hsp_total, conn)
 
-    print(dm)
+    # print(dm) # This prints the raw dataframe, not the string that will be returned
 
     dm.columns = ['Member','WD','F1','DI','F2','VS','EX','PC']
     dg.columns = ['Grp','WD','F1','DI','F2','VS','EX','PC','TT']

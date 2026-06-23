@@ -35,7 +35,7 @@ conn_str = """
 # MT FUNCTIONS
 
 def format_display_name(value): # EDU FUNCTIONS (used in bb "list" functions that use case-sensitive pandas filtering to avoid the slow "OR" condition filtering in SQL when searching both leaves. Potentially could be used in any bb or fmp function involving both leaf )
-    print(f"\n>>>format_display_name: value={value}")
+    print(f"\n>>>calling format_display_name: value={value}")
     """Format g or d for display in the header only"""
     known = {
         'm&w dept': 'M&W Dept',
@@ -49,15 +49,15 @@ def format_display_name(value): # EDU FUNCTIONS (used in bb "list" functions tha
     }
     lookup = value.lower()
     if lookup in known:
-        print(">>>Return")
-    return known[lookup]
+        print(">>>Format display name: returning known value")
+        return known[lookup]
     if re.match(r'^d\d+$', lookup, re.IGNORECASE):
-        print(">>>Return")
-    return value.upper()  # D6, D11 etc.
+        print(">>>Format display name: returning uppercase D value")
+        return value.upper()  # D6, D11 etc.
     if re.match(r'^g\d+$', lookup, re.IGNORECASE):
-        print(">>>Return")
-    return value.upper()  # G1, G26 etc.
-    print(">>>Return")
+        print(">>>Format display name: returning uppercase G value")
+        return value.upper()  # G1, G26 etc.
+    print(">>>Format display name: returning original value")
     return value  # fallback: return as-is
 
 def commands(access): # ACCESS FUNCTIONS

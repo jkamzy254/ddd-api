@@ -87,7 +87,7 @@ def reg_new_user_request(id,tname,user,pw): # ACCESS FUNCTIONS
     ds = pd.read_sql(selectquery, conn)
     if len(ds) == 0:
         print(">>>Return")
-    return 'Invalid username or password'
+        return 'Invalid username or password'
     
     ds.columns = ['Access','Grp','Name','UID']
     

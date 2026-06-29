@@ -119,7 +119,6 @@ class FMPUpdateFruitProfileViewSet(APIView):
     def post(self, request):
         form = request.data
         token = decode_jwt(request)
-        print(form)
 
         try:
             with connection.cursor() as cursor:

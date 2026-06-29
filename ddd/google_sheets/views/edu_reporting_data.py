@@ -19,7 +19,7 @@ class GetEduWeeklyAttendanceViewSet(APIView):
         print(request)
         try:
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spEducation_GetDeptWeekBreakdown")
+                cursor.execute("EXEC spEducation_InnerWeeklyEdu")
                 bbrecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(bbrecs, status=status.HTTP_200_OK)

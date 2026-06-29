@@ -8,6 +8,7 @@ from .views import edu_player as ep
 from .views import edu_dept_bbt as eb
 from .views import tribe_exam as ex
 from .views import mlt as mlt
+from .views import ev_dept_admin as ev
 from django.views.generic.base import TemplateView
 
 from django.urls import path
@@ -99,5 +100,10 @@ urlpatterns = [
 	path('mltGetMember/', mlt.MLTGetMemberViewSet.as_view()), 
 	path('mltGetMaterial/', mlt.MLTGetMaterialViewSet.as_view()),
 	path('mltFetchFile/', mlt.MLTFetchFileViewSet.as_view()), 
+     
+	#EV Dept Admin System
+	path('evGetMember/', ev.GetMemberViewSet.as_view()),
+	path('evCheckHistory/', ev.FMPCheckFruitHistoryViewSet.as_view()),
+	path('evUnlockFruit/', ev.FMPUnlockFruitViewSet.as_view()), 
  
 ]

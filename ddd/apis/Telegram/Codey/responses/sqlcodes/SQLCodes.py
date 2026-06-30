@@ -4615,18 +4615,23 @@ def test2(): # IT FUNCTIONS
 
 
 
-def ctmissionnew(season, leaf, bbt, access, d, g, ct, plus): # BB FUNCTIONS
-    print(f"\n>>>ctmissionnew: season={season}, leaf={leaf}, bbt={bbt}, access={access}, d={d}, g={g}, ct={ct}, plus={plus}")
+def ctmissionnew(season, leaf, bbt, access, d, g, ct, plus, showgroup): # BB FUNCTIONS
+    print(f"\n>>>ctmissionnew: season={season}, leaf={leaf}, bbt={bbt}, access={access}, d={d}, g={g}, ct={ct}, plus={plus}, showgroup={showgroup}")
     g = g if access == 'Group' else '%'
     d = d.capitalize().replace('d','D')
     grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
 
-    q = f"SELECT * FROM CTMissionNew2('{season}', {leaf}, {bbt}, '{access}', '{d}', '{g}')"
+    q = f"SELECT * FROM CTMissionNew2('{season}', {leaf}, {bbt}, '{access}', '{d}', '{g}', 0)"
+    q_grp = f"SELECT * FROM CTMissionNew2('{season}', {leaf}, {bbt}, '{access}', '{d}', '{g}', 1)"
     print(q)
     with odbc.connect(conn_str) as conn:
         dq = pd.read_sql(q, conn)
+        dg = pd.read_sql(q_grp, conn)
     dq.columns = ['Dept','Total','TGW','Member','X','P','FE','CCT']
     dq.replace(r' Dept',r'', regex = True, inplace = True)
+    if showgroup == 1:
+        dg.columns = ['Dept','Total','TGW','Member','X','P','FE','CCT']
+        dg.replace(r' Dept',r'', regex = True, inplace = True)
         
     dept = str()
 
@@ -4657,6 +4662,35 @@ def ctmissionnew(season, leaf, bbt, access, d, g, ct, plus): # BB FUNCTIONS
             dept = f'{dept}{dp}[{tt}|{tg}|{mm}|{np}|{pk}|{fe}|{cct}]\n'
         dept = dept + '\n'
 
+    grp = str()
+    if showgroup == 1:
+        if plus == 0:  
+            for r in range(len(dg)):
+                dp =   str(dg.loc[r,'Dept'][:9]) + ' '*(9-len(str(dg.loc[r,'Dept'])))
+                tt  = ' '*(4-len(str(dg.loc[r,'Total'])))   + str(dg.loc[r,'Total'])
+                tg  = ' '*(3-len(str(dg.loc[r,'TGW'])))     + str(dg.loc[r,'TGW'])
+                mm  = ' '*(3-len(str(dg.loc[r,'Member'])))  + str(dg.loc[r,'Member'])
+                np  = ' '*(3-len(str(dg.loc[r,'X'])))       + str(dg.loc[r,'X'])
+                pk  = ' '*(3-len(str(dg.loc[r,'P'])))       + str(dg.loc[r,'P']) # P only, without FE and CCT
+                fe  = ' '*(3-len(str(dg.loc[r,'FE'])))      + str(dg.loc[r,'FE']) # FE only, without CCT
+                cct = ' '*(3-len(str(dg.loc[r,'CCT'])))     + str(dg.loc[r,'CCT'])
+                grp = f'{grp}{dp}[{tt}|{tg}|{mm}|{np}|{pk}|{fe}|{cct}]\n'
+            grp = grp + '\n'
+        else:
+            for r in range(len(dg)):
+                str_pk  = str(dg.loc[r,'P'] + dg.loc[r,'FE'] + dg.loc[r,'CCT'])
+                str_fe  = str(dg.loc[r,'FE'] + dg.loc[r,'CCT'])
+                dp =   str(dg.loc[r,'Dept'][:9]) + ' '*(9-len(str(dg.loc[r,'Dept'])))
+                tt  = ' '*(4-len(str(dg.loc[r,'Total'])))   + str(dg.loc[r,'Total'])
+                tg  = ' '*(3-len(str(dg.loc[r,'TGW'])))     + str(dg.loc[r,'TGW'])
+                mm  = ' '*(3-len(str(dg.loc[r,'Member'])))  + str(dg.loc[r,'Member'])
+                np  = ' '*(3-len(str(dg.loc[r,'X'])))       + str(dg.loc[r,'X'])
+                pk  = ' '*(3-len(str_pk))                   + str_pk # Sum of P, FE and CCT
+                fe  = ' '*(3-len(str_fe))                   + str_fe # Sum of FE and CCT
+                cct = ' '*(3-len(str(dg.loc[r,'CCT'])))     + str(dg.loc[r,'CCT'])
+                grp = f'{grp}{dp}[{tt}|{tg}|{mm}|{np}|{pk}|{fe}|{cct}]\n'
+            grp = grp + '\n'
+
     totalrow = 'Total' if d == '%' else grpdept
 
     if access == 'Group':
@@ -4678,7 +4712,7 @@ def ctmissionnew(season, leaf, bbt, access, d, g, ct, plus): # BB FUNCTIONS
     note = p_std['note']
     header = p_std['header']
 
-    summary = f"{dept}</pre>" # Not putting header yet, so re.sub does not affect the "0 P"
+    summary = f"{grp}{dept}</pre>" # Not putting header yet, so re.sub does not affect the "0 P"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     summary = re.sub(totalrow,f"\n{totalrow}",summary)

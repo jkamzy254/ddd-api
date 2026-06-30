@@ -53,3 +53,43 @@ class FMPUnlockFruitViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class FMPUnlockFruitViewSet(APIView):
+    def post(self, request):
+        user = request.GET.get('User')
+        uid = request.GET.get('UID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spEVGetMeetings @User = '{user}', @UID = '{uid}'")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        
+class FMPUnlockFruitViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        try:
+            user = request.GET.get('User')
+            uid = request.GET.get('UID')
+            attendee1 = request.GET.get('Attendee1')
+            attendee2 = rec.get('Attendee2') if rec.get('Attendee2') else "NULL"
+            meetdate = request.GET.get('MeetDate')
+            metpicker = request.GET.get('MetPicker')
+            bbtid = rec.get('BBTID') if rec.get('BBTID') else "NULL"
+            outcome = request.GET.get('Outcome') if rec.get('Outcome') else "NULL"
+            with connection.cursor() as cursor:
+                cursor.execute(f"""EXEC spEVUpdateMeeting 
+                                    @User = '{user}', @UID = '{uid}',
+                                    @Attendee1 = {attendee1}, @Attendee2 = {attendee2}, 
+                                    @MeetDate = {meetdate}, @MetPicker = {metpicker}, 
+                                    @BBTID = {bbtid}, @Outcome = {outcome};
+                                    """)
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

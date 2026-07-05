@@ -170,6 +170,15 @@ def bot_responses(id, tname, input_text):
             timerange = command[:-3]
             print(f"\nCalling memberfmp with timerange={timerange}, g={g}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, access={access}")
             return SQLCodes.memberfmp(timerange, g, fmp_sid, fmp_ss, access)
+        
+        if command in ['todaybbt','yesterdaybbt','weekbbt','lastweekbbt','seasonbbt']:
+            timerange = command[:-3]
+            if access == 'Group':
+                print(f"\nCalling memberbbt with timerange={timerange}, g={g}, bb_sid={bb_sid}, bb_ss={bb_ss}, access={access}")
+                return SQLCodes.memberbbt(timerange, g, bb_sid, bb_ss, access)
+            else:
+                print(f"\nCalling deptbbt with timerange={timerange}, g={g}, bb_sid={bb_sid}, bb_ss={bb_ss}, access={access}")
+                return SQLCodes.deptbbt(task, timerange, d, fmp_sid, fmp_ss, access)
 
         if command in ['todaypp','yesterdaypp','weekpp','lastweekpp','seasonpp']:
             timerange = command[:-2]

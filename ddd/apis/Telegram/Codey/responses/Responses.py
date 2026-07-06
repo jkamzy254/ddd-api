@@ -103,7 +103,7 @@ def bot_responses(id, tname, input_text):
         else:
             command = user_message
 
-    elif access in ['Group', 'Israel']:
+    elif access in ['Group','CUL']:
         command = user_message
         if command in ['youthtoday','youthyesterday','youthweek','youthlastweek','youthseason','depttoday','deptyesterday','deptweek','deptlastweek','deptseason','gyjntoday','gyjnyesterday','gyjnweek','gyjnlastweek','gyjnseason','oevtoday','oevyesterday','oevweek','oevlastweek','oevseason','tgwtoday','tgwyesterday','tgwweek','tgwlastweek','tgwseason','bbfull','tolfull','bblastseason','youthmxpx','bbdept']:
             return 'You are not allowed to use this function'
@@ -173,7 +173,7 @@ def bot_responses(id, tname, input_text):
         
         if command in ['todaybbt','yesterdaybbt','weekbbt','lastweekbbt','seasonbbt']:
             timerange = command[:-3]
-            if access == 'Group':
+            if access in ('Group','CUL'):
                 print(f"\nCalling memberbbt with timerange={timerange}, g={g}, bb_sid={bb_sid}, bb_ss={bb_ss}, access={access}")
                 return SQLCodes.memberbbt(timerange, g, bb_sid, bb_ss, access)
             else:
@@ -516,7 +516,7 @@ def bot_responses(id, tname, input_text):
                 return SQLCodes.ev(id)
             if access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT']:
                 idlist = SQLCodes.idlist('dept', d)
-            if access == 'Group':
+            if access in ('Group','CUL'):
                 idlist = SQLCodes.idlist('group', g)
             if int(id) in idlist:
                 print(f"\nCalling ev with id={id}")

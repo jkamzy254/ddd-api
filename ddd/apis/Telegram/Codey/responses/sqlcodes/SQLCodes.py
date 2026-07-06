@@ -68,7 +68,7 @@ def commands(access): # ACCESS FUNCTIONS
     if access in ['D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT']:
         print(">>>Return")
         return f'<b>🤖Using Codey🤖</b>\n____________________________________________________________________\n\n<u>📣General command structure📣</u>\n<b><i>&lt;CT&gt;</i></b><code>&lt;command&gt;</code><b><i>&lt;/g&gt;</i></b>\n\n<u><b>👨‍🏫&lt;CT&gt;</b> = optional <b>prefix👩‍🏫</b></u>\n<i>▪️phys = physical CT (default if omitted)\n▪️sft = online CT\n▪️all = both physical + online</i>\n\n<u><b>👥&lt;/g&gt;</b> = optional <b>suffix👥</b></u>\n<i>▪️/g = filters specific group (e.g. /G1, /EST2)</i>\n____________________________________________________________________\n\n<b><i><u>📣Group FMP</u></i></b>\n\n<code>➡️&lt;timespan&gt;fmp\n\n&lt;timespan&gt;</code>\n<i>▪️today\n▪️yesterday\n▪️week\n▪️lastweek\n▪️season\n\ne.g. </i><code>todayfmp</code>\n____________________________________________________________________\n\n<b><u><i>📣Dept FMP</i></u></b>\n\n<code>➡️&lt;Division or Task&gt;&lt;Timespan&gt;\n\n&lt;Division or Task&gt;</code>\n<i>▪️dept = all dept\n▪️tgw = all dept TGW only\n▪️member = all dept member only\n▪️gyjn/oev/iev/edu/sv = all dept specific task only\n\n💡Adding //SFT or //InnerSFT will replace dept groups with SFT groups\n\ne.g. </i><code>depttoday</code>\n____________________________________________________________________\n\n<b><i><u>📣BB Commands</u></i></b>\n\n<code>➡️bb&lt;format&gt;\n\n&lt;format&gt;</code>\n<i>▪️status = table of status numbers per group\n▪️active = table: active statuses only\n▪️inactive = table: inactive statuses only\n▪️list = list of bb fruits\n\ne.g. </i><code>bblist/G1</code>\n____________________________________________________________________\n\n<b><i><u>📣BBT Commands</u></i></b>\n\n<code>➡️&lt;BbtType&gt;&lt;Format&gt;\n\n&lt;BbtType&gt;</code>\n<i>▪️bbt = all bbt + prebbt\n▪️gyjnbbt = all gyjns\n▪️btm# = all bbt/btm from specified btm number\n\ne.g.</i><code> bbtstatus</code>\n____________________________________________________________________\n\n<b><i><u>📣Other Commands</u></i></b>\n\n<code>➡️&lt;0411111111&gt;</code><i> = double fish check</i>'
-    if access == 'Group':
+    if access in ('Group','CUL'):
         print(">>>Return")
         return f'<b>🤖Using Codey🤖</b>\n____________________________________________________________________\n\n<u>📣General command structure📣</u>\n<b><i>&lt;CT&gt;</i></b><code>&lt;command&gt;</code>\n\n<u><b>👨‍🏫&lt;CT&gt;</b> = optional <b>prefix👩‍🏫</b></u>\n<i>▪️phys = physical CT (default if omitted)\n▪️sft = online CT\n▪️all = both physical + online</i>\n____________________________________________________________________\n\n<b><i><u>📣Group FMP</u></i></b>\n\n<code>➡️&lt;timespan&gt;fmp\n\n&lt;timespan&gt;</code>\n<i>▪️today\n▪️yesterday\n▪️week\n▪️lastweek\n▪️season\n\ne.g. </i><code>todayfmp</code>\n____________________________________________________________________\n\n<b><i><u>📣BB Commands</u></i></b>\n\n<code>➡️bb&lt;format&gt;\n\n&lt;format&gt;</code>\n<i>▪️status = table of status numbers per group\n▪️active = table: active statuses only\n▪️inactive = table: inactive statuses only\n▪️list = list of bb fruits\n\ne.g. </i><code>bblist/G1</code>\n____________________________________________________________________\n\n<b><i><u>📣BBT Commands</u></i></b>\n\n<code>➡️&lt;BbtType&gt;&lt;Format&gt;\n\n&lt;BbtType&gt;</code>\n<i>▪️bbt = all bbt + prebbt\n▪️btm# = all bbt/btm from specified btm number\n\ne.g.</i><code> bbtstatus</code>\n____________________________________________________________________\n\n<b><i><u>📣Other Commands</u></i></b>\n\n<code>➡️&lt;0411111111&gt;</code><i> = double fish check</i>'
 
@@ -218,7 +218,7 @@ def maillist(): # IT FUNCTIONS
 
 def idlist(access,group_or_dept): # ACCESS FUNCTIONS
     print(f"\n>>>idlist: access={access}, group_or_dept={group_or_dept}")
-    filter = 'MemberGroup' if access == 'group' else 'Group_IMWY'
+    filter = 'MemberGroup' if access in ('Group','CUL') else 'Group_IMWY'
     conn = odbc.connect(conn_str)
     idtable = pd.read_sql(f"SELECT ID FROM MemberData WHERE {filter} = '{group_or_dept}'", conn)
     conn.cursor().close()
@@ -1083,10 +1083,10 @@ def pxlist(g): # FMP FUNCTIONS
 
 def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
     print(f"\n>>>bbstatus: g={g}, d={d}, sid={sid}, access={access}, v2={v2}")
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -1131,7 +1131,7 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
     member = str()
-    if access == 'Group':
+    if access in ('Group','CUL'):
         for r in range(len(dm)):
             bbt =   str(dm.loc[r,'Member'])[:5] + ' '*(5-len(str(dm.loc[r,'Member'])[:5]))
             pn  = ' '*(4-len(str(dm.loc[r,'pNew']))) + str(dm.loc[r,'pNew'])
@@ -1165,7 +1165,7 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
     group = group + '\n'
             
     dept = str()  
-    if access != 'Group':
+    if access not in ('Group','CUL'):
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             pn  = ' '*(4-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
@@ -1212,12 +1212,12 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
 
 def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     print(f"\n>>>bbtstatus: g={g}, d={d}, sid={sid}, access={access}, v2={v2}")
-    name = 'BBTCode' if access == 'Group' else 'BBTGrp'
+    name = 'BBTCode' if access in ('Group','CUL') else 'BBTGrp'
 
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -1306,7 +1306,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
         group = group + '\n'
             
     dept = str()  
-    if access != 'Group':  
+    if access not in ('Group','CUL'):  
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
@@ -1351,10 +1351,10 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
 
 def newbbstatus(g, d, sid, access): # BB FUNCTIONS
     print(f"\n>>>bbstatus: g={g}, d={d}, sid={sid}, access={access}")
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -1391,7 +1391,7 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
     member = str()
-    if access == 'Group':
+    if access in ('Group','CUL'):
         for r in range(len(dm)):
             bbt =   str(dm.loc[r,'Member'])[:5] + ' '*(5-len(str(dm.loc[r,'Member'])[:5]))
             pn  = ' '*(4-len(str(dm.loc[r,'pNew']))) + str(dm.loc[r,'pNew'])
@@ -1429,7 +1429,7 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
     group = group + '\n'
             
     dept = str()  
-    if access != 'Group':
+    if access not in ('Group','CUL'):
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             pn  = ' '*(4-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
@@ -1493,12 +1493,12 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
 
 def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
     print(f"\n>>>newbbtstatus: q={q}, g={g}, d={d}, sid={sid}, access={access}")
-    name = 'BBTCode' if access == 'Group' else 'BBTGrp'
+    name = 'BBTCode' if access in ('Group','CUL') else 'BBTGrp'
         
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -1578,7 +1578,7 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
     group = group + '\n'
             
     dept = str()  
-    if access != 'Group':  
+    if access not in ('Group','CUL'):  
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
@@ -1708,10 +1708,10 @@ def deptbbtstatus(q, d, r, access): # BBT FUNCTIONS
 def bbtactive(q, g, d, r, access): # BBT FUNCTIONS
     print(f"\n>>>bbtactive: q={q}, g={g}, d={d}, r={r}, access={access}")
     name = 'BBT' if access == 'IT' else 'BBTCode2'
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -1764,7 +1764,7 @@ def bbtactive(q, g, d, r, access): # BBT FUNCTIONS
         group = f'{group}{grp}[{pn}|{ba}|{ca}]\n'
     
     dept = str()  
-    if access != 'Group':  
+    if access not in ('Group','CUL'):  
         for r in range(len(dd)):
             dpt = str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             pn  = ' '*(3-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
@@ -1857,10 +1857,10 @@ def deptbbtactive(q, d, r, access): # BBT FUNCTIONS
 def bbtinactive(q, g, d, r, access): # BBT FUNCTIONS
     print(f"\n>>>bbtinactive: q={q}, g={g}, d={d}, r={r}, access={access}")
     name = 'BBT' if access == 'IT' else 'BBTCode2'
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -1917,7 +1917,7 @@ def bbtinactive(q, g, d, r, access): # BBT FUNCTIONS
         group = f'{group}{grp}[{po}|{bm}|{ci}|{pf}|{bf}]\n'
     
     dept = str()  
-    if access != 'Group':    
+    if access not in ('Group','CUL'):    
         for r in range(len(dd)):
             dpt = str(dd.loc[r,'Dept'])   + ' '*(5-len(str(dd.loc[r,'Dept'])))
             po  = ' '*(3-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
@@ -2013,8 +2013,8 @@ def bblistold(d,g,sid,access): # BB FUNCTIONS
     print(">>>Return")
     return 'This function is deprecated'
     d = d.capitalize()
-    g = '%' if access != 'Group' else g
-    if access == 'Group':
+    g = '%' if access not in ('Group','CUL') else g
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
     else:
         grpdept = str(d).replace('D[0-9]%','Youth')
@@ -2043,7 +2043,7 @@ def bblistold(d,g,sid,access): # BB FUNCTIONS
     dIC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
     conn.cursor().close()
         
-    if access == 'Group':
+    if access in ('Group','CUL'):
         pts = [dNP['Points'].sum(), dOP['Points'].sum(), dAB['Points'].sum(), dIM['Points'].sum(), dIF['Points'].sum(), dFP['Points'].sum(), dAC['Points'].sum(), dIC['Points'].sum()]
         pt = 'Points'
     elif d != 'D[0-9]%':
@@ -2129,8 +2129,8 @@ def bblistold(d,g,sid,access): # BB FUNCTIONS
 
 def bblist(d, g, sid, access):
     print(f"\n>>>bblist: d={d}, g={g}, sid={sid}, access={access}")
-    g = '%' if access != 'Group' else g
-    if access == 'Group':
+    g = '%' if access not in ('Group','CUL') else g
+    if access in ('Group','CUL'):
         grpdept = format_display_name(g)
     else:
         grpdept = 'Youth' if '%' in d else format_display_name(d)
@@ -2155,7 +2155,7 @@ def bblist(d, g, sid, access):
 
     df = df[df['NewStatus'].isin(['New P','Old P','ABB','IBB ME','IBB FA','Fallen P','ABB CCT','IBB CCT'])]
 
-    if access == 'Group':
+    if access in ('Group','CUL'):
         pt = 'Points'
     elif d.lower() not in ('d[0-9]%', '%'):
         pt = 'DPoints'
@@ -2216,8 +2216,8 @@ def bblistsold(d,g,physical,online,access): # BB FUNCTIONS
     return 'This function is deprecated'
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    g = '%' if access != 'Group' else g
-    if access == 'Group':
+    g = '%' if access not in ('Group','CUL') else g
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -2265,7 +2265,7 @@ def bblistsold(d,g,physical,online,access): # BB FUNCTIONS
     oIC.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
     conn.cursor().close()
         
-    if access == 'Group':
+    if access in ('Group','CUL'):
         pts = [dNP['Points'].sum(), dOP['Points'].sum(), dAB['Points'].sum(), dIM['Points'].sum(), dIF['Points'].sum(), dFP['Points'].sum(), dAC['Points'].sum(), dIC['Points'].sum()]
         opts = [oNP['Points'].sum(), oOP['Points'].sum(), oAB['Points'].sum(), oIM['Points'].sum(), oIF['Points'].sum(), oFP['Points'].sum(), oAC['Points'].sum(), oIC['Points'].sum()]
         pt = 'Points'
@@ -2399,8 +2399,8 @@ def bblists(d, g, physical, online, access):
     print(f"\n>>>bblists: d={d}, g={g}, physical={physical}, online={online}, access={access}")
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)', r'\1D\2', d)
-    g = '%' if access != 'Group' else g
-    if access == 'Group':
+    g = '%' if access not in ('Group','CUL') else g
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)', r'\1G\2', g)
     else:
@@ -2433,7 +2433,7 @@ def bblists(d, g, physical, online, access):
     dfP = dfP[dfP['NewStatus'].isin(['New P','Old P','ABB','IBB ME','IBB FA','Fallen P','ABB CCT','IBB CCT'])]
     dfO = dfO[dfO   ['NewStatus'].isin(['New P','Old P','ABB','IBB ME','IBB FA','Fallen P','ABB CCT','IBB CCT'])]
 
-    if access == 'Group':
+    if access in ('Group','CUL'):
         pt = 'Points'
     elif d.lower() not in ('d[0-9]%', '%'):
         pt = 'DPoints'
@@ -2529,8 +2529,8 @@ def bbtlistold(q,d,g,sid,access): # BBT FUNCTIONS
                  'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
 
-    g = '%' if access != 'Group' else g
-    if access == 'Group':
+    g = '%' if access not in ('Group','CUL') else g
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -2671,11 +2671,11 @@ def bbtlist(q, d, g, sid, access): # BBT FUNCTIONS
         bbttype = q.upper()
         params['btmno'] = q[3:]
 
-    g = '%' if access != 'Group' else g
+    g = '%' if access not in ('Group','CUL') else g
     params['bbtg'] = g
     params['bbtd'] = d
 
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
     else:
         grpdept = str(d).replace('D[0-9]%', 'Youth')
@@ -2752,8 +2752,8 @@ def bblistfe(d,g,sid,access): # BB FUNCTIONS
     print(">>>Return")
     return 'This function is deprecated'
     d = d.capitalize()
-    g = '%' if access != 'Group' else g
-    if access == 'Group':
+    g = '%' if access not in ('Group','CUL') else g
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
     else:
         grpdept = str(d).replace('D[0-9]%','Youth')
@@ -2791,7 +2791,7 @@ def bblistfe(d,g,sid,access): # BB FUNCTIONS
     dFA.columns = ['LastClass','BBTN','FruitName','L1N','L2N','LastTopic','NextClassDate','Points','DPoints']
     conn.cursor().close()
         
-    if access == 'Group':
+    if access in ('Group','CUL'):
         pts = [dPN['Points'].sum(), dPO['Points'].sum(), dPF['Points'].sum(), dFE['Points'].sum(), dBA['Points'].sum(), dC1['Points'].sum(), dC2['Points'].sum(), dCI['Points'].sum(), dUB['Points'].sum(), dME['Points'].sum(), dFA['Points'].sum()]
         pt = 'Points'
     elif d != 'D[0-9]%':
@@ -2925,8 +2925,8 @@ def bbtlistubb(q,d,g,sid,access): # BBT FUNCTIONS
                  'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
 
-    g = '%' if access != 'Group' else g
-    if access == 'Group':
+    g = '%' if access not in ('Group','CUL') else g
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -3283,10 +3283,10 @@ def youthfm(d): # FMP FUNCTIONS
 def bbactive(g, d, sid, access): # BB FUNCTIONS
     print(f"\n>>>bbactive: g={g}, d={d}, sid={sid}, access={access}")
 
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -3320,7 +3320,7 @@ def bbactive(g, d, sid, access): # BB FUNCTIONS
     conn.cursor().close()
 
     member = str()
-    if access == 'Group':
+    if access in ('Group','CUL'):
         for r in range(len(dm)):
             bbt =   str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
             sp  = ' '*(5-len(str(dm.loc[r,'SP']))) + str(dm.loc[r,'SP'])
@@ -3342,7 +3342,7 @@ def bbactive(g, d, sid, access): # BB FUNCTIONS
     group = group + '\n'
             
     dept = str()  
-    if access != 'Group':
+    if access not in ('Group','CUL'):
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
             sp  = ' '*(5-len(str(dd.loc[r,'SP'])))   + str(dd.loc[r,'SP'])
@@ -3387,10 +3387,10 @@ def bbactive(g, d, sid, access): # BB FUNCTIONS
 def bbactive2(g, d, sid, access): # BB FUNCTIONS
     print(f"\n>>>bbactive2: g={g}, d={d}, sid={sid}, access={access}")
                 
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -3424,7 +3424,7 @@ def bbactive2(g, d, sid, access): # BB FUNCTIONS
     conn.cursor().close()
 
     member = str()
-    if access == 'Group':
+    if access in ('Group','CUL'):
         for r in range(len(dm)):
             bbt =   str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
             sp  = ' '*(5-len(str(dm.loc[r,'SP']))) + str(dm.loc[r,'SP'])
@@ -3448,7 +3448,7 @@ def bbactive2(g, d, sid, access): # BB FUNCTIONS
     group = group + '\n'
             
     dept = str()  
-    if access != 'Group':
+    if access not in ('Group','CUL'):
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
             sp  = ' '*(5-len(str(dd.loc[r,'SP'])))   + str(dd.loc[r,'SP'])
@@ -3517,7 +3517,7 @@ def deptbbactive(d, sid, access): # BB FUNCTIONS
     conn.cursor().close()
             
     dept = str()  
-    if access != 'Group':
+    if access not in ('Group','CUL'):
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
             sp  = ' '*(5-len(str(dd.loc[r,'SP'])))   + str(dd.loc[r,'SP'])
@@ -3559,10 +3559,10 @@ def deptbbactive(d, sid, access): # BB FUNCTIONS
 def bbinactive(g, d, sid, access): # BB FUNCTIONS
     print(f"\n>>>bbinactive: g={g}, d={d}, sid={sid}, access={access}")
 
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -3596,7 +3596,7 @@ def bbinactive(g, d, sid, access): # BB FUNCTIONS
     conn.cursor().close()
 
     member = str()
-    if access == 'Group':
+    if access in ('Group','CUL'):
         for r in range(len(dm)):
             bbt =   str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
             po  = ' '*(4-len(str(dm.loc[r,'pOld']))) + str(dm.loc[r,'pOld'])
@@ -3620,7 +3620,7 @@ def bbinactive(g, d, sid, access): # BB FUNCTIONS
     group = group + '\n'
             
     dept = str()  
-    if access != 'Group':
+    if access not in ('Group','CUL'):
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
             po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
@@ -3687,7 +3687,7 @@ def deptbbinactive(d, sid, access): # BB FUNCTIONS
     conn.cursor().close()
             
     dept = str()  
-    if access != 'Group':
+    if access not in ('Group','CUL'):
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
             po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
@@ -4101,15 +4101,15 @@ def ev(id): # IT FUNCTIONS
 def classes(g, d, access, time): # BBT FUNCTIONS
     print(f"\n>>>classes: g={g}, d={d}, access={access}, time={time}")
     
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize()
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
         grpdept = str(d).replace('D[0-9]%','Youth')
-    bbtgrp = 'BBT' if access == 'Group' else 'Grp'
+    bbtgrp = 'BBT' if access in ('Group','CUL') else 'Grp'
     if time == 'today':
         timetitle = 'Today'
     if time == 'week':
@@ -4137,7 +4137,7 @@ def classes(g, d, access, time): # BBT FUNCTIONS
     conn.cursor().close()
 
     member = str()
-    if access == 'Group':
+    if access in ('Group','CUL'):
         member = '\n'
         for r in range(len(dm)):
             bbt =   str(dm.loc[r,'Name'][:5]) + ' '*(5-len(str(dm.loc[r,'Name'][:5])))
@@ -4177,10 +4177,10 @@ def classes(g, d, access, time): # BBT FUNCTIONS
 def edu(day, g, d, access): # EDU FUNCTIONS
     print(f"\n>>>edu: day={day}, g={g}, d={d}, access={access}")
                 
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -4235,7 +4235,7 @@ def edu(day, g, d, access): # EDU FUNCTIONS
     group = group + '\n'
             
     dept = str()  
-    if access != 'Group':
+    if access not in ('Group','CUL'):
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             at  = ' '*(2-len(str(dd.loc[r,'Att']))) + str(dd.loc[r,'Att'])
@@ -4276,10 +4276,10 @@ def edu(day, g, d, access): # EDU FUNCTIONS
 def edurev(g, d, access): # EDU FUNCTIONS
     print(f"\n>>>edu: g={g}, d={d}, access={access}")
                 
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -4317,7 +4317,7 @@ def edurev(g, d, access): # EDU FUNCTIONS
     group = group + '\n'
             
     dept = str()  
-    if access != 'Group':
+    if access not in ('Group','CUL'):
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
             rs  = ' '*(2-len(str(dd.loc[r,'RevS']))) + str(dd.loc[r,'RevS'])
@@ -4366,10 +4366,10 @@ def edurev(g, d, access): # EDU FUNCTIONS
 def bbstatusdate(g, d, ssn, dt, access): # BB FUNCTIONS
     print(f"\n>>>bbstatusdate: g={g}, d={d}, ssn={ssn}, dt={dt}, access={access}")
 
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -4403,7 +4403,7 @@ def bbstatusdate(g, d, ssn, dt, access): # BB FUNCTIONS
     conn.cursor().close()
 
     member = str()
-    if access == 'Group':
+    if access in ('Group','CUL'):
         for r in range(len(dm)):
             bbt =   str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
             pn  = ' '*(4-len(str(dm.loc[r,'pNew']))) + str(dm.loc[r,'pNew'])
@@ -4435,7 +4435,7 @@ def bbstatusdate(g, d, ssn, dt, access): # BB FUNCTIONS
     group = group + '\n'
             
     dept = str()  
-    if access != 'Group':
+    if access not in ('Group','CUL'):
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
             pn  = ' '*(4-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
@@ -4490,8 +4490,8 @@ def bbstatusdate(g, d, ssn, dt, access): # BB FUNCTIONS
 def bbtmission(sid, d, g, standard, ct, access): # BBT FUNCTIONS
     print(f"\n>>>bbtmission: sid={sid}, d={d}, g={g}, standard={standard}, ct={ct}, access={access}")
 
-    g = g if access == 'Group' else '%'
-    grpdept = f'{g} ' if access == 'Group' else f'{d} '.replace('D[0-9]%','Youth').replace('% ','')
+    g = g if access in ('Group','CUL') else '%'
+    grpdept = f'{g} ' if access in ('Group','CUL') else f'{d} '.replace('D[0-9]%','Youth').replace('% ','')
     filt = 0 if access in ('IT','EDU','All') else 1
     gd = 'Dept' if access in ('IT','EDU','All') else 'Grp '
     d = d.capitalize()
@@ -4540,10 +4540,10 @@ def bbtmission(sid, d, g, standard, ct, access): # BBT FUNCTIONS
 def pickfe(g, d, access): # FMP FUNCTIONS
     print(f"\n>>>pickfe: g={g}, d={d}, access={access}")
                 
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
     d = re.sub(r'(¹|²)d([0-9]*)',r'\1D\2',d)
-    if access == 'Group':
+    if access in ('Group','CUL'):
         grpdept = g.capitalize()
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
@@ -4572,7 +4572,7 @@ def pickfe(g, d, access): # FMP FUNCTIONS
     conn.cursor().close()
 
     member = str()
-    if access == 'Group':
+    if access in ('Group','CUL'):
         for r in range(len(dm)):
             mbr =   str(dm.loc[r,'Member'][:5]) + ' '*(5-len(str(dm.loc[r,'Member'][:5])))
             pp  = ' '*(4-len(str(dm.loc[r,'PhysP'])))  + str(dm.loc[r,'PhysP'])
@@ -4593,7 +4593,7 @@ def pickfe(g, d, access): # FMP FUNCTIONS
     group = group + '\n'
             
     dept = str()  
-    if access != 'Group':
+    if access not in ('Group','CUL'):
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
             pp  = ' '*(4-len(str(dd.loc[r,'PhysP']))) + str(dd.loc[r,'PhysP'])
@@ -4638,9 +4638,9 @@ def test2(): # IT FUNCTIONS
 
 def ctmissionnew(season, leaf, bbt, access, d, g, ct, plus, showgroup): # BB FUNCTIONS
     print(f"\n>>>ctmissionnew: season={season}, leaf={leaf}, bbt={bbt}, access={access}, d={d}, g={g}, ct={ct}, plus={plus}, showgroup={showgroup}")
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
-    grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
+    grpdept = g.capitalize() if access in ('Group','CUL') else d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
 
     q = f"SELECT * FROM CTMissionNew2('{season}', {leaf}, {bbt}, '{access}', '{d}', '{g}', 0)"
     q_grp = f"SELECT * FROM CTMissionNew2('{season}', {leaf}, {bbt}, '{access}', '{d}', '{g}', 1)"
@@ -4714,7 +4714,7 @@ def ctmissionnew(season, leaf, bbt, access, d, g, ct, plus, showgroup): # BB FUN
 
     totalrow = 'Total' if d == '%' else grpdept
 
-    if access == 'Group':
+    if access in ('Group','CUL'):
         mgd = 'Member'
     elif access in ('IT','EDU','All','%','D[0-9]%'):
         mgd = 'Dept  '
@@ -4748,9 +4748,9 @@ def ctmissionnew(season, leaf, bbt, access, d, g, ct, plus, showgroup): # BB FUN
 
 def julymissionnew(season, leaf, bbt, access, d, g, ct, showgroup): # BB FUNCTIONS
     print(f"\n>>>julymissionnew: season={season}, leaf={leaf}, bbt={bbt}, access={access}, d={d}, g={g}, ct={ct}, showgroup={showgroup}")
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
-    grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
+    grpdept = g.capitalize() if access in ('Group','CUL') else d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
 
     q = f"SELECT * FROM JulyMissionNew2('{season}', {leaf}, {bbt}, '{access}', '{d}', '{g}', 0)"
     q_grp = f"SELECT * FROM JulyMissionNew2('{season}', {leaf}, {bbt}, '{access}', '{d}', '{g}', 1)"
@@ -4792,7 +4792,7 @@ def julymissionnew(season, leaf, bbt, access, d, g, ct, showgroup): # BB FUNCTIO
 
     totalrow = 'Total' if d == '%' else grpdept
 
-    if access == 'Group':
+    if access in ('Group','CUL'):
         mgd = 'Member'
     elif access in ('IT','EDU','All','%','D[0-9]%'):
         mgd = 'Dept  '
@@ -4903,11 +4903,11 @@ def bbmission(g, d, standard, ct, access): # BB FUNCTIONS, BBT FUNCTIONS
     view = views[standard]
     r = {'Physical + Online':'%','Physical':'Melbourne','Online':'Online'}[ct]
     
-    name = 'BBTCode' if access == 'Group' else 'BBTGrp'
+    name = 'BBTCode' if access in ('Group','CUL') else 'BBTGrp'
         
-    g = g if access == 'Group' else '%'
+    g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
-    grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth')
+    grpdept = g.capitalize() if access in ('Group','CUL') else d.replace('D[0-9]%','Youth')
     
     conn = odbc.connect(conn_str)
     bb_mem = f"SELECT Dept, Grp, {name}, X, P, FE, SE FROM {view}('{r}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID, {name}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
@@ -4955,7 +4955,7 @@ def bbmission(g, d, standard, ct, access): # BB FUNCTIONS, BBT FUNCTIONS
     group = group + '\n'
             
     dept = str()  
-    if access != 'Group':  
+    if access not in ('Group','CUL'):  
         for r in range(len(dd)):
             dpt =   str(dd.loc[r,'Dept'][:5]) + ' '*(5-len(str(dd.loc[r,'Dept'])))
             x = ' '*(3-len(str(dd.loc[r,'X']))) + str(dd.loc[r,'X'])

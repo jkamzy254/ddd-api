@@ -4803,7 +4803,7 @@ def julymissionnew(season, leaf, bbt, access, d, g, ct, showgroup): # BB FUNCTIO
                 (1,0): 'Leaf',
                 (0,1): 'BBT'}[(leaf, bbt)]
    
-    note = '\nX = No picking.\nIBB = Only inactive picking/BBs.\nABB = At least 1 NP/ABB/CCT_Active'
+    note = '\nX = No picking\nIBB = Only inactive picking/BBs\nABB = At least 1 NP/ABB/CCT_Active'
     header = '   [ Tot|TGW|Mem|  X|IBB|ABB]'
 
     summary = f"{grp}{dept}</pre>" # Not putting header yet, so re.sub does not affect the "0 P"

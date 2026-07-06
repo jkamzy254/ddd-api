@@ -373,7 +373,11 @@ def bot_responses(id, tname, input_text):
             print(f"\nCalling bbtmission with bb_sid={bb_sid}, d={d}, g={g}, type=tie, ct={ct}, access={access}")
             return SQLCodes.bbtmission(bb_sid, d, g, 'tie', ct, access)
 
-        if command.startswith('ctmission'):
+        if command.startswith('ctmission') or command.startswith('julymission'):
+            variant = 'None'
+            if command.startswith('julymission'):
+                variant = 'July'
+                command = command.replace('julymission','ctmission')
             plus = 0
             if '+' in command:
                 command,plus = command.replace('+',''),1
@@ -386,6 +390,9 @@ def bot_responses(id, tname, input_text):
                         'leaf': (1,0),
                         'bbt': (0,1),
                         '': (1,1)}.get(suffix, (1,1))
+            if variant == 'July':
+                print(f"\nCalling julymissionnew with bb_sid={bb_sid}, leaf={leafbbt[0]}, bbt={leafbbt[1]}, access={access}, d={d}, g={g}, ct={ct}, showgroups={showgroups}")
+                return SQLCodes.julymissionnew(bb_sid, leafbbt[0], leafbbt[1], access, d, g, ct, showgroups)
             print(f"\nCalling ctmissionnew with bb_sid={bb_sid}, leaf={leafbbt[0]}, bbt={leafbbt[1]}, access={access}, d={d}, g={g}, ct={ct}, plus={plus}, showgroups={showgroups}")
             return SQLCodes.ctmissionnew(bb_sid, leafbbt[0], leafbbt[1], access, d, g, ct, plus, showgroups)
         

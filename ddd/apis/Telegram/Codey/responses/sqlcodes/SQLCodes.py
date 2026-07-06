@@ -4745,6 +4745,79 @@ def ctmissionnew(season, leaf, bbt, access, d, g, ct, plus, showgroup): # BB FUN
 
 
 
+
+def julymissionnew(season, leaf, bbt, access, d, g, ct, showgroup): # BB FUNCTIONS
+    print(f"\n>>>julymissionnew: season={season}, leaf={leaf}, bbt={bbt}, access={access}, d={d}, g={g}, ct={ct}, showgroup={showgroup}")
+    g = g if access == 'Group' else '%'
+    d = d.capitalize().replace('d','D')
+    grpdept = g.capitalize() if access == 'Group' else d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
+
+    q = f"SELECT * FROM JulyMissionNew2('{season}', {leaf}, {bbt}, '{access}', '{d}', '{g}', 0)"
+    q_grp = f"SELECT * FROM JulyMissionNew2('{season}', {leaf}, {bbt}, '{access}', '{d}', '{g}', 1)"
+    print(q)
+    with odbc.connect(conn_str) as conn:
+        dq = pd.read_sql(q, conn)
+        dg = pd.read_sql(q_grp, conn)
+    dq.columns = ['Dept','Total','TGW','Member','X','IBB','ABB']
+    dq.replace(r' Dept',r'', regex = True, inplace = True)
+    if showgroup == 1:
+        dg.columns = ['Dept','Total','TGW','Member','X','IBB','ABB']
+        dg.replace(r' Dept',r'', regex = True, inplace = True)
+        
+    dept = str()
+
+    for r in range(len(dq)):
+        dp =   str(dq.loc[r,'Dept'][:9]) + ' '*(9-len(str(dq.loc[r,'Dept'])))
+        tt  = ' '*(4-len(str(dq.loc[r,'Total'])))   + str(dq.loc[r,'Total'])
+        tg  = ' '*(3-len(str(dq.loc[r,'TGW'])))     + str(dq.loc[r,'TGW'])
+        mm  = ' '*(3-len(str(dq.loc[r,'Member'])))  + str(dq.loc[r,'Member'])
+        xb  = ' '*(3-len(str(dq.loc[r,'X'])))       + str(dq.loc[r,'X'])
+        ib  = ' '*(3-len(str(dq.loc[r,'IBB'])))     + str(dq.loc[r,'IBB']) # IBB only, without FE and CCT
+        ab  = ' '*(3-len(str(dq.loc[r,'ABB'])))     + str(dq.loc[r,'ABB']) # ABB only, without FE and CCT
+        dept = f'{dept}{dp}[{tt}|{tg}|{mm}|{xb}|{ib}|{ab}]\n'
+    dept = dept + '\n'
+
+    grp = str()
+    if showgroup == 1:
+        for r in range(len(dg)):
+            dp =   str(dg.loc[r,'Dept'][:9]) + ' '*(9-len(str(dg.loc[r,'Dept'])))
+            tt  = ' '*(4-len(str(dg.loc[r,'Total'])))   + str(dg.loc[r,'Total'])
+            tg  = ' '*(3-len(str(dg.loc[r,'TGW'])))     + str(dg.loc[r,'TGW'])
+            mm  = ' '*(3-len(str(dg.loc[r,'Member'])))  + str(dg.loc[r,'Member'])
+            xb  = ' '*(3-len(str(dg.loc[r,'X'])))       + str(dg.loc[r,'X'])
+            ib  = ' '*(3-len(str(dg.loc[r,'IBB'])))     + str(dg.loc[r,'IBB']) # IBB only, without FE and CCT
+            ab  = ' '*(3-len(str(dg.loc[r,'ABB'])))     + str(dg.loc[r,'ABB']) # ABB only, without FE and CCT
+            grp = f'{grp}{dp}[{tt}|{tg}|{mm}|{xb}|{ib}|{ab}]\n'
+        grp = grp + '\n'
+
+    totalrow = 'Total' if d == '%' else grpdept
+
+    if access == 'Group':
+        mgd = 'Member'
+    elif access in ('IT','EDU','All','%','D[0-9]%'):
+        mgd = 'Dept  '
+    else:
+        mgd = 'Group '
+
+    standard = {(1,1): 'Leaf + BBT',
+                (1,0): 'Leaf',
+                (0,1): 'BBT'}[(leaf, bbt)]
+   
+    note = '\nX = No picking.\nIBB = At least 1 OP/ME/FA.\nABB = At least 1 NP/ABB/CCT_Active'
+    header = '   [ Tot|TGW|Mem|  X|IBB|ABB]'
+
+    summary = f"{grp}{dept}</pre>" # Not putting header yet, so re.sub does not affect the "0 P"
+    summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
+    summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
+    summary = re.sub(totalrow,f"\n{totalrow}",summary)
+    summary = f"<b><u>{grpdept} July 28 Mission</u></b>\n<i>Standard = {standard}\n{ct} CT\n{note}\n</i>\n<pre>{mgd}{header}\n\n{summary}"
+    print(">>>Return")
+    return summary
+
+
+
+
+
 def ctmission(access): # BB FUNCTIONS # REPLACED WITH CTMISSIONNEW
     print(f"\n>>>ctmission: access={access}")
     

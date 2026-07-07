@@ -4810,7 +4810,7 @@ def julymissionnew(season, leaf, bbt, access, d, g, ct, showgroup): # BB FUNCTIO
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     summary = re.sub(totalrow,f"\n{totalrow}",summary)
-    summary = f"<b><u>{grpdept} July 22 Mission</u></b>\n<i>Pickings as of 28 June\n\nStandard = {standard}\n{ct} CT\n\n{note}</i>\n\n<pre>{mgd}{header}\n\n{summary}"
+    summary = f"<b><u>{grpdept} 22 July Mission</u></b>\n<i>Pickings as of 28 June\n\nStandard = {standard}\n{ct} CT\n\n{note}</i>\n\n<pre>{mgd}{header}\n\n{summary}"
     print(">>>Return")
     return summary
 

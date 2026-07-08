@@ -580,7 +580,17 @@ def memberfmp(timerange,g,sid,ss,access): # FMP FUNCTIONS
    
     s,e,title = timevalues[timerange]
         
-    memberQ = f"SELECT {name}, F, M, PP, P, FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Grp LIKE '{g}'"
+    memberQ = f"""SELECT {name}, F, M, PP, P, FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Grp LIKE '{g}'
+                  ORDER BY CASE
+                  WHEN Title = 'GYJN' THEN 1
+                  WHEN Task = 'OEV' AND Title = 'TJN' THEN 2
+                  WHEN Task = 'IEV' AND Title = 'TJN' THEN 3
+                  WHEN Task = 'EDU' AND Title = 'TJN' THEN 4
+                  WHEN Task = 'SV' AND Title = 'TJN' THEN 5
+                  WHEN Title = 'GGN' THEN 6
+                  ELSE 7
+                  END, MemberCode"""
+    
     totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Grp LIKE '{g}'"
     print(memberQ)
     

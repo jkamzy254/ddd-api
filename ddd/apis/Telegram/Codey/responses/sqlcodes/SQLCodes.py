@@ -1237,7 +1237,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     btmfilt = f" AND BtmNo = '{q[3:]}'" if q[3:] != '' else ''
 
     i = q[:3]
-    bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus IN ('BBT','Pre-BBT')"],
+    bbtvalues = {'bbt' : ['BBT',   " AND BBTStatus = 'BBT'"],
                  'pre' : [q.upper(), f"{prebbtfilt} AND BBTStatus = 'Pre-BBT'"],
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm' : [q.upper(), f"{btmfilt} AND BBTStatus = 'BTM'"]}
@@ -2669,7 +2669,7 @@ def bbtlist(q, d, g, sid, access): # BBT FUNCTIONS
 
     if i == 'bbt':
         bbttype = 'BBT'
-        params['bbtstatus'] = 'BBT,Pre-BBT'
+        params['bbtstatus'] = 'BBT'
     elif i == 'pre':
         bbttype = q.upper()
         params['btmno'] = q[6:]

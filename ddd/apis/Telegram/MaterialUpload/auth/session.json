@@ -1,0 +1,62 @@
+[
+  {
+    "name": "livid.language",
+    "value": "en",
+    "domain": "livid.com",
+    "path": "/",
+    "expires": 1815661106,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Strict"
+  },
+  {
+    "name": "_gcl_au",
+    "value": "1.1.1597690546.1784125070",
+    "domain": ".livid.com",
+    "path": "/",
+    "expires": 1791901070,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_fbp",
+    "value": "fb.1.1784125070090.324131220424158620",
+    "domain": ".livid.com",
+    "path": "/",
+    "expires": 1791901106,
+    "httpOnly": false,
+    "secure": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "__Secure-livid.session_token",
+    "value": "GihPWHEjUOuUZbmHoS82LUAefI4cMbEV.Ody0YxjDW1Exb4twt05zDXbu6%2BCczs%2BbvV5eZ%2Boqyfc%3D",
+    "domain": ".livid.com",
+    "path": "/",
+    "expires": 1784211600,
+    "httpOnly": true,
+    "secure": true,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "_rdt_uuid",
+    "value": "1784125069969.7d9355fe-85d5-4213-852a-e01755ab2aa1",
+    "domain": ".livid.com",
+    "path": "/",
+    "expires": 1791901106,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "Strict"
+  },
+  {
+    "name": "ph_phc_GrHP9wODTRn9EN0wCGDkx4kJSjwHPo4Xmk8GcbZyRrd_posthog",
+    "value": "%7B%22%24device_id%22%3A%22019f6624-1a3c-7356-a858-c8315aae6f2b%22%2C%22distinct_id%22%3A%227f2QGWtaUGLbrYGyqRDjD6a14QdgQJhd%22%2C%22%24sesid%22%3A%5B1784125112577%2C%22019f6624-1a63-71bc-87d2-1cfbf0ce05c4%22%2C1784125069905%5D%2C%22%24epp%22%3Atrue%2C%22%24initial_person_info%22%3A%7B%22r%22%3A%22%24direct%22%2C%22u%22%3A%22https%3A%2F%2Flivid.com%2Flogin%22%7D%2C%22%24user_state%22%3A%22identified%22%7D",
+    "domain": ".livid.com",
+    "path": "/",
+    "expires": 1815661113,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "Lax"
+  }
+]

@@ -5648,18 +5648,15 @@ def memberbbt(timerange,g,sid,ss,access): # BBT FUNCTIONS
 
 
 
-def deptbbt(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
-    print(f"\n>>>deptbbt: task={task}, timerange={timerange}, dept={d}, sid={sid}, seasonstart={ss}, access={access}")
+def deptbbt(timerange,d,sid,ss,access): # BBT FUNCTIONS
+    print(f"\n>>>deptbbt: timerange={timerange}, dept={d}, sid={sid}, seasonstart={ss}, access={access}")
     
-    displayGroups = False if task == 'dept' and access in ('All','IT','EDU') else True
-    topleft = 'Grp ' if displayGroups == True else 'Dept'
-
     if timerange in {'today','yesterday'}:
-        spc = [6,5,4,4,4,4,f'{topleft}  [ PP  | P  |FE  |CL  |CT  ]',   'Total ']
+        spc = [6,5,4,4,4,4,f'Grp   [ PP  | P  |FE  |CL  |CT  ]',   'Total ']
     if timerange in {'week','lastweek'}:
-        spc = [5,5,5,4,4,4,f'{topleft} [ PP  |  P  |FE  |CL  |CT  ]',   'Total']
+        spc = [5,5,5,4,4,4,f'Grp  [ PP  |  P  |FE  |CL  |CT  ]',   'Total']
     if timerange == 'season':
-        spc = [4,6,6,5,5,5,f'{topleft}[  PP  |   P  | FE  | CL  | CT  ]','Tot ']
+        spc = [4,6,6,5,5,5,f'Grp [  PP  |   P  | FE  | CL  | CT  ]','Tot ']
 
     timevalues = {'today':   ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
                 'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
@@ -5685,17 +5682,15 @@ def deptbbt(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
     group = str()
-    
-    if displayGroups:
-        for r in range(len(dm)):
-            grp = str(dm.loc[r,'Grp'])[:spc[0]] + ' '*(spc[0]-len(str(dm.loc[r,'Grp'])[:spc[0]]))
-            f  = ' '*(spc[1]-len(str(dm.loc[r,'F'])))  + str(dm.loc[r,'F'])
-            m  = ' '*(spc[2]-len(str(dm.loc[r,'M'])))  + str(dm.loc[r,'M'])
-            pp = ' '*(spc[3]-len(str(dm.loc[r,'PP']))) + str(dm.loc[r,'PP'])
-            p  = ' '*(spc[4]-len(str(dm.loc[r,'P'])))  + str(dm.loc[r,'P'])
-            fe = ' '*(spc[5]-len(str(dm.loc[r,'FE']))) + str(dm.loc[r,'FE'])
-            group = f'{group}{grp}[{f}|{m}|{pp}|{p}|{fe}]\n'
-        group = group + '\n'
+    for r in range(len(dm)):
+        grp = str(dm.loc[r,'Grp'])[:spc[0]] + ' '*(spc[0]-len(str(dm.loc[r,'Grp'])[:spc[0]]))
+        f  = ' '*(spc[1]-len(str(dm.loc[r,'F'])))  + str(dm.loc[r,'F'])
+        m  = ' '*(spc[2]-len(str(dm.loc[r,'M'])))  + str(dm.loc[r,'M'])
+        pp = ' '*(spc[3]-len(str(dm.loc[r,'PP']))) + str(dm.loc[r,'PP'])
+        p  = ' '*(spc[4]-len(str(dm.loc[r,'P'])))  + str(dm.loc[r,'P'])
+        fe = ' '*(spc[5]-len(str(dm.loc[r,'FE']))) + str(dm.loc[r,'FE'])
+        group = f'{group}{grp}[{f}|{m}|{pp}|{p}|{fe}]\n'
+    group = group + '\n'
 
     dept = str()    
     for r in range(len(dd)):

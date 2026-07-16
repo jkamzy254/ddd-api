@@ -178,7 +178,7 @@ def bot_responses(id, tname, input_text):
                 return SQLCodes.memberbbt(timerange, g, bb_sid, bb_ss, access)
             else:
                 print(f"\nCalling deptbbt with timerange={timerange}, g={g}, bb_sid={bb_sid}, bb_ss={bb_ss}, access={access}")
-                return SQLCodes.deptbbt(task, timerange, d, fmp_sid, fmp_ss, access)
+                return SQLCodes.deptbbt(timerange, d, bb_sid, bb_ss, access)
 
         if command in ['todaypp','yesterdaypp','weekpp','lastweekpp','seasonpp']:
             timerange = command[:-2]

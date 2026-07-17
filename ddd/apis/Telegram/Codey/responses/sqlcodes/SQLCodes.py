@@ -5648,7 +5648,7 @@ def memberbbt(timerange,g,sid,ss,access): # BBT FUNCTIONS
 
 
 
-def deptbbt(timerange,d,sid,ss,access): # BBT FUNCTIONS
+def deptbbt(timerange,d,sid,ss,access,bbtdept): # BBT FUNCTIONS
     print(f"\n>>>deptbbt: timerange={timerange}, dept={d}, sid={sid}, seasonstart={ss}, access={access}")
     
     if timerange in {'today','yesterday'}:
@@ -5682,27 +5682,30 @@ def deptbbt(timerange,d,sid,ss,access): # BBT FUNCTIONS
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
     group = str()
-    for r in range(len(dm)):
-        grp = str(dm.loc[r,'Grp'])[:spc[0]] + ' '*(spc[0]-len(str(dm.loc[r,'Grp'])[:spc[0]]))
-        pp = ' '*(spc[1]-len(str(dm.loc[r,'PP']))) + str(dm.loc[r,'PP'])
-        p  = ' '*(spc[2]-len(str(dm.loc[r,'P'])))  + str(dm.loc[r,'P'])
-        fe = ' '*(spc[3]-len(str(dm.loc[r,'FE']))) + str(dm.loc[r,'FE'])
-        cl = ' '*(spc[4]-len(str(dm.loc[r,'CL']))) + str(dm.loc[r,'CL'])
-        ct = ' '*(spc[5]-len(str(dm.loc[r,'CT']))) + str(dm.loc[r,'CT'])
-        group = f'{group}{grp}[{pp}|{p}|{fe}|{cl}|{ct}]\n'
-    group = group + '\n'
+    if bbtdept is False:  
+        for r in range(len(dm)):
+            grp = str(dm.loc[r,'Grp'])[:spc[0]] + ' '*(spc[0]-len(str(dm.loc[r,'Grp'])[:spc[0]]))
+            pp = ' '*(spc[1]-len(str(dm.loc[r,'PP']))) + str(dm.loc[r,'PP'])
+            p  = ' '*(spc[2]-len(str(dm.loc[r,'P'])))  + str(dm.loc[r,'P'])
+            fe = ' '*(spc[3]-len(str(dm.loc[r,'FE']))) + str(dm.loc[r,'FE'])
+            cl = ' '*(spc[4]-len(str(dm.loc[r,'CL']))) + str(dm.loc[r,'CL'])
+            ct = ' '*(spc[5]-len(str(dm.loc[r,'CT']))) + str(dm.loc[r,'CT'])
+            group = f'{group}{grp}[{pp}|{p}|{fe}|{cl}|{ct}]\n'
+        group = group + '\n'
 
-    dept = str()    
-    for r in range(len(dd)):
-        dpt = str(dd.loc[r,'Dept'][:spc[0]]) + ' '*(spc[0]-len(str(dd.loc[r,'Dept'][:spc[0]])))
-        pp = ' '*(spc[1]-len(str(dd.loc[r,'PP']))) + str(dd.loc[r,'PP'])
-        p  = ' '*(spc[2]-len(str(dd.loc[r,'P'])))  + str(dd.loc[r,'P'])
-        fe = ' '*(spc[3]-len(str(dd.loc[r,'FE']))) + str(dd.loc[r,'FE'])
-        cl = ' '*(spc[4]-len(str(dd.loc[r,'CL']))) + str(dd.loc[r,'CL'])
-        ct = ' '*(spc[5]-len(str(dd.loc[r,'CT']))) + str(dd.loc[r,'CT'])
-        dept = f'{dept}{dpt}[{pp}|{p}|{fe}|{cl}|{ct}]\n'
-    dept = dept + '\n'
+    dept = str()
+    if access not in ('Group','CUL'):      
+        for r in range(len(dd)):
+            dpt = str(dd.loc[r,'Dept'][:spc[0]]) + ' '*(spc[0]-len(str(dd.loc[r,'Dept'][:spc[0]])))
+            pp = ' '*(spc[1]-len(str(dd.loc[r,'PP']))) + str(dd.loc[r,'PP'])
+            p  = ' '*(spc[2]-len(str(dd.loc[r,'P'])))  + str(dd.loc[r,'P'])
+            fe = ' '*(spc[3]-len(str(dd.loc[r,'FE']))) + str(dd.loc[r,'FE'])
+            cl = ' '*(spc[4]-len(str(dd.loc[r,'CL']))) + str(dd.loc[r,'CL'])
+            ct = ' '*(spc[5]-len(str(dd.loc[r,'CT']))) + str(dd.loc[r,'CT'])
+            dept = f'{dept}{dpt}[{pp}|{p}|{fe}|{cl}|{ct}]\n'
+        dept = dept + '\n'
 
+    total = str()
     if d in ('D[0-9]%','%'):
         pp = ' '*(spc[1]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
         p  = ' '*(spc[2]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
@@ -5710,8 +5713,6 @@ def deptbbt(timerange,d,sid,ss,access): # BBT FUNCTIONS
         cl = ' '*(spc[4]-len(str(dt.loc[0,'CL']))) + str(dt.loc[0,'CL'])
         ct = ' '*(spc[5]-len(str(dt.loc[0,'CT']))) + str(dt.loc[0,'CT'])
         total = f'{spc[7]}[{pp}|{p}|{fe}|{cl}|{ct}]\n'
-    else:
-        total = str()
         
     depttitle = d.replace('D[0-9]%','Youth').replace('MW[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
 

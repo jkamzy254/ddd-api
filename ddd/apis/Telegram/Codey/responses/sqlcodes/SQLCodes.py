@@ -5648,18 +5648,15 @@ def memberbbt(timerange,g,sid,ss,access): # BBT FUNCTIONS
 
 
 
-def deptbbt(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
-    print(f"\n>>>deptbbt: task={task}, timerange={timerange}, dept={d}, sid={sid}, seasonstart={ss}, access={access}")
+def deptbbt(timerange,d,sid,ss,access,bbtdept): # BBT FUNCTIONS
+    print(f"\n>>>deptbbt: timerange={timerange}, dept={d}, sid={sid}, seasonstart={ss}, access={access}")
     
-    displayGroups = False if task == 'dept' and access in ('All','IT','EDU') else True
-    topleft = 'Grp ' if displayGroups == True else 'Dept'
-
     if timerange in {'today','yesterday'}:
-        spc = [6,5,4,4,4,4,f'{topleft}  [ PP  | P  |FE  |CL  |CT  ]',   'Total ']
+        spc = [6,5,4,4,4,4,f'Grp   [ PP  | P  |FE  |CL  |CT  ]',   'Total ']
     if timerange in {'week','lastweek'}:
-        spc = [5,5,5,4,4,4,f'{topleft} [ PP  |  P  |FE  |CL  |CT  ]',   'Total']
+        spc = [5,5,5,4,4,4,f'Grp  [ PP  |  P  |FE  |CL  |CT  ]',   'Total']
     if timerange == 'season':
-        spc = [4,6,6,5,5,5,f'{topleft}[  PP  |   P  | FE  | CL  | CT  ]','Tot ']
+        spc = [4,6,6,5,5,5,f'Grp [  PP  |   P  | FE  | CL  | CT  ]','Tot ']
 
     timevalues = {'today':   ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
                 'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
@@ -5669,9 +5666,9 @@ def deptbbt(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
     
     s,e,timetitle = timevalues[timerange]
     
-    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}' GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    memberQ = f"SELECT Grp, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}' GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    deptQ   = f"SELECT Dept, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    totalQ  = f"SELECT SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
     print(memberQ)
 
     with odbc.connect(conn_str) as conn:
@@ -5679,44 +5676,43 @@ def deptbbt(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
         dd = pd.read_sql(deptQ, conn)
         dt = pd.read_sql(totalQ, conn)
 
-    dm.columns = ['Grp','F','M','PP','P','FE']
-    dd.columns = ['Dept','F','M','PP','P','FE']
-    dt.columns = ['F','M','PP','P','FE']
+    dm.columns = ['Grp','PP','P','FE','CL','CT']
+    dd.columns = ['Dept','PP','P','FE','CL','CT']
+    dt.columns = ['PP','P','FE','CL','CT']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
     group = str()
-    
-    if displayGroups:
+    if bbtdept is False:  
         for r in range(len(dm)):
             grp = str(dm.loc[r,'Grp'])[:spc[0]] + ' '*(spc[0]-len(str(dm.loc[r,'Grp'])[:spc[0]]))
-            f  = ' '*(spc[1]-len(str(dm.loc[r,'F'])))  + str(dm.loc[r,'F'])
-            m  = ' '*(spc[2]-len(str(dm.loc[r,'M'])))  + str(dm.loc[r,'M'])
-            pp = ' '*(spc[3]-len(str(dm.loc[r,'PP']))) + str(dm.loc[r,'PP'])
-            p  = ' '*(spc[4]-len(str(dm.loc[r,'P'])))  + str(dm.loc[r,'P'])
-            fe = ' '*(spc[5]-len(str(dm.loc[r,'FE']))) + str(dm.loc[r,'FE'])
-            group = f'{group}{grp}[{f}|{m}|{pp}|{p}|{fe}]\n'
+            pp = ' '*(spc[1]-len(str(dm.loc[r,'PP']))) + str(dm.loc[r,'PP'])
+            p  = ' '*(spc[2]-len(str(dm.loc[r,'P'])))  + str(dm.loc[r,'P'])
+            fe = ' '*(spc[3]-len(str(dm.loc[r,'FE']))) + str(dm.loc[r,'FE'])
+            cl = ' '*(spc[4]-len(str(dm.loc[r,'CL']))) + str(dm.loc[r,'CL'])
+            ct = ' '*(spc[5]-len(str(dm.loc[r,'CT']))) + str(dm.loc[r,'CT'])
+            group = f'{group}{grp}[{pp}|{p}|{fe}|{cl}|{ct}]\n'
         group = group + '\n'
 
-    dept = str()    
-    for r in range(len(dd)):
-        dpt = str(dd.loc[r,'Dept'][:spc[0]]) + ' '*(spc[0]-len(str(dd.loc[r,'Dept'][:spc[0]])))
-        f  = ' '*(spc[1]-len(str(dd.loc[r,'F'])))  + str(dd.loc[r,'F'])
-        m  = ' '*(spc[2]-len(str(dd.loc[r,'M'])))  + str(dd.loc[r,'M'])
-        pp = ' '*(spc[3]-len(str(dd.loc[r,'PP']))) + str(dd.loc[r,'PP'])
-        p  = ' '*(spc[4]-len(str(dd.loc[r,'P'])))  + str(dd.loc[r,'P'])
-        fe = ' '*(spc[5]-len(str(dd.loc[r,'FE']))) + str(dd.loc[r,'FE'])
-        dept = f'{dept}{dpt}[{f}|{m}|{pp}|{p}|{fe}]\n'
-    dept = dept + '\n'
+    dept = str()
+    if access not in ('Group','CUL'):      
+        for r in range(len(dd)):
+            dpt = str(dd.loc[r,'Dept'][:spc[0]]) + ' '*(spc[0]-len(str(dd.loc[r,'Dept'][:spc[0]])))
+            pp = ' '*(spc[1]-len(str(dd.loc[r,'PP']))) + str(dd.loc[r,'PP'])
+            p  = ' '*(spc[2]-len(str(dd.loc[r,'P'])))  + str(dd.loc[r,'P'])
+            fe = ' '*(spc[3]-len(str(dd.loc[r,'FE']))) + str(dd.loc[r,'FE'])
+            cl = ' '*(spc[4]-len(str(dd.loc[r,'CL']))) + str(dd.loc[r,'CL'])
+            ct = ' '*(spc[5]-len(str(dd.loc[r,'CT']))) + str(dd.loc[r,'CT'])
+            dept = f'{dept}{dpt}[{pp}|{p}|{fe}|{cl}|{ct}]\n'
+        dept = dept + '\n'
 
+    total = str()
     if d in ('D[0-9]%','%'):
-        f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
-        m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
-        pp = ' '*(spc[3]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
-        p  = ' '*(spc[4]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
-        fe = ' '*(spc[5]-len(str(dt.loc[0,'FE']))) + str(dt.loc[0,'FE'])
-        total = f'{spc[7]}[{f}|{m}|{pp}|{p}|{fe}]\n'
-    else:
-        total = str()
+        pp = ' '*(spc[1]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
+        p  = ' '*(spc[2]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
+        fe = ' '*(spc[3]-len(str(dt.loc[0,'FE']))) + str(dt.loc[0,'FE'])
+        cl = ' '*(spc[4]-len(str(dt.loc[0,'CL']))) + str(dt.loc[0,'CL'])
+        ct = ' '*(spc[5]-len(str(dt.loc[0,'CT']))) + str(dt.loc[0,'CT'])
+        total = f'{spc[7]}[{pp}|{p}|{fe}|{cl}|{ct}]\n'
         
     depttitle = d.replace('D[0-9]%','Youth').replace('MW[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
 

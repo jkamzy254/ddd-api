@@ -145,7 +145,7 @@ class HSPGetMemberLoyaltyCard(APIView):
             uid = request.GET.get('UID')
             with connection.cursor() as cursor:
                 cursor.execute('SELECT * FROM HSPMemberLoyaltyFunction(%s)', (uid,))
-                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:
             # Handle exceptions here, e.g., logging or returning an error response

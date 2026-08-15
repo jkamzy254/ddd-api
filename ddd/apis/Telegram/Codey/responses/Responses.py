@@ -360,7 +360,7 @@ def bot_responses(id, tname, input_text):
             print(f"\nCalling classes with g={g}, d={d}, access={access}, timerange=week")
             return SQLCodes.classes(g, d, access, 'week')
 
-        if command not in ('edutoday','eduyesterday','edulastweek','eduweek','eduseason') and command.startswith('edu'):
+        if command not in ('edutoday','eduyesterday','edulastweek','eduweek','eduseason','edulastseason') and command.startswith('edu'):
             day = command.removeprefix('edu')
             print(f"\nCalling edu with day={day}, g={g}, d={d}, access={access}")
             return SQLCodes.edu(day, g, d, access) if day != 'rev' else SQLCodes.edurev(g, d, access)

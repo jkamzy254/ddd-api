@@ -571,16 +571,21 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
     
     name = 'Member' if access == 'IT' else 'MemberCode'
   
-    timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
-                  'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
-                  'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
-                  'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season'],
-                  'lastseason':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season']}
+    timevalues = {'today':      ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
+                  'yesterday':  ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
+                  'week':       ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
+                  'lastweek':   ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
+                  'season':     [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season'],
+                  'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season']}
    
-    s,e,title = timevalues[timerange]
+    s,e,timetitle = timevalues[timerange]
+    
+    if timerange == 'lastseason':
+        sid = f"(SELECT dbo.lastssnid('{ct}'))"
+    else:
+        sid = f"'{sid}'" # Adding quotes as sometimes sid can be '%' which is a string
         
-    memberQ = f"""SELECT {name}, F, M, PP, P, FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Grp LIKE '{g}'
+    memberQ = f"""SELECT {name}, F, M, PP, P, FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Grp LIKE '{g}'
                   ORDER BY CASE
                   WHEN Title = 'GYJN' THEN 1
                   WHEN Task = 'OEV' AND Title = 'TJN' THEN 2
@@ -591,7 +596,7 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
                   ELSE 7
                   END, MemberCode"""
     
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Grp LIKE '{g}'"
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Grp LIKE '{g}'"
     print(memberQ)
     
     with odbc.connect(conn_str) as conn:
@@ -626,7 +631,7 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
         
         total = f'Total   [{f}|{m}|{pp}|{p}|{fe}]'
         
-        member = f'<b><u>{g} FMP : {title}</u></b>\n\n<pre>Member  [ F  | M  |PP |P  |FE ]\n\n{member}\n{total}</pre>'
+        member = f'<b><u>{g} FMP : {timetitle}</u></b>\n\n<pre>Member  [ F  | M  |PP |P  |FE ]\n\n{member}\n{total}</pre>'
         member = re.sub(r'\.0',r'  ',member) # Replaces '.0' with empty space
         member = re.sub(r'(\D)0([^.])',r'\1-\2',member)   # Replaces lone '0' with '-'
         print(">>>Return")
@@ -673,19 +678,16 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
        
     memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
     deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    # regionQ = f"SELECT District, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY District ORDER BY District".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")  
     totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
     print(memberQ)
 
     with odbc.connect(conn_str) as conn:
         dm = pd.read_sql(memberQ, conn)
         dd = pd.read_sql(deptQ, conn)
-        # dr = pd.read_sql(regionQ, conn)
         dt = pd.read_sql(totalQ, conn)
 
     dm.columns = ['Grp','F','M','PP','P','FE']
     dd.columns = ['Dept','F','M','PP','P','FE']
-    # dr.columns = ['Region','F','M','PP','P','FE']
     dt.columns = ['F','M','PP','P','FE']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
     
@@ -713,17 +715,6 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
         dept = f'{dept}{dpt}[{f}|{m}|{pp}|{p}|{fe}]\n'
     dept = dept + '\n'
     
-    # region = str()
-    # if d.endswith('D[0-9]%'):    
-    #     for r in range(len(dr)):
-    #         reg = str(dr.loc[r,'Region']) + ' '*(spc[0]-len(str(dr.loc[r,'Region'])))
-    #         f  = ' '*(spc[1]-len(str(dr.loc[r,'F'])))  + str(dr.loc[r,'F'])
-    #         m  = ' '*(spc[2]-len(str(dr.loc[r,'M'])))  + str(dr.loc[r,'M'])
-    #         p  = ' '*(spc[3]-len(str(dr.loc[r,'P'])))  + str(dr.loc[r,'P'])
-    #         fe = ' '*(spc[4]-len(str(dr.loc[r,'FE']))) + str(dr.loc[r,'FE'])
-    #         region = f'{region}{reg}[{f}|{m}|{p}|{fe}]\n'
-    #     region = region + '\n'
-
     if d in ('D[0-9]%','%'):
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
@@ -744,7 +735,7 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
 
 
 
-def taskfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
+def taskfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
     print(f"\n>>>taskfmp: task={task}, timerange={timerange}, dept={d}, sid={sid}, seasonstart={ss}, access={access}")
     
     name = 'MemberFull' if access == 'IT' else 'MemberInitial'
@@ -762,40 +753,43 @@ def taskfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
             spc = [10,4,4,4,4,4,'TGW       [ F  | M  |PP  | P  |FE  ]','Total     ']
         elif timerange in {'week','lastweek'}:
             spc = [9,5,4,4,4,4,'TGW      [  F  | M  |PP  | P  |FE  ]','Total    ']
-        elif timerange == 'season':
+        elif timerange in ('season','lastseason'):
             spc = [8,5,5,4,4,4,'TGW     [  F  |  M  |PP  | P  |FE  ]','Total   ']
     else:
         if timerange in {'today','yesterday'}:
             spc = [7,4,4,4,4,4,'TGW    [ F  | M  |PP  | P  |FE  ]',  'Total  ']
         elif timerange in {'week','lastweek'}:
             spc = [7,5,4,4,4,4,'TGW    [  F  | M  |PP  | P  |FE  ]', 'Total  ']
-        elif timerange == 'season':
+        elif timerange in ('season','lastseason'):
             spc = [7,5,5,4,4,4,'TGW    [  F  |  M  |PP  | P  |FE  ]','Total  ']
 
-    timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
-                  'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
-                  'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
-                  'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season']}
+    timevalues = {'today':      ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
+                  'yesterday':  ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
+                  'week':       ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
+                  'lastweek':   ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
+                  'season':     [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season'],
+                  'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season']}
     
     s,e,timetitle = timevalues[timerange]
+    
+    if timerange == 'lastseason':
+        sid = f"(SELECT dbo.lastssnid('{ct}'))"
+    else:
+        sid = f"'{sid}'" # Adding quotes as sometimes sid can be '%' which is a string
        
-    baseQ   = f"{name}, F, M, PP, P, FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) s WHERE Dept LIKE '{d}'{taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    baseQ   = f"{name}, F, M, PP, P, FE FROM CodeyFMPPP({sid}, ({s}), ({e})) s WHERE Dept LIKE '{d}'{taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
     memberQ = f"SELECT Grp, {baseQ} ORDER BY GID"
     deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM (SELECT Dept, DID, {baseQ})b GROUP BY Dept, DID ORDER BY DID"
-    # regionQ = f"SELECT District, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM (SELECT District, {baseQ})b GROUP BY District ORDER BY District" 
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) s WHERE Dept LIKE '{d}'{taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) s WHERE Dept LIKE '{d}'{taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
     print(deptQ)
     
     with odbc.connect(conn_str) as conn:
         dm = pd.read_sql(memberQ, conn)
         dd = pd.read_sql(deptQ, conn)
-        # dr = pd.read_sql(regionQ, conn)
         dt = pd.read_sql(totalQ, conn)
     
     dm.columns = ['Grp','Member','F','M','PP','P','FE']
     dd.columns = ['Dept','F','M','PP','P','FE']
-    # dr.columns = ['Region','F','M','PP','P','FE']
     dt.columns = ['F','M','PP','P','FE']
     dd.replace(r' Dept',r'', regex = True, inplace = True)
 
@@ -820,18 +814,6 @@ def taskfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
         fe = ' '*(spc[5]-len(str(dd.loc[r,'FE']))) + str(dd.loc[r,'FE'])
         dept = f'{dept}{dpt}[{f}|{m}|{pp}|{p}|{fe}]\n'
     dept = dept + '\n'
-
-    # region = str()
-    # if d.endswith('D[0-9]%'):    
-    #     for r in range(len(dr)):
-    #         reg = str(dr.loc[r,'Region']) + ' '*(spc[0]-len(str(dr.loc[r,'Region'])))
-    #         f  = ' '*(spc[1]-len(str(dr.loc[r,'F'])))  + str(dr.loc[r,'F'])
-    #         m  = ' '*(spc[2]-len(str(dr.loc[r,'M'])))  + str(dr.loc[r,'M'])
-    #         pp = ' '*(spc[3]-len(str(dr.loc[r,'PP']))) + str(dr.loc[r,'PP'])
-    #         p  = ' '*(spc[4]-len(str(dr.loc[r,'P'])))  + str(dr.loc[r,'P'])
-    #         fe = ' '*(spc[5]-len(str(dr.loc[r,'FE']))) + str(dr.loc[r,'FE'])
-    #         region = f'{region}{reg}[{f}|{m}|{pp}|{p}|{fe}]\n'
-    #     region = region + '\n'
     
     total = str()
     if d in ('D[0-9]%','%'):

@@ -1,6 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 from .sqlcodes import SQLCodes
+
+def more_than_60_days_ago(date_str): # For functions where user can specify date, this prevents attempting to access archived data
+    given_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    return given_date < date.today() - timedelta(days=60)
 
 def bot_responses(id, tname, input_text):
 
@@ -166,29 +170,29 @@ def bot_responses(id, tname, input_text):
             print(f"\nCommand {command} requested with access {access}")
             return f"Sorry, <i>{command}</i> is not a valid command. Try replacing the 'T' with one of: 'today', 'yesterday', 'week', 'last week' or 'season'.\nFor example: <pre>" + command.replace('tfmp','todayfmp').replace('youtht','youthtoday').replace('deptt','depttoday').replace('gyjnt','gyjntoday').replace('tgwt','tgwtoday').replace('membert','membertoday').replace('oevt','oevtoday').replace('ievt','ievtoday').replace('edut','edutoday').replace('svt','svtoday') + "</pre> :)"
 
-        if command in ['todayfmp','yesterdayfmp','weekfmp','lastweekfmp','seasonfmp']:
+        if command in ['todayfmp','yesterdayfmp','weekfmp','lastweekfmp','seasonfmp','lastseasonfmp']:
             timerange = command[:-3]
-            print(f"\nCalling memberfmp with timerange={timerange}, g={g}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, access={access}")
-            return SQLCodes.memberfmp(timerange, g, fmp_sid, fmp_ss, access)
+            print(f"\nCalling memberfmp with timerange={timerange}, g={g}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
+            return SQLCodes.memberfmp(timerange, g, fmp_sid, fmp_ss, ct, access)
         
-        if command in ['todaybbt','yesterdaybbt','weekbbt','lastweekbbt','seasonbbt','todaybbtdept','yesterdaybbtdept','weekbbtdept','lastweekbbtdept','seasonbbtdept']:
+        if command in ['todaybbt','yesterdaybbt','weekbbt','lastweekbbt','seasonbbt','lastseasonbbt','todaybbtdept','yesterdaybbtdept','weekbbtdept','lastweekbbtdept','seasonbbtdept','lastseasonbbtdept']:
             bbtdept = False
             if command.endswith('dept'):
                 bbtdept = True
                 command = command.removesuffix('dept')
             timerange = command[:-3]
             if access in ('Group','CUL'):
-                print(f"\nCalling memberbbt with timerange={timerange}, g={g}, bb_sid={bb_sid}, bb_ss={bb_ss}, access={access}")
-                return SQLCodes.memberbbt(timerange, g, bb_sid, bb_ss, access)
+                print(f"\nCalling memberbbt with timerange={timerange}, g={g}, bb_sid={bb_sid}, bb_ss={bb_ss}, ct={ct}, access={access}")
+                return SQLCodes.memberbbt(timerange, g, bb_sid, bb_ss, ct, access)
             else:
-                print(f"\nCalling deptbbt with timerange={timerange}, g={g}, bb_sid={bb_sid}, bb_ss={bb_ss}, access={access}, bbtdept={bbtdept}")
-                return SQLCodes.deptbbt(timerange, d, bb_sid, bb_ss, access, bbtdept)
+                print(f"\nCalling deptbbt with timerange={timerange}, g={g}, bb_sid={bb_sid}, bb_ss={bb_ss}, ct={ct}, access={access}, bbtdept={bbtdept}")
+                return SQLCodes.deptbbt(timerange, d, bb_sid, bb_ss, ct, access, bbtdept)
 
-        if command in ['todaypp','yesterdaypp','weekpp','lastweekpp','seasonpp']:
+        if command in ['todaypp','yesterdaypp','weekpp','lastweekpp','seasonpp','lastseasonpp']:
             timerange = command[:-2]
-            print(f"\nCalling memberpp with timerange={timerange}, g={g}, pp_sid={fmp_sid}, pp_ss={fmp_ss}, access={access}")
-            return SQLCodes.memberpp(timerange, g, fmp_sid, fmp_ss, access)
-        
+            print(f"\nCalling memberpp with timerange={timerange}, g={g}, pp_sid={fmp_sid}, pp_ss={fmp_ss}, ct={ct}, access={access}")
+            return SQLCodes.memberpp(timerange, g, fmp_sid, fmp_ss, ct, access)
+
         if command == 'fmstatus':
             print(f"\nCalling fmstatus with d={d}, g={g}, access={access}")
             return SQLCodes.fmstatus(d, g, '2020-01-01', access)
@@ -237,8 +241,10 @@ def bot_responses(id, tname, input_text):
 
         if command.startswith('bbstatusdate'):
             dt = command.removeprefix('bbstatusdate=')
-            print(f"\nCalling bbstatusdate with g={g}, d={d}, ssn={ssn}, dt={dt}, access={access}")
-            return SQLCodes.bbstatusdate(g, d, ssn, dt, access)
+            if id not in (659275499,623868072) and more_than_60_days_ago(dt):
+                return "❌ You do not have permission to view data older than 60 days. Please contact IT for assistance."
+            print(f"\nCalling bbstatusdate with g={g}, d={d}, ct={ct}, dt={dt}, access={access}")
+            return SQLCodes.bbstatusdate(g, d, ct, dt, access)
 
         if command == 'bbactive':
             print(f"\nCalling bbactive with g={g}, d={d}, bb_sid={bb_sid}, access={access}")
@@ -406,25 +412,25 @@ def bot_responses(id, tname, input_text):
         for task in ['church','youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(task):
                 timerange = command[len(task):]
-                if timerange in ['today','yesterday','week','lastweek','season']:
+                if timerange in ['today','yesterday','week','lastweek','season','lastseason']:
                     if task in ['youth','dept','tgw','member']:
-                        print(f"\nCalling deptfmp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, access={access}")
-                        return SQLCodes.deptfmp(task, timerange, d, fmp_sid, fmp_ss, access)
+                        print(f"\nCalling deptfmp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
+                        return SQLCodes.deptfmp(task, timerange, d, fmp_sid, fmp_ss, ct, access)
                     if task in ['gyjn','oev','iev','edu','sv']:
-                        print(f"\nCalling taskfmp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, access={access}")
-                        return SQLCodes.taskfmp(task, timerange, d, fmp_sid, fmp_ss, access)
+                        print(f"\nCalling taskfmp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
+                        return SQLCodes.taskfmp(task, timerange, d, fmp_sid, fmp_ss, ct, access)
 
         for task in ['church','youth','mw','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(f'pp{task}'):
                 timerange = command[len(f'pp{task}'):]
-                if timerange in ['today','yesterday','week','lastweek','season']:
+                if timerange in ['today','yesterday','week','lastweek','season','lastseason']:
                     if task in ['youth','dept','tgw','member']:
-                        print(f"\nCalling deptpp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, access={access}")
-                        return SQLCodes.deptpp(task, timerange, d, fmp_sid, fmp_ss, access)
+                        print(f"\nCalling deptpp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
+                        return SQLCodes.deptpp(task, timerange, d, fmp_sid, fmp_ss, ct, access)
                     if task in ['gyjn','oev','iev','edu','sv']:
-                        print(f"\nCalling taskpp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, access={access}")
-                        return SQLCodes.taskpp(task, timerange, d, fmp_sid, fmp_ss, access)
-                    
+                        print(f"\nCalling taskpp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
+                        return SQLCodes.taskpp(task, timerange, d, fmp_sid, fmp_ss, ct, access)
+
         if command in ('youthfm','deptfm'):
             print(f"\nCalling youthfm with d={d}")
             return SQLCodes.youthfm(d)

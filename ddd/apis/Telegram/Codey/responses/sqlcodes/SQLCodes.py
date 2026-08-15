@@ -3,7 +3,7 @@ import numpy as np
 import pypyodbc as odbc
 import re
 import os
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
@@ -566,8 +566,8 @@ def weekmpfe(g): # FMP FUNCTIONS
 
 # UNIVERSAL MEMBER FMP FUNCTION
 
-def memberfmp(timerange,g,sid,ss,access): # FMP FUNCTIONS
-    print(f"\n>>>memberfmp: timerange={timerange}, group={g}, sid={sid}, seasonstart={ss}, access={access}")
+def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
+    print(f"\n>>>memberfmp: timerange={timerange}, group={g}, sid={sid}, seasonstart={ss}, ct={ct}, access={access}")
     
     name = 'Member' if access == 'IT' else 'MemberCode'
   
@@ -635,8 +635,8 @@ def memberfmp(timerange,g,sid,ss,access): # FMP FUNCTIONS
 
 # UNIVERSAL DEPT FMP FUNCTION:
 
-def deptfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
-    print(f"\n>>>deptfmp: task={task}, timerange={timerange}, dept={d}, sid={sid}, seasonstart={ss}, access={access}")
+def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
+    print(f"\n>>>deptfmp: task={task}, timerange={timerange}, dept={d}, sid={sid}, seasonstart={ss}, ct={ct},    access={access}")
     
     displayGroups = False if task == 'dept' and access in ('All','IT','EDU') else True
     topleft = 'Grp ' if displayGroups == True else 'Dept'
@@ -654,21 +654,27 @@ def deptfmp(task,timerange,d,sid,ss,access): # FMP FUNCTIONS
         spc = [6,5,4,4,4,4,f'{topleft}  [  F  | M  |PP  | P  |FE  ]',   'Total ']
     if timerange in {'week','lastweek'}:
         spc = [5,5,5,4,4,4,f'{topleft} [  F  |  M  |PP  | P  |FE  ]',   'Total']
-    if timerange == 'season':
+    if timerange in ('season','lastseason'):
         spc = [4,6,6,5,5,5,f'{topleft}[   F  |   M  | PP  |  P  | FE  ]','Tot ']
 
-    timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
-                  'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
-                  'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
-                  'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season']}
+    timevalues = {'today':      ['(SELECT dbo.today())', '(SELECT dbo.tomorrow())', 'Today'],
+                  'yesterday':  ['(SELECT dbo.yesterday())', '(SELECT dbo.today())', 'Yesterday'],
+                  'week':       ['(SELECT dbo.weekstart())', '(SELECT dbo.nextweekstart())', 'This Week'],
+                  'lastweek':   ['(SELECT dbo.lastweekstart())', '(SELECT dbo.weekstart())', 'Last Week'],
+                  'season':     [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season'],
+                  'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season']}
     
     s,e,timetitle = timevalues[timerange]
+
+    if timerange == 'lastseason':
+        sid = f"(SELECT dbo.lastssnid('{ct}'))"
+    else:
+        sid = f"'{sid}'" # Adding quotes as sometimes sid can be '%' which is a string
        
-    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    # regionQ = f"SELECT District, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY District ORDER BY District".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")  
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP('{sid}', ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    # regionQ = f"SELECT District, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ} GROUP BY District ORDER BY District".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")  
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Dept LIKE '{d}'{taskQ}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
     print(memberQ)
 
     with odbc.connect(conn_str) as conn:
@@ -4373,8 +4379,10 @@ def edurev(g, d, access): # EDU FUNCTIONS
 
 
 
-def bbstatusdate(g, d, ssn, dt, access): # BB FUNCTIONS
-    print(f"\n>>>bbstatusdate: g={g}, d={d}, ssn={ssn}, dt={dt}, access={access}")
+def bbstatusdate(g, d, ct, dt, access): # BB FUNCTIONS
+    print(f"\n>>>bbstatusdate: g={g}, d={d}, ct={ct}, dt={dt}, access={access}")
+
+    # ct variable can be "Physical + Online", "Physical", or "Online". "Physical" is default, but others determined by command prefix.
 
     g = g if access in ('Group','CUL') else '%'
     d = d.capitalize().replace('d','D')
@@ -4386,14 +4394,14 @@ def bbstatusdate(g, d, ssn, dt, access): # BB FUNCTIONS
         grpdept = d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
         
     
-    print(f"bbstatus parameters:          g = '{g}'          d = '{d}'       ssn = '{ssn}'       dt = '{dt}'       access = '{access}'")
+    print(f"bbstatus parameters:          g = '{g}'          d = '{d}'       ct = '{ct}'       dt = '{dt}'       access = '{access}'")
     
     conn = odbc.connect(conn_str)
-    bb_mem    = f"SELECT Dept, Grp, MemberCode, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBStatusDate('{dt}','{ssn}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_group  = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDate('{dt}','{ssn}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept   = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDate('{dt}','{ssn}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    # bb_region = f"SELECT District, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDate('{dt}','{ssn}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY District".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth  = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDate('{dt}','{ssn}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_mem    = f"SELECT Dept, Grp, MemberCode, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_group  = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_dept   = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    # bb_region = f"SELECT District, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}' GROUP BY District".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_youth  = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept LIKE '{d}' AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
     
     print(bb_group)
     
@@ -4431,7 +4439,7 @@ def bbstatusdate(g, d, ssn, dt, access): # BB FUNCTIONS
             
     group = str()    
     for r in range(len(dg)):
-        grp =   str(dg.loc[r,'Grp']) + ' '*(5-len(str(dg.loc[r,'Grp'])))
+        grp =   str(dg.loc[r,'Grp'])[:5] + ' '*(5-len(str(dg.loc[r,'Grp'])[:5]))
         pn  = ' '*(4-len(str(dg.loc[r,'pNew']))) + str(dg.loc[r,'pNew'])
         po  = ' '*(4-len(str(dg.loc[r,'pOld']))) + str(dg.loc[r,'pOld'])
         ba  = ' '*(4-len(str(dg.loc[r,'bbA'])))  + str(dg.loc[r,'bbA'])
@@ -4447,7 +4455,7 @@ def bbstatusdate(g, d, ssn, dt, access): # BB FUNCTIONS
     dept = str()  
     if access not in ('Group','CUL'):
         for r in range(len(dd)):
-            dpt =   str(dd.loc[r,'Dept']) + ' '*(5-len(str(dd.loc[r,'Dept'])))
+            dpt =   str(dd.loc[r,'Dept'])[:5] + ' '*(5-len(str(dd.loc[r,'Dept'])[:5]))
             pn  = ' '*(4-len(str(dd.loc[r,'pNew']))) + str(dd.loc[r,'pNew'])
             po  = ' '*(4-len(str(dd.loc[r,'pOld']))) + str(dd.loc[r,'pOld'])
             ba  = ' '*(4-len(str(dd.loc[r,'bbA'])))  + str(dd.loc[r,'bbA'])

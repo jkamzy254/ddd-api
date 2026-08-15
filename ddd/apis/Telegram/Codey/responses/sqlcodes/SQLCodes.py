@@ -571,10 +571,10 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
     
     name = 'Member' if access == 'IT' else 'MemberCode'
   
-    timevalues = {'today':      ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
-                  'yesterday':  ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
-                  'week':       ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
-                  'lastweek':   ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
+    timevalues = {'today':      ['(SELECT dbo.today())', '(SELECT dbo.tomorrow())', 'Today'],
+                  'yesterday':  ['(SELECT dbo.yesterday())', '(SELECT dbo.today())', 'Yesterday'],
+                  'week':       ['(SELECT dbo.weekstart())', '(SELECT dbo.nextweekstart())', 'This Week'],
+                  'lastweek':   ['(SELECT dbo.lastweekstart())', '(SELECT dbo.weekstart())', 'Last Week'],
                   'season':     [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season'],
                   'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season']}
    
@@ -585,7 +585,7 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
     else:
         sid = f"'{sid}'" # Adding quotes as sometimes sid can be '%' which is a string
         
-    memberQ = f"""SELECT {name}, F, M, PP, P, FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Grp LIKE '{g}'
+    memberQ = f"""SELECT {name}, F, M, PP, P, FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Grp LIKE '{g}'
                   ORDER BY CASE
                   WHEN Title = 'GYJN' THEN 1
                   WHEN Task = 'OEV' AND Title = 'TJN' THEN 2
@@ -596,7 +596,7 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
                   ELSE 7
                   END, MemberCode"""
     
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Grp LIKE '{g}'"
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Grp LIKE '{g}'"
     print(memberQ)
     
     with odbc.connect(conn_str) as conn:
@@ -678,9 +678,9 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
 
         
        
-    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')){taskQ} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')){taskQ} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')){taskQ}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
     # The "Dept In" is necessary to avoid slow SQL execution plans (>1 min) caused by "Dept LIKE 'D[0-9]%'" which assumes 3 rows, but returns about 900 rows
     print(memberQ)
 
@@ -766,10 +766,10 @@ def taskfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
         elif timerange in ('season','lastseason'):
             spc = [7,5,5,4,4,4,'TGW    [  F  |  M  |PP  | P  |FE  ]','Total  ']
 
-    timevalues = {'today':      ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
-                  'yesterday':  ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
-                  'week':       ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
-                  'lastweek':   ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
+    timevalues = {'today':      ['(SELECT dbo.today())', '(SELECT dbo.tomorrow())', 'Today'],
+                  'yesterday':  ['(SELECT dbo.yesterday())', '(SELECT dbo.today())', 'Yesterday'],
+                  'week':       ['(SELECT dbo.weekstart())', '(SELECT dbo.nextweekstart())', 'This Week'],
+                  'lastweek':   ['(SELECT dbo.lastweekstart())', '(SELECT dbo.weekstart())', 'Last Week'],
                   'season':     [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season'],
                   'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season']}
     
@@ -780,10 +780,10 @@ def taskfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
     else:
         sid = f"'{sid}'" # Adding quotes as sometimes sid can be '%' which is a string
        
-    baseQ   = f"{name}, F, M, PP, P, FE FROM CodeyFMPPP({sid}, ({s}), ({e})) s WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    baseQ   = f"{name}, F, M, PP, P, FE FROM CodeyFMPPP({sid}, {s}, {e}) s WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
     memberQ = f"SELECT Grp, {baseQ} ORDER BY GID"
     deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM (SELECT Dept, DID, {baseQ})b GROUP BY Dept, DID ORDER BY DID"
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, ({s}), ({e})) s WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) s WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
     print(deptQ)
     
     with odbc.connect(conn_str) as conn:
@@ -5376,17 +5376,17 @@ def memberpp(timerange,g,sid,ss,access): # BBT FUNCTIONS
     
     name = 'Member' if access == 'IT' else 'MemberCode'
   
-    timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
-                  'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
-                  'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
-                  'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season'],
-                  'lastseason':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season']}
+    timevalues = {'today':     ['(SELECT dbo.today())', '(SELECT dbo.tomorrow())', 'Today'],
+                  'yesterday': ['(SELECT dbo.yesterday())', '(SELECT dbo.today())', 'Yesterday'],
+                  'week':      ['(SELECT dbo.weekstart())', '(SELECT dbo.nextweekstart())', 'This Week'],
+                  'lastweek':  ['(SELECT dbo.lastweekstart())', '(SELECT dbo.weekstart())', 'Last Week'],
+                  'season':    [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season'],
+                  'lastseason':    [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season']}
    
     s,e,title = timevalues[timerange]
         
-    memberQ = f"SELECT {name}, PP FROM CodeyPP('{sid}', ({s}), ({e})) WHERE Grp LIKE '{g}'"
-    totalQ  = f"SELECT SUM(PP)PP FROM CodeyPP('{sid}', ({s}), ({e})) WHERE Grp LIKE '{g}'"
+    memberQ = f"SELECT {name}, PP FROM CodeyPP('{sid}', {s}, {e}) WHERE Grp LIKE '{g}'"
+    totalQ  = f"SELECT SUM(PP)PP FROM CodeyPP('{sid}', {s}, {e}) WHERE Grp LIKE '{g}'"
     print(memberQ)
     
     with odbc.connect(conn_str) as conn:
@@ -5443,17 +5443,17 @@ def deptpp(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
     if timerange == 'season':
         spc = [4,6,6,5,5,5,f'{topleft}[ PP  ]','Tot ']   
 
-    timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
-                  'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
-                  'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
-                  'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season']}
+    timevalues = {'today':     ['(SELECT dbo.today())', '(SELECT dbo.tomorrow())', 'Today'],
+                  'yesterday': ['(SELECT dbo.yesterday())', '(SELECT dbo.today())', 'Yesterday'],
+                  'week':      ['(SELECT dbo.weekstart())', '(SELECT dbo.nextweekstart())', 'This Week'],
+                  'lastweek':  ['(SELECT dbo.lastweekstart())', '(SELECT dbo.weekstart())', 'Last Week'],
+                  'season':    [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season']}
     
     s,e,timetitle = timevalues[timerange]
        
-    memberQ = f"SELECT Grp, SUM(PP)PP FROM CodeyPP('{sid}', ({s}), ({e})) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    deptQ   = f"SELECT Dept, SUM(PP)PP FROM CodeyPP('{sid}', ({s}), ({e})) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")  
-    totalQ  = f"SELECT SUM(PP)PP FROM CodeyPP('{sid}', ({s}), ({e})) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    memberQ = f"SELECT Grp, SUM(PP)PP FROM CodeyPP('{sid}', {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    deptQ   = f"SELECT Dept, SUM(PP)PP FROM CodeyPP('{sid}', {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")  
+    totalQ  = f"SELECT SUM(PP)PP FROM CodeyPP('{sid}', {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
     print(memberQ)
 
     with odbc.connect(conn_str) as conn:
@@ -5526,18 +5526,18 @@ def taskpp(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
         elif timerange == 'season':
             spc = [7,5,5,4,4,4,'TGW    [PP  ]','Total  ']
 
-    timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
-                  'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
-                  'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
-                  'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season']}
+    timevalues = {'today':     ['(SELECT dbo.today())', '(SELECT dbo.tomorrow())', 'Today'],
+                  'yesterday': ['(SELECT dbo.yesterday())', '(SELECT dbo.today())', 'Yesterday'],
+                  'week':      ['(SELECT dbo.weekstart())', '(SELECT dbo.nextweekstart())', 'This Week'],
+                  'lastweek':  ['(SELECT dbo.lastweekstart())', '(SELECT dbo.weekstart())', 'Last Week'],
+                  'season':    [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season']}
     
     s,e,timetitle = timevalues[timerange]
        
-    baseQ   = f"{name}, PP FROM CodeyPP('{sid}', ({s}), ({e})) s WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    baseQ   = f"{name}, PP FROM CodeyPP('{sid}', {s}, {e}) s WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
     memberQ = f"SELECT Grp, {baseQ} ORDER BY GID"
     deptQ   = f"SELECT Dept, SUM(PP)PP FROM (SELECT Dept, DID, {baseQ})b GROUP BY Dept, DID ORDER BY DID"
-    totalQ  = f"SELECT SUM(PP)PP FROM CodeyPP('{sid}', ({s}), ({e})) s WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    totalQ  = f"SELECT SUM(PP)PP FROM CodeyPP('{sid}', {s}, {e}) s WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
     
     print(deptQ)
     
@@ -5586,17 +5586,17 @@ def memberbbt(timerange,g,sid,ss,access): # BBT FUNCTIONS
     
     name = 'Member' if access == 'IT' else 'MemberCode'
   
-    timevalues = {'today':     ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
-                  'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
-                  'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
-                  'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                  'season':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season'],
-                  'lastseason':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season']}
+    timevalues = {'today':     ['(SELECT dbo.today())', '(SELECT dbo.tomorrow())', 'Today'],
+                  'yesterday': ['(SELECT dbo.yesterday())', '(SELECT dbo.today())', 'Yesterday'],
+                  'week':      ['(SELECT dbo.weekstart())', '(SELECT dbo.nextweekstart())', 'This Week'],
+                  'lastweek':  ['(SELECT dbo.lastweekstart())', '(SELECT dbo.weekstart())', 'Last Week'],
+                  'season':    [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season'],
+                  'lastseason':    [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season']}
    
     s,e,title = timevalues[timerange]
         
-    memberQ = f"SELECT {name}, PP, P, FE, CL, CT FROM CodeyFMPPPBBT('{sid}', ({s}), ({e})) WHERE Grp LIKE '{g}'"
-    totalQ  = f"SELECT SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', ({s}), ({e})) WHERE Grp LIKE '{g}'"
+    memberQ = f"SELECT {name}, PP, P, FE, CL, CT FROM CodeyFMPPPBBT('{sid}', {s}, {e}) WHERE Grp LIKE '{g}'"
+    totalQ  = f"SELECT SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', {s}, {e}) WHERE Grp LIKE '{g}'"
     print(memberQ)
     
     with odbc.connect(conn_str) as conn:
@@ -5651,17 +5651,17 @@ def deptbbt(timerange,d,sid,ss,access,bbtdept): # BBT FUNCTIONS
     if timerange == 'season':
         spc = [4,6,6,5,5,5,f'Grp [  PP  |   P  | FE  | CL  | CT  ]','Tot ']
 
-    timevalues = {'today':   ['SELECT dbo.today()', 'SELECT dbo.tomorrow()', 'Today'],
-                'yesterday': ['SELECT dbo.yesterday()', 'SELECT dbo.today()', 'Yesterday'],
-                'week':      ['SELECT dbo.weekstart()', 'SELECT dbo.nextweekstart()', 'This Week'],
-                'lastweek':  ['SELECT dbo.lastweekstart()', 'SELECT dbo.weekstart()', 'Last Week'],
-                'season':    [f"'{ss}'", 'SELECT dbo.tomorrow()', 'EV Season']}
+    timevalues = {'today':   ['(SELECT dbo.today())', '(SELECT dbo.tomorrow())', 'Today'],
+                'yesterday': ['(SELECT dbo.yesterday())', '(SELECT dbo.today())', 'Yesterday'],
+                'week':      ['(SELECT dbo.weekstart())', '(SELECT dbo.nextweekstart())', 'This Week'],
+                'lastweek':  ['(SELECT dbo.lastweekstart())', '(SELECT dbo.weekstart())', 'Last Week'],
+                'season':    [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season']}
     
     s,e,timetitle = timevalues[timerange]
     
-    memberQ = f"SELECT Grp, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', ({s}), ({e})) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    deptQ   = f"SELECT Dept, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', ({s}), ({e})) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    totalQ  = f"SELECT SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', ({s}), ({e})) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    memberQ = f"SELECT Grp, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    deptQ   = f"SELECT Dept, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    totalQ  = f"SELECT SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
     print(memberQ)
 
     with odbc.connect(conn_str) as conn:

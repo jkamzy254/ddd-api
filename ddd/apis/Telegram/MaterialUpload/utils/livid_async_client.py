@@ -47,6 +47,13 @@ DEFAULT_APPEARANCE = {
 }
 
 
+def _by_name(folders: list[dict]) -> list[dict]:
+    """Case-insensitive A-Z sort. We also ask the API for ascending order, but
+    its sort is case-sensitive (all uppercase names come before lowercase ones),
+    so re-sort locally to get a listing that reads alphabetically."""
+    return sorted(folders, key=lambda f: (f.get("name") or "").lower())
+
+
 @dataclass
 class VideoPreview:
     id: str
@@ -88,14 +95,21 @@ class AsyncLividClient:
     # ---------- folders ----------
 
     async def list_folders(self) -> list[dict]:
-        r = await self.client.get(f"{API_BASE}/v2/folders", params={"orderByField": "name", "orderByDirection": "desc"})
+        r = await self.client.get(f"{API_BASE}/v2/folders", params={"orderByField": "name", "orderByDirection": "asc"})
         raise_for_status(r)
-        return r.json()["childFolders"]["folders"]
+        return _by_name(r.json()["childFolders"]["folders"])
 
     async def get_folder(self, folder_id: str) -> dict:
-        r = await self.client.get(f"{API_BASE}/v2/folders/{folder_id}", params={"orderByField": "name", "orderByDirection": "desc"})
+        """Returns {"folder": {...}, "childFolders": {"folders": [...]}}. The
+        child folders are sorted A-Z here so every caller (get_folder and
+        list_subfolders alike) gets the same alphabetical listing."""
+        r = await self.client.get(f"{API_BASE}/v2/folders/{folder_id}", params={"orderByField": "name", "orderByDirection": "asc"})
         raise_for_status(r)
-        return r.json()
+        data = r.json()
+        child = data.get("childFolders") or {}
+        if isinstance(child.get("folders"), list):
+            child["folders"] = _by_name(child["folders"])
+        return data
 
     async def list_subfolders(self, folder_id: str) -> list[dict]:
         data = await self.get_folder(folder_id)
@@ -104,9 +118,10 @@ class AsyncLividClient:
     # ---------- videos: read ----------
 
     async def list_videos(self, folder_id: str) -> list[VideoPreview]:
-        r = await self.client.get(f"{API_BASE}/v1/videos/previews", params={"folderId": folder_id, "orderByField": "title", "orderByDirection": "desc"})
+        r = await self.client.get(f"{API_BASE}/v1/videos/previews", params={"folderId": folder_id, "orderByField": "title", "orderByDirection": "asc"})
         raise_for_status(r)
-        return [VideoPreview.from_json(v) for v in r.json()["videoPreviews"]]
+        videos = [VideoPreview.from_json(v) for v in r.json()["videoPreviews"]]
+        return sorted(videos, key=lambda v: v.title.lower())
 
     async def find_video(self, folder_id: str, video_id: str) -> Optional[VideoPreview]:
         for v in await self.list_videos(folder_id):

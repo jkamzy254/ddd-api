@@ -1,6 +1,12 @@
 """
 Telegram bot for uploading/managing videos on Livid.
 
+Two entry points, both ending on the same Embed / Database / Rename / Privacy
+action menu:
+
+    send a video  -- pick a target folder, upload it, then act on it
+    /browse       -- walk the folder tree, list a folder's videos, pick one
+
 This file is just the Telegram wiring -- menus, handlers, and the upload
 orchestration. The pieces it builds on live in sibling modules:
 
@@ -41,6 +47,7 @@ from utils.livid_async_client import (
     API_BASE,
 )
 from utils.bot_db import run_video_upload_proc
+from utils import folder_policies
 
 # Load this project's .env regardless of the working directory (so the bot
 # works when launched from a Django management command in another package).
@@ -58,7 +65,12 @@ PAGE_SIZE = 8  # folder/video buttons per page (Telegram caps inline keyboards)
 VIDEO_EXTS = (".mp4", ".mov", ".mkv", ".webm", ".avi")
 
 # --- Global State ---
-user_uploads = {}
+# One session per user, keyed by Telegram user id. Two kinds share this dict:
+#   mode="upload"  -- started by sending a video; carries the pending media.
+#   mode="browse"  -- started by /browse; no media, just folder navigation.
+# Once a video is selected (uploaded, or picked from a folder listing) both
+# kinds carry video_id/slug/title and drive the same action menu.
+user_sessions = {}
 # The client is created inside build_bot()/main() (not at import time) so this
 # module can be imported with no side effects and no credentials -- which is
 # what lets main() be launched from a multiprocessing.Process like the other
@@ -165,13 +177,27 @@ def _pagination_row(page: int, pages: int, prefix: str) -> Optional[list]:
     return row
 
 
-async def _folder_menu(folder_id: Optional[str], client: AsyncLividClient, page: int = 0) -> tuple[str, list]:
+async def _folder_menu(
+    folder_id: Optional[str], client: AsyncLividClient, page: int = 0,
+    mode: str = "upload", detail: Optional[dict] = None,
+) -> tuple[str, list]:
+    """Folder listing, alphabetical. In upload mode the current folder offers
+    '💾 Save here'; in browse mode it offers '📹 Videos (n)' instead.
+
+    `detail` lets a caller that already fetched GET /v2/folders/{id} hand it in
+    rather than making the same request a second time.
+    """
+    video_count = 0
     if folder_id is None:
         folders = await client.list_folders()
-        header = "📁 Choose a folder to upload into:"
+        header = ("📁 Choose a folder to upload into:" if mode == "upload"
+                  else "📁 Browse folders:")
     else:
-        folders = await client.list_subfolders(folder_id)
-        header = "📁 Save here, or go into a subfolder:"
+        detail = detail or await client.get_folder(folder_id)
+        folders = detail["childFolders"]["folders"]
+        video_count = detail["folder"]["_count"]["videos"]
+        header = ("📁 Save here, or go into a subfolder:" if mode == "upload"
+                  else f"📁 {detail['folder']['name']}")
 
     total = len(folders)
     pages = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
@@ -181,7 +207,12 @@ async def _folder_menu(folder_id: Optional[str], client: AsyncLividClient, page:
 
     rows = []
     if folder_id is not None:
-        rows.append([Button.inline("💾 Save here", data=f"savehere:{folder_id}".encode('utf-8'))])
+        if mode == "upload":
+            rows.append([Button.inline("💾 Save here", data=f"savehere:{folder_id}".encode('utf-8'))])
+        elif video_count:
+            # Only the page number rides in the data; the folder being listed is
+            # always session['stack'][-1].
+            rows.append([Button.inline(f"📹 Videos ({video_count})", data=b"bvideos:0")])
 
     for f in chunk:
         label = f["name"] + (f" ({f['_count']['videos']})" if f["_count"]["videos"] else "")
@@ -195,9 +226,52 @@ async def _folder_menu(folder_id: Optional[str], client: AsyncLividClient, page:
         rows.append([Button.inline("⬅️ Back", data=b"back")])
 
     text = header
+    if mode == "browse" and folder_id is not None and not folders and not video_count:
+        text += "\n(this folder is empty)"
     if total > PAGE_SIZE:
         text += f"\n(folders {start + 1}-{start + len(chunk)} of {total})"
     return text, rows
+
+
+def _browse_video_menu(session: dict, page: int = 0) -> tuple[str, list]:
+    """Paginated listing of a folder's videos (browse mode). Reads the cached
+    list from session['browse_videos'] so paging doesn't refetch."""
+    videos = session.get("browse_videos", [])
+    if not videos:
+        return "This folder has no videos.", [[Button.inline("⬅️ Back", data=b"bfback")]]
+
+    total = len(videos)
+    pages = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
+    page = max(0, min(page, pages - 1))
+    session["browse_page"] = page
+    start = page * PAGE_SIZE
+    chunk = videos[start:start + PAGE_SIZE]
+
+    rows = [[Button.inline(v.title[:60], data=f"bvid:{v.id}".encode('utf-8'))] for v in chunk]
+    page_row = _pagination_row(page, pages, "bvpage")
+    if page_row:
+        rows.append(page_row)
+    rows.append([Button.inline("⬅️ Back", data=b"bfback")])
+
+    text = "🎬 Pick a video:"
+    if total > PAGE_SIZE:
+        text += f"\n(videos {start + 1}-{start + len(chunk)} of {total})"
+    return text, rows
+
+
+async def _show_browse_videos(event, session: dict, client: AsyncLividClient,
+                              page: int = 0, refetch: bool = False) -> None:
+    """Render the video list for whichever folder the user is currently in."""
+    folder_id = session["stack"][-1] if session.get("stack") else None
+    if folder_id is None:
+        await event.edit("Open a folder first.")
+        return
+    # Fetch on entry, and whenever the cache belongs to a different folder.
+    if refetch or session.get("browse_folder") != folder_id:
+        session["browse_videos"] = await client.list_videos(folder_id)
+        session["browse_folder"] = folder_id
+    text, buttons = _browse_video_menu(session, page)
+    await event.edit(text, buttons=buttons)
 
 
 def _replace_menu(upload: dict, page: int = 0) -> tuple[str, list]:
@@ -222,12 +296,24 @@ def _replace_menu(upload: dict, page: int = 0) -> tuple[str, list]:
     return text, rows
 
 
-def _action_buttons() -> list:
-    return [
+def _action_buttons(session: Optional[dict] = None) -> list:
+    """The Embed / Database / Rename / Privacy menu. Identical for an
+    just-uploaded video and one picked out of a folder via /browse -- the only
+    difference is that browse mode gets a route back to the video list."""
+    rows = [
         [Button.inline("🔗 Embed", b"output:embed"), Button.inline("🗂 Database", b"output:download")],
         [Button.inline("✏️ Rename", b"act:rename"), Button.inline("🔒 Privacy", b"act:privacy")],
-        [Button.inline("✅ Done", b"act:done")],
     ]
+    if (session or {}).get("mode") == "browse":
+        rows.append([Button.inline("⬅️ Videos", data=b"bvback"), Button.inline("✅ Done", b"act:done")])
+    else:
+        rows.append([Button.inline("✅ Done", b"act:done")])
+    return rows
+
+
+def _action_text(session: dict) -> str:
+    title = session.get("title") or "this video"
+    return f"🎬 {title}\n\nWhat would you like to do?"
 
 
 async def _target_folder_chosen(event, folder_id: str, upload: dict) -> None:
@@ -348,15 +434,21 @@ async def _run_upload(event, upload: dict, folder_id: Optional[str], version_of_
     upload["title"] = title
 
     # Kick off automatic post-processing (wait for transcoding, then apply the
-    # default appearance and queue a transcript) so the menu shows immediately.
-    asyncio.create_task(_auto_post_process(event.sender_id, video_id, title))
+    # default appearance, the folder's privacy policy, and queue a transcript)
+    # so the menu shows immediately. Folder policies only apply to NEW uploads;
+    # a replacement keeps whatever privacy the video already had.
+    asyncio.create_task(_auto_post_process(
+        event.sender_id, video_id, title,
+        folder_id=upload.get("target_folder_id"),
+        is_new=folder_id is not None,
+    ))
 
     await event.edit(
         "✅ Upload complete!\n"
         "⏳ Appearance + transcript will be applied automatically once "
         "transcoding finishes.\n\n"
         "Meanwhile, what would you like to do?",
-        buttons=_action_buttons(),
+        buttons=_action_buttons(upload),
     )
 
 
@@ -376,9 +468,13 @@ async def _ensure_embeddable(client: AsyncLividClient, video_id: str) -> tuple[s
     return detail.get("slug") or video_id, detail.get("title") or ""
 
 
-async def _auto_post_process(user_id: int, video_id: str, title: str) -> None:
+async def _auto_post_process(
+    user_id: int, video_id: str, title: str,
+    folder_id: Optional[str] = None, is_new: bool = True,
+) -> None:
     """Runs after upload: wait for transcoding, then apply the default
-    appearance and queue a transcript. Reports progress in its own message."""
+    appearance, the folder's privacy policy (LividFolderTable), and queue a
+    transcript. Reports progress in its own message."""
     client = get_client()
     try:
         status_msg = await bot.send_message(
@@ -416,6 +512,26 @@ async def _auto_post_process(user_id: int, video_id: str, title: str) -> None:
         log.exception("auto appearance failed")
         lines.append(f"⚠️ Appearance failed: {exc}")
 
+    # Folder privacy policy (LividFolderTable): Password set -> inherit it;
+    # row with NULL password -> unlisted; no row -> leave Livid's default.
+    # Only new uploads inherit -- replacements keep their existing privacy.
+    if is_new and folder_id:
+        try:
+            policy = await folder_policies.get_policy(folder_id)
+            if policy is None:
+                pass  # no policy for this folder (or SQL unreachable -- logged)
+            elif policy.password:
+                # Same two-step PUT the web app does: mode first, then password.
+                await client.update_video(video_id, privacyPage="password", embedEnabled=True)
+                await client.update_video(video_id, privacyPassword=policy.password)
+                lines.append(f"🔑 Folder policy: password-protected ('{policy.name}').")
+            else:
+                await client.set_privacy(video_id, "unlisted", embed_enabled=True)
+                lines.append(f"🔗 Folder policy: unlisted ('{policy.name}').")
+        except Exception as exc:
+            log.exception("folder policy failed")
+            lines.append(f"⚠️ Folder policy failed: {exc}")
+
     # A transcript needs the encoded media, so only queue it once encoding is
     # confirmed done.
     if encode_ok:
@@ -434,7 +550,29 @@ async def _auto_post_process(user_id: int, video_id: str, title: str) -> None:
 # ---------- handlers ----------
 
 async def start(event):
-    await event.respond("Send me a video file and I'll stream it straight to Livid without downloading it locally.")
+    await event.respond(
+        "Send me a video file and I'll stream it straight to Livid without "
+        "downloading it locally.\n\n"
+        "/browse — open the folder tree to find an existing video and grab its "
+        "embed code, save it to the database, rename it, or change its privacy.\n"
+        "/reload — re-read the Livid session token after running auth.py."
+    )
+
+
+@_guard
+async def browse(event):
+    """Browse existing videos without uploading anything: walk the folder tree,
+    list a folder's videos, pick one, and use the same action menu an upload
+    ends on."""
+    try:
+        client = get_client()
+    except Exception as exc:
+        await event.reply(f"⚠️ {exc}")
+        return
+    user_sessions[event.sender_id] = {"mode": "browse", "stack": []}
+    status = await event.reply("🔄 Fetching folders...")
+    text, buttons = await _folder_menu(None, client, mode="browse")
+    await status.edit(text, buttons=buttons)
 
 
 async def reload_session(event):
@@ -475,7 +613,8 @@ async def handle_incoming_file(event):
     ext = Path(actual_name).suffix or ".mp4"
     file_name = f"{title}{ext}"
 
-    user_uploads[event.sender_id] = {
+    user_sessions[event.sender_id] = {
+        "mode": "upload",
         "media": message.media,
         "size": message.file.size,
         "content_type": message.file.mime_type or "video/mp4",
@@ -498,29 +637,34 @@ async def handle_incoming_file(event):
 async def handle_text_input(event):
     """Captures the free-text replies for the Rename / Password flows."""
     user_id = event.sender_id
-    upload = user_uploads.get(user_id)
-    if not upload or not upload.get("awaiting") or not upload.get("video_id"):
+    session = user_sessions.get(user_id)
+    if not session or not session.get("awaiting") or not session.get("video_id"):
         return  # not waiting on anything -- ignore
 
-    awaiting = upload.pop("awaiting")
+    awaiting = session.pop("awaiting")
     text = event.raw_text.strip()
     client = get_client()
-    video_id = upload["video_id"]
+    video_id = session["video_id"]
 
     try:
         if awaiting == "rename":
             await client.update_video(video_id, title=text)
-            upload["title"] = text
-            await event.reply(f"✏️ Renamed to: {text}", buttons=_action_buttons())
+            session["title"] = text
+            # Keep the cached browse listing in step with the new title.
+            for v in session.get("browse_videos", []):
+                if v.id == video_id:
+                    v.title = text
+                    break
+            await event.reply(f"✏️ Renamed to: {text}", buttons=_action_buttons(session))
         elif awaiting == "password":
             await client.set_password(video_id, text)
             await event.reply(
                 "🔑 Password set — the video is now password-protected.",
-                buttons=_action_buttons(),
+                buttons=_action_buttons(session),
             )
     except Exception as exc:
         log.exception("%s failed", awaiting)
-        await event.reply(f"⚠️ Couldn't apply {awaiting}: {exc}", buttons=_action_buttons())
+        await event.reply(f"⚠️ Couldn't apply {awaiting}: {exc}", buttons=_action_buttons(session))
 
 
 @_guard
@@ -529,11 +673,15 @@ async def folder_callback(event):
     await event.answer()
 
     user_id = event.sender_id
-    if user_id not in user_uploads:
-        await event.answer("No active upload session. Send a video first.", alert=True)
+    if user_id not in user_sessions:
+        await event.answer(
+            "No active session. Send a video to upload, or /browse existing ones.",
+            alert=True,
+        )
         return
 
-    upload = user_uploads[user_id]
+    upload = user_sessions[user_id]
+    mode = upload.get("mode", "upload")
     data = event.data.decode('utf-8')
     client = get_client()
 
@@ -543,14 +691,22 @@ async def folder_callback(event):
     elif data.startswith("nav:"):
         folder_id = data.split(":", 1)[1]
         detail = await client.get_folder(folder_id)
-        child_count = detail["folder"]["_count"]["childFolders"]
+        counts = detail["folder"]["_count"]
         upload["stack"].append(folder_id)
         upload["folder_page"] = 0  # entering a new level starts at page 1
 
-        if child_count == 0:
+        if mode == "browse":
+            # A leaf folder that holds videos goes straight to the listing --
+            # its folder menu would only be the Videos button and Back.
+            if counts["childFolders"] == 0 and counts["videos"]:
+                await _show_browse_videos(event, upload, client, refetch=True)
+            else:
+                text, buttons = await _folder_menu(folder_id, client, mode=mode, detail=detail)
+                await event.edit(text, buttons=buttons)
+        elif counts["childFolders"] == 0:
             await _target_folder_chosen(event, folder_id, upload)
         else:
-            text, buttons = await _folder_menu(folder_id, client)
+            text, buttons = await _folder_menu(folder_id, client, mode=mode, detail=detail)
             await event.edit(text, buttons=buttons)
 
     elif data == "back":
@@ -558,15 +714,45 @@ async def folder_callback(event):
             upload["stack"].pop()
         upload["folder_page"] = 0
         parent = upload["stack"][-1] if upload["stack"] else None
-        text, buttons = await _folder_menu(parent, client)
+        text, buttons = await _folder_menu(parent, client, mode=mode)
         await event.edit(text, buttons=buttons)
 
     elif data.startswith("page:"):
         page = int(data.split(":", 1)[1])
         upload["folder_page"] = page
         current = upload["stack"][-1] if upload["stack"] else None
-        text, buttons = await _folder_menu(current, client, page=page)
+        text, buttons = await _folder_menu(current, client, page=page, mode=mode)
         await event.edit(text, buttons=buttons)
+
+    # ----- browse mode: folder -> video list -> action menu -----
+
+    elif data.startswith("bvideos:"):
+        page = int(data.split(":", 1)[1])
+        await _show_browse_videos(event, upload, client, page=page, refetch=True)
+
+    elif data.startswith("bvpage:"):
+        page = int(data.split(":", 1)[1])
+        await _show_browse_videos(event, upload, client, page=page)
+
+    elif data == "bvback":
+        # Action menu -> back to the video list we came from.
+        await _show_browse_videos(event, upload, client, page=upload.get("browse_page", 0))
+
+    elif data == "bfback":
+        # Video list -> back to the folder menu (without leaving the folder).
+        current = upload["stack"][-1] if upload["stack"] else None
+        text, buttons = await _folder_menu(
+            current, client, page=upload.get("folder_page", 0), mode=mode
+        )
+        await event.edit(text, buttons=buttons)
+
+    elif data.startswith("bvid:"):
+        video_id = data.split(":", 1)[1]
+        video = next((v for v in upload.get("browse_videos", []) if v.id == video_id), None)
+        upload["video_id"] = video_id
+        upload["slug"] = video.slug if video else video_id
+        upload["title"] = video.title if video else "(unknown)"
+        await event.edit(_action_text(upload), buttons=_action_buttons(upload))
 
     elif data.startswith("savehere:"):
         folder_id = data.split(":", 1)[1]
@@ -645,14 +831,14 @@ async def folder_callback(event):
             await event.edit(
                 "✅ Saved to the database:\n"
                 f"• Name: {name}\n• LinkID: {link_id}\n• Category: {category}",
-                buttons=_action_buttons(),
+                buttons=_action_buttons(upload),
             )
         except Exception as exc:
             log.exception("spHSPVideoUpload failed")
-            await event.edit(f"⚠️ Database save failed: {exc}", buttons=_action_buttons())
+            await event.edit(f"⚠️ Database save failed: {exc}", buttons=_action_buttons(upload))
 
     elif data == "act:menu":
-        await event.edit("What would you like to do?", buttons=_action_buttons())
+        await event.edit(_action_text(upload), buttons=_action_buttons(upload))
 
     elif data == "act:rename":
         upload["awaiting"] = "rename"
@@ -676,10 +862,10 @@ async def folder_callback(event):
             # web app: public was sent together with embedEnabled=true).
             embed = True if level in ("public", "unlisted") else None
             await client.set_privacy(upload["video_id"], level, embed_enabled=embed)
-            await event.edit(f"🔒 Visibility set to '{level}'.", buttons=_action_buttons())
+            await event.edit(f"🔒 Visibility set to '{level}'.", buttons=_action_buttons(upload))
         except Exception as exc:
             log.exception("set_privacy failed")
-            await event.edit(f"⚠️ Couldn't set privacy: {exc}", buttons=_action_buttons())
+            await event.edit(f"⚠️ Couldn't set privacy: {exc}", buttons=_action_buttons(upload))
 
     elif data == "priv:password":
         upload["awaiting"] = "password"
@@ -690,7 +876,7 @@ async def folder_callback(event):
 
     elif data == "act:done":
         await event.edit(f"✅ All set — '{upload['title']}' is ready.")
-        del user_uploads[user_id]
+        del user_sessions[user_id]
 
 
 # ---------- startup ----------
@@ -706,6 +892,7 @@ def build_bot() -> TelegramClient:
     bot = TelegramClient(session_path, API_ID, API_HASH)
 
     bot.add_event_handler(start, events.NewMessage(pattern='/start'))
+    bot.add_event_handler(browse, events.NewMessage(pattern='/browse'))
     bot.add_event_handler(reload_session, events.NewMessage(pattern='/reload'))
     bot.add_event_handler(handle_incoming_file, events.NewMessage(func=lambda e: e.video or e.document))
     bot.add_event_handler(handle_text_input, events.NewMessage(

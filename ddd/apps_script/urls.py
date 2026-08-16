@@ -7,6 +7,7 @@ from .views import ct_attendance as ca
 from .views import edu_player as ep
 from .views import edu_dept_bbt as eb
 from .views import tribe_exam as ex
+from .views import sept_exam as se
 from .views import mlt as mlt
 from .views import ev_dept_admin as ev
 from django.views.generic.base import TemplateView
@@ -106,5 +107,12 @@ urlpatterns = [
 	path('evGetMember/', ev.GetMemberViewSet.as_view()),
 	path('evCheckHistory/', ev.FMPCheckFruitHistoryViewSet.as_view()),
 	path('evUnlockFruit/', ev.FMPUnlockFruitViewSet.as_view()), 
+ 
+	#Sept Exam System
+	path('sepExamGetMember/', se.GetMemberViewSet.as_view()),
+	path('sepExamGetGroupView/', se.GetGroupViewSet.as_view()),
+	path('sepExamGetMyGroup/', se.GetMyGroupViewSet.as_view()),
+	path('sepExamUpdateScore/', se.UpdateExamScoreViewSet.as_view()),
+	path('sepExamUpdateScoreSheets/', se.UpdateExamScoreSheetsViewSet.as_view()),
  
 ]

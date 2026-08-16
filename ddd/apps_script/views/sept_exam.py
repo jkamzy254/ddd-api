@@ -15,7 +15,7 @@ class GetMemberViewSet(APIView):
         
         try:
             with connection.cursor() as cursor:
-                cursor.execute("EXEC spExamAppsScriptLogin @Username = %s, @Password = %s",[username, password])
+                cursor.execute("EXEC spSeptExamAppsScriptLogin @Username = %s, @Password = %s",[username, password])
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 
             if len(result) == 0:
@@ -24,6 +24,7 @@ class GetMemberViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         
         except Exception as e:
+            print(str(e))
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class GetGroupViewSet(APIView):
@@ -33,8 +34,8 @@ class GetGroupViewSet(APIView):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(f"""SELECT M.*, E.Score, E.Reason, E.ReportDate 
-                                    FROM MembersGetGroupViewFunction('{uid}') M 
-                                    LEFT JOIN (Select * From ExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
+                                    FROM MembersGetSeptExamGrpFunction('{uid}') M 
+                                    LEFT JOIN (Select * From SeptExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
                                """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
@@ -51,7 +52,7 @@ class GetMyGroupViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute(f"""SELECT M.*, E.Score, E.Reason, E.ReportDate 
                                     FROM MembersGetMyGroupFunction('{uid}') M 
-                                    LEFT JOIN (Select * From ExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
+                                    LEFT JOIN (Select * From SeptExamResultsTable WHERE ExamID = {examid}) E ON E.UID = M.UID ORDER BY GID, Pos, ID
                                """)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
@@ -72,7 +73,7 @@ class UpdateExamScoreViewSet(APIView):
         try:
             with connection.cursor() as cursor:
                 
-                cursor.execute(f"EXEC spExamReportScore @ExamID = {examid}, @UID = '{uid}', @Score = {score}, @Reason = '{reason}', @Reporter = '{reporter}'")
+                cursor.execute(f"EXEC spSeptExamReportScore @ExamID = {examid}, @UID = '{uid}', @Score = {score}, @Reason = '{reason}', @Reporter = '{reporter}'")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 
             return Response(result, status=status.HTTP_200_OK)
@@ -92,7 +93,7 @@ class UpdateExamScoreSheetsViewSet(APIView):
         try:
             with connection.cursor() as cursor:
                 
-                cursor.execute(f"EXEC spExamReportScore @ExamID = {examid}, @EVID = '{evid}', @Score = {score}, @Reason = '{reason}', @Reporter = '{reporter}'")
+                cursor.execute(f"EXEC spSeptExamReportScore @ExamID = {examid}, @EVID = '{evid}', @Score = {score}, @Reason = '{reason}', @Reporter = '{reporter}'")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
                 
             return Response(result, status=status.HTTP_200_OK)

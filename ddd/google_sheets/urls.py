@@ -5,7 +5,8 @@ from .views import new_bbt_data as nbd
 from .views import ct_student_ev as cse
 from .views import cct_edu as ce
 from .views import fruit_basket as fb
-from .views import edu_reporting_data as erd
+from .views import edu_reporting_data as ed
+from .views import ev_reporting_data as ev
 from django.views.generic.base import TemplateView
 
 from django.urls import path
@@ -50,8 +51,11 @@ urlpatterns = [
 	path('getBBStats/', fb.GetBBStatsViewSet.as_view()),
  
 	#Edu Reporting Data
-	path('getWeeklyAttendance/', erd.GetEduWeeklyAttendanceViewSet.as_view()),
-	path('getHSPWeeklySessions/', erd.GetHSPEduWeeklySessionsViewSet.as_view()),
-	path('getHSPSessionScores/', erd.GetHSPEduSessionScoresViewSet.as_view()),
+	path('getWeeklyAttendance/', ed.GetEduWeeklyAttendanceViewSet.as_view()),
+	path('getHSPWeeklySessions/', ed.GetHSPEduWeeklySessionsViewSet.as_view()),
+	path('getHSPSessionScores/', ed.GetHSPEduSessionScoresViewSet.as_view()),
+ 
+	#EV Reporting Data
+	path('getSFTPerformance/', ev.GetSFTPerformanceViewSet.as_view()),
  
 ]

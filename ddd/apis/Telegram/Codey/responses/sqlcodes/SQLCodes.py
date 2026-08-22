@@ -650,8 +650,8 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
                   'dept'   : [''       , ''            ],
                   'youth'  : [''       , ''            ],
                   'mw'     : [''       , ''            ],
-                  'tgw'    : [' TGW'   , " AND Title IN ('TJN','GYJN')"],
-                  'member' : [' Member', " AND (Title IS NULL OR Title NOT IN ('TJN','GYJN'))"]}
+                  'tgw'    : [' TGW'   , " AND Title IN ('TJN','GYJN','GGN')"],
+                  'member' : [' Member', " AND (Title IS NULL OR Title NOT IN ('TJN','GYJN','GGN'))"]}
     tasktitle = taskvalues[task][0]
     taskQ = taskvalues[task][1]
   
@@ -5431,8 +5431,8 @@ def deptpp(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
         task = 'youth'
     
     taskvalues = {'youth' : [''       , ''            ],
-                  'tgw'   : [' TGW'   , " AND Title IN ('TJN','GYJN')"],
-                  'member': [' Member', " AND (Title IS NULL OR Title NOT IN ('TJN','GYJN'))"]}
+                  'tgw'   : [' TGW'   , " AND Title IN ('TJN','GYJN','GGN')"],
+                  'member': [' Member', " AND (Title IS NULL OR Title NOT IN ('TJN','GYJN','GGN'))"]}
     tasktitle = taskvalues[task][0]
     taskQ = taskvalues[task][1]
   

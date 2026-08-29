@@ -24,15 +24,15 @@ async def get_scores(excel):
 
     excel_out = await sync_to_async(get_excel)(exam_rec, recs)
     score_text = await sync_to_async(get_text)(recs)
-    chart_out = await sync_to_async(get_chart)(exam_rec)
+    # chart_out = await sync_to_async(get_chart)(exam_rec)
     excel_out.append(score_text)
-    excel_out.append(chart_out)
+    # excel_out.append(chart_out)
     
     return excel_out
 
 def get_db_exam():
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM SeptExamListTable WHERE DATEADD(Week,1 , ExamDate) > GETDATE()")
+        cursor.execute("SELECT * FROM SeptExamView")
         # Get column names immediately after execution
         columns = [column[0] for column in cursor.description]
 
@@ -48,7 +48,7 @@ def get_db_exam():
         
 def get_db_recs(exam_id):
     with connection.cursor() as cursor:
-        sql = "SELECT * FROM HSPExamNotPassedFunction(%s) Order By ODID, GID, Pos, ID"
+        sql = "SELECT * FROM SeptExamNotPassedFunction(%s) Order By ODID, GID, Pos, ID"
         cursor.execute(sql, [exam_id])
         recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
     return recs
@@ -95,7 +95,7 @@ def get_excel(exam_rec, recs):
     ws["A1"] = exam_title
     
     with connection.cursor() as cursor:
-        sql = "SELECT * FROM HSPExamResultsTable WHERE ExamID = %s"
+        sql = "SELECT * FROM SeptExamResultsTable WHERE ExamID = %s"
         cursor.execute(sql, [exam_rec.get('ID')])
         erecs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
     
@@ -147,7 +147,7 @@ def get_chart(exam_rec):
     exam_id = exam_rec['ID'] 
     exam_name = exam_rec['ExamName'] 
     with connection.cursor() as cursor:
-        sql = "SELECT * FROM HSPExamPassRateFunction(%s) Order By ODID"
+        sql = "SELECT * FROM SeptExamPassRateFunction(%s) Order By ODID"
         cursor.execute(sql, [exam_id])
         recs = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 

@@ -2,7 +2,7 @@ from dotenv import load_dotenv, find_dotenv
 import os
 load_dotenv(find_dotenv())
 
-from .responses import general as g, scheduled as s, hsp as h
+from .responses import general as g, scheduled as s, hsp as h, sep as sp
 import warnings
 import logging
 
@@ -117,7 +117,7 @@ async def get_hsp_excel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     )
     
 async def get_sep_excel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    file_path, exam_title, file_name, score_txt, chart_path = await h.get_scores('Yes')
+    file_path, exam_title, file_name, score_txt, chart_path = await sp.get_scores('Yes')
 
     # Send the exam title and progress message last
     await update.message.reply_text(

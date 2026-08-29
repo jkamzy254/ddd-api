@@ -36,7 +36,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text("Help!")
 
 async def get_excel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    file_path, exam_title, file_name, score_txt = await g.get_scores('Yes')
+    file_path, exam_title, file_name, score_txt, chart_path = await g.get_scores('Yes')
 
     # Send the exam title and progress message last
     await update.message.reply_text(
@@ -65,11 +65,11 @@ async def get_excel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
     
     
-    # await update.message.reply_photo(
-    #     photo=open(chart_path, "rb"),
-    #     caption=f"<b>{exam_title}</b>\n📊 Exam Summary by Department",
-    #     parse_mode='HTML'
-    # )
+    await update.message.reply_photo(
+        photo=open(chart_path, "rb"),
+        caption=f"<b>{exam_title}</b>\n📊 Exam Summary by Department",
+        parse_mode='HTML'
+    )
 
     # Send the Excel file with custom download name
     with open(file_path, "rb") as f:
@@ -117,7 +117,7 @@ async def get_hsp_excel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     )
     
 async def get_sep_excel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    file_path, exam_title, file_name, score_txt, chart_path = await sp.get_scores('Yes')
+    file_path, exam_title, file_name, score_txt = await sp.get_scores('Yes')
 
     # Send the exam title and progress message last
     await update.message.reply_text(
@@ -142,13 +142,6 @@ async def get_sep_excel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     # Send confirmation message
     await update.message.reply_text(
         f"<b>{exam_title}</b>\nPreparing your report...",
-        parse_mode='HTML'
-    )
-    
-    
-    await update.message.reply_photo(
-        photo=open(chart_path, "rb"),
-        caption=f"<b>{exam_title}</b>\n📊 Exam Summary by Department",
         parse_mode='HTML'
     )
 

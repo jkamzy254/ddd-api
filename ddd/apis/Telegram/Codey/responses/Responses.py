@@ -68,7 +68,7 @@ def bot_responses(id, tname, input_text):
             try:
                 print('//')
                 command, d = user_message.split('//')
-                d = d.capitalize() if d.startswith('d') else d.replace('sft', 'SFT').replace('inner', 'Inner')
+                d = d.capitalize().replace('sft', 'SFT')
                 d = {'youth': 'D[0-9]%',
                      'mw': 'MW[0-9]%',
                      'church': '%'}.get(d.lower(), d)
@@ -88,7 +88,7 @@ def bot_responses(id, tname, input_text):
         else:
             command = user_message
 
-    elif access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT']:
+    elif access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT']:
         d = access if access not in ('Dept') else d
         print(f"\nAccess level {access} set d to {d}")
         if '/' in user_message:
@@ -408,7 +408,7 @@ def bot_responses(id, tname, input_text):
             return SQLCodes.ctmissionnew(bb_sid, leafbbt[0], leafbbt[1], access, d, g, ct, plus, showgroups)
         
     # Dept and above functions
-    if original_access != 'GGN' and access in ['%','MW[0-9]%','MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','¹','²','All','EDU','IT']:
+    if original_access != 'GGN' and access in ['%','MW[0-9]%','MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','¹','²','All','EDU','IT']:
 
         for task in ['church','youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(task):
@@ -525,7 +525,7 @@ def bot_responses(id, tname, input_text):
             if access == 'IT':
                 print(f"\nCalling ev with id={id}")
                 return SQLCodes.ev(id)
-            if access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT']:
+            if access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT']:
                 idlist = SQLCodes.idlist('dept', d)
             if access in ('Group','CUL'):
                 idlist = SQLCodes.idlist('group', g)

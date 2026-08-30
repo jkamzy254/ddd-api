@@ -5126,9 +5126,9 @@ def map_emoji(val, col=None): # EDU FUNCTIONS
 
 
 
-def hspreport(g, d, access): # EDU FUNCTIONS
-    print(f"\n>>>hspreport: g={g}, d={d}, access={access}")
-    
+def hspreport(g, d, access, division): # EDU FUNCTIONS
+    print(f"\n>>>hspreport: g={g}, d={d}, access={access}, division={division}")
+
     g = g if access  in ('Group','GGN') else '%'
     print(f"Group Filter: {g}")
     d = '%' if access in ('Group','GGN') else d.capitalize().replace('d','D')
@@ -5225,7 +5225,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     # --- Kamau Adjustment #2/3 End
     
     hsp_group = f"""
-    SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, VideoSubmit, ExamSubmit, PodcastPrs, Members
+    SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, VideoSubmit, ExamAvg, PodcastPrs, Members
     FROM HSPCodey
     WHERE {deptfilter.replace("Dept IN ('Men','Women')","Grp LIKE 'MW[0-9]%'")}
         AND Grp LIKE '{g}'
@@ -5236,7 +5236,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     
     hsp_dept = f"""
     SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
-        SUM(VideoSubmit)VideoSubmit, SUM(ExamSubmit)ExamSubmit, SUM(PodcastPrs)PodcastPrs, SUM(Members)Total
+        SUM(VideoSubmit)VideoSubmit, AVG(ExamAvg)ExamAvg, SUM(PodcastPrs)PodcastPrs, SUM(Members)Total
     FROM HSPCodey
     WHERE {deptfilter}
         AND Grp LIKE '{g}'
@@ -5245,10 +5245,23 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     """
     # print("Department Query:")
     # print(hsp_dept)
-    
+
+    hsp_division = f"""
+    SELECT Division, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
+        SUM(VideoSubmit)VideoSubmit, AVG(ExamAvg)ExamAvg, SUM(PodcastPrs)PodcastPrs, SUM(Members)Total
+    FROM HSPCodey
+    WHERE {deptfilter}
+        AND Grp LIKE '{g}'
+        AND Division IS NOT NULL
+    GROUP BY Division
+    ORDER BY Division
+    """
+    # print("Division Query:")
+    # print(hsp_division)
+
     hsp_total = f"""
     SELECT SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
-        SUM(VideoSubmit)VideoSubmit, SUM(ExamSubmit)ExamSubmit, SUM(PodcastPrs)PodcastPrs, SUM(Members)Total
+        SUM(VideoSubmit)VideoSubmit, AVG(ExamAvg)ExamAvg, SUM(PodcastPrs)PodcastPrs, SUM(Members)Total
     FROM HSPCodey
     WHERE {deptfilter}
         AND Grp LIKE '{g}'
@@ -5259,6 +5272,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     dm = pd.read_sql(hsp_mem, conn)
     dg = pd.read_sql(hsp_group, conn)
     dd = pd.read_sql(hsp_dept, conn)
+    dv = pd.read_sql(hsp_division, conn)
     dy = pd.read_sql(hsp_total, conn)
 
     # print(dm) # This prints the raw dataframe, not the string that will be returned
@@ -5266,6 +5280,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     dm.columns = ['Member','WD','F1','DI','F2','VS','EX','PC']
     dg.columns = ['Grp','WD','F1','DI','F2','VS','EX','PC','TT']
     dd.columns = ['Dept','WD','F1','DI','F2','VS','EX','PC','TT']
+    dv.columns = ['Division','WD','F1','DI','F2','VS','EX','PC','TT']
     dy.columns = ['WD','F1','DI','F2','VS','EX','PC','TT']
 
 
@@ -5295,18 +5310,19 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     
     s = 2 if access in ('Group','GGN') else 3  
     group = str()
-    for r in range(len(dg)):
-        grp =   str(dg.loc[r,'Grp'][:5]) + ' '*(5-len(str(dg.loc[r,'Grp'])[:5]))
-        wp  = ' '*(s-len(str(dg.loc[r,'WD']))) + str(dg.loc[r,'WD'])
-        f1  = ' '*(s-len(str(dg.loc[r,'F1']))) + str(dg.loc[r,'F1'])
-        di  = ' '*(s-len(str(dg.loc[r,'DI']))) + str(dg.loc[r,'DI'])
-        f2  = ' '*(s-len(str(dg.loc[r,'F2']))) + str(dg.loc[r,'F2'])
-        vs  = ' '*(s-len(str(dg.loc[r,'VS']))) + str(dg.loc[r,'VS'])
-        ex  = ' '*(s-len(str(dg.loc[r,'EX']))) + str(dg.loc[r,'EX'])
-        pc  = ' '*(s-len(str(dg.loc[r,'PC']))) + str(dg.loc[r,'PC'])
-        tt  = ' '*(s-len(str(dg.loc[r,'TT']))) + str(dg.loc[r,'TT'])
-        group = f'{group}{grp}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}|{tt}]\n' if access not in ('Group','GGN') else f'<b>{group}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}]</b>\n(<i>{tt} members)</i><pre>\n'
-    group = group + '\n'
+    if division == 0:
+        for r in range(len(dg)):
+            grp =   str(dg.loc[r,'Grp'][:5]) + ' '*(5-len(str(dg.loc[r,'Grp'])[:5]))
+            wp  = ' '*(s-len(str(dg.loc[r,'WD']))) + str(dg.loc[r,'WD'])
+            f1  = ' '*(s-len(str(dg.loc[r,'F1']))) + str(dg.loc[r,'F1'])
+            di  = ' '*(s-len(str(dg.loc[r,'DI']))) + str(dg.loc[r,'DI'])
+            f2  = ' '*(s-len(str(dg.loc[r,'F2']))) + str(dg.loc[r,'F2'])
+            vs  = ' '*(s-len(str(dg.loc[r,'VS']))) + str(dg.loc[r,'VS'])
+            ex  = ' '*(s-len(str(dg.loc[r,'EX']))) + str(dg.loc[r,'EX'])
+            pc  = ' '*(s-len(str(dg.loc[r,'PC']))) + str(dg.loc[r,'PC'])
+            tt  = ' '*(s-len(str(dg.loc[r,'TT']))) + str(dg.loc[r,'TT'])
+            group = f'{group}{grp}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}|{tt}]\n' if access not in ('Group','GGN') else f'<b>{group}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}]</b>\n(<i>{tt} members)</i><pre>\n'
+        group = group + '\n'
       
     dept = str()  
     if access not in ('Group','GGN','24'):
@@ -5322,7 +5338,22 @@ def hspreport(g, d, access): # EDU FUNCTIONS
             tt  = ' '*(3-len(str(dd.loc[r,'TT']))) + str(dd.loc[r,'TT'])
             dept = f'{dept}{dpt}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}|{tt}]\n'
         dept = dept + '\n'
-    
+
+    dvsn = str()  
+    if access not in ('Group','GGN') and d in ('D[0-9]%','%','Mw','24') and division == 1:
+        for r in range(len(dv)):
+            dvn =   str(dv.loc[r,'Division'])[:5] + ' '*(5-len(str(dv.loc[r,'Division'])[:5]))
+            wp  = ' '*(3-len(str(dv.loc[r,'WD']))) + str(dv.loc[r,'WD'])
+            f1  = ' '*(3-len(str(dv.loc[r,'F1']))) + str(dv.loc[r,'F1'])
+            di  = ' '*(3-len(str(dv.loc[r,'DI']))) + str(dv.loc[r,'DI'])
+            f2  = ' '*(3-len(str(dv.loc[r,'F2']))) + str(dv.loc[r,'F2'])
+            vs  = ' '*(3-len(str(dv.loc[r,'VS']))) + str(dv.loc[r,'VS'])
+            ex  = ' '*(3-len(str(dv.loc[r,'EX']))) + str(dv.loc[r,'EX'])
+            pc  = ' '*(3-len(str(dv.loc[r,'PC']))) + str(dv.loc[r,'PC'])
+            tt  = ' '*(3-len(str(dv.loc[r,'TT']))) + str(dv.loc[r,'TT'])
+            dvsn = f'{dvsn}{dvn}[{wp}|{f1}|{di}|{f2}|{vs}|{ex}|{pc}|{tt}]\n'
+        dvsn = dvsn + '\n'
+
     total = str()
     if access not in ('Group','GGN') and d in ('D[0-9]%','%','Mw','24'):
         wp  = ' '*(3-len(str(dy.loc[0,'WD']))) + str(dy.loc[0,'WD'])
@@ -5339,7 +5370,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     header = f"<b><u>{grpdept} HSP EDU REPORTING</u></b>\n<i>{now}</i>\n\n"
     header = header if access not in ('Group','GGN') else f"{header}1⃣ Wed\n2⃣ Friday 1\n3⃣ Drop-in \n4⃣ Friday 2\n5⃣ Video Submission\n6⃣ Exam\n7⃣ Podcast\n\n🔒Reporting Not Open\n⬜️Reporting Open\n❌Absent\n✅Attend\n\n"
     columns = '' if access in ('Group','GGN') else '     [WED|FR1|DPN|FR2|VID|EXM|PDC|TOT]\n\n'
-    table = f"<pre>{columns}{member}{group}{dept}{total}</pre>"
+    table = f"<pre>{columns}{member}{group}{dept}{dvsn}{total}</pre>"
     table = re.sub(r'\.0',r'  ',table) if access not in ('Group','GGN') else table # Replaces '.0' with empty space
     table = re.sub(r'(\D)0([^.])',r'\1-\2',table) if access not in ('Group','GGN') else table   # Replaces lone '0' with '-'
     summary = f"{header}{table}"

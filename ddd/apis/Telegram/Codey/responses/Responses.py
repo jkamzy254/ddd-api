@@ -151,9 +151,10 @@ def bot_responses(id, tname, input_text):
 
     ct = {'%': 'Physical + Online', phys_sid: 'Physical', on_sid: 'Online'}[bb_sid]
 
-    if command == 'hspreport':
+    if command in ('hspreport','hspdivision'):
+        division = 1 if command == 'hspdivision' else 0
         print(f"\nCalling hspreport with g={g}, d={d}, access={access}")
-        return SQLCodes.hspreport(g, d, access)
+        return SQLCodes.hspreport(g, d, access, division)
 
     if access not in ('MT','GGN'):
         if 'phonenumber' in str(user_message):

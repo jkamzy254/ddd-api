@@ -5131,7 +5131,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     
     g = g if access  in ('Group','GGN') else '%'
     print(f"Group Filter: {g}")
-    d = d.capitalize().replace('d','D')
+    d = '%' if access in ('Group','GGN') else d.capitalize().replace('d','D')
     print(f"Dept Input: {d}")
 
     deptfilter = f"Dept LIKE '{d}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
@@ -5324,7 +5324,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
         dept = dept + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%','Mw','24'):
+    if access not in ('Group','GGN') and d in ('D[0-9]%','%','Mw','24'):
         wp  = ' '*(3-len(str(dy.loc[0,'WD']))) + str(dy.loc[0,'WD'])
         f1  = ' '*(3-len(str(dy.loc[0,'F1']))) + str(dy.loc[0,'F1'])
         di  = ' '*(3-len(str(dy.loc[0,'DI']))) + str(dy.loc[0,'DI'])

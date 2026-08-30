@@ -47,6 +47,27 @@ DEFAULT_APPEARANCE = {
 }
 
 
+# Livid's list endpoints hand back at most 25 items per request unless you ask
+# for more, plus a `nextCursor` (the id of the first item on the next page)
+# whenever more remain. Without this the bot only ever saw a folder's first 25
+# videos, so anything from the 26th on was unreachable -- e.g. in the "which
+# video should this replace?" menu. We ask for a big page *and* follow the
+# cursor, so folders of any size come back whole.
+PAGE_LIMIT = 100
+
+
+def _videos_page(body: dict) -> tuple[list, Optional[str]]:
+    """(items, next_cursor) for GET /v1/videos/previews."""
+    return body.get("videoPreviews") or [], body.get("nextCursor")
+
+
+def _folders_page(body: dict) -> tuple[list, Optional[str]]:
+    """(items, next_cursor) for GET /v2/folders[/{id}] -- the pagination keys
+    live inside the "childFolders" block rather than at the top level."""
+    child = body.get("childFolders") or {}
+    return child.get("folders") or [], child.get("nextCursor")
+
+
 def _by_name(folders: list[dict]) -> list[dict]:
     """Case-insensitive A-Z sort. We also ask the API for ascending order, but
     its sort is case-sensitive (all uppercase names come before lowercase ones),
@@ -92,23 +113,52 @@ class AsyncLividClient:
     async def aclose(self) -> None:
         await self.client.aclose()
 
+    # ---------- paging ----------
+
+    async def _paged_get(self, path: str, params: dict, extract) -> tuple[list, dict]:
+        """GET `path`, following `nextCursor` until the listing runs out.
+
+        `extract(body)` pulls the (items, next_cursor) pair out of one response
+        so the same loop serves both response shapes. Returns every item along
+        with the first response body, so callers that need the rest of that body
+        (get_folder's "folder" block) don't have to request it twice.
+        """
+        params = {**params, "limit": PAGE_LIMIT}
+        r = await self.client.get(f"{API_BASE}{path}", params=params)
+        raise_for_status(r)
+        first = r.json()
+        page, cursor = extract(first)
+        items = list(page)
+
+        seen = set()
+        while cursor and cursor not in seen:
+            seen.add(cursor)
+            r = await self.client.get(f"{API_BASE}{path}", params={**params, "cursor": cursor})
+            raise_for_status(r)
+            page, cursor = extract(r.json())
+            if not page:
+                break
+            items.extend(page)
+        return items, first
+
     # ---------- folders ----------
 
     async def list_folders(self) -> list[dict]:
-        r = await self.client.get(f"{API_BASE}/v2/folders", params={"orderByField": "name", "orderByDirection": "asc"})
-        raise_for_status(r)
-        return _by_name(r.json()["childFolders"]["folders"])
+        folders, _ = await self._paged_get(
+            "/v2/folders", {"orderByField": "name", "orderByDirection": "asc"}, _folders_page
+        )
+        return _by_name(folders)
 
     async def get_folder(self, folder_id: str) -> dict:
         """Returns {"folder": {...}, "childFolders": {"folders": [...]}}. The
         child folders are sorted A-Z here so every caller (get_folder and
         list_subfolders alike) gets the same alphabetical listing."""
-        r = await self.client.get(f"{API_BASE}/v2/folders/{folder_id}", params={"orderByField": "name", "orderByDirection": "asc"})
-        raise_for_status(r)
-        data = r.json()
-        child = data.get("childFolders") or {}
-        if isinstance(child.get("folders"), list):
-            child["folders"] = _by_name(child["folders"])
+        folders, data = await self._paged_get(
+            f"/v2/folders/{folder_id}", {"orderByField": "name", "orderByDirection": "asc"}, _folders_page
+        )
+        child = data.setdefault("childFolders", {})
+        child["folders"] = _by_name(folders)
+        child.pop("nextCursor", None)  # every page is folded in, so it's stale
         return data
 
     async def list_subfolders(self, folder_id: str) -> list[dict]:
@@ -118,9 +168,13 @@ class AsyncLividClient:
     # ---------- videos: read ----------
 
     async def list_videos(self, folder_id: str) -> list[VideoPreview]:
-        r = await self.client.get(f"{API_BASE}/v1/videos/previews", params={"folderId": folder_id, "orderByField": "title", "orderByDirection": "asc"})
-        raise_for_status(r)
-        videos = [VideoPreview.from_json(v) for v in r.json()["videoPreviews"]]
+        """Every video in the folder -- all pages, not just the API's first 25."""
+        raw, _ = await self._paged_get(
+            "/v1/videos/previews",
+            {"folderId": folder_id, "orderByField": "title", "orderByDirection": "asc"},
+            _videos_page,
+        )
+        videos = [VideoPreview.from_json(v) for v in raw]
         return sorted(videos, key=lambda v: v.title.lower())
 
     async def find_video(self, folder_id: str, video_id: str) -> Optional[VideoPreview]:

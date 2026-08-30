@@ -31,7 +31,7 @@ import logging
 from dataclasses import dataclass
 from typing import Optional
 
-from utils.bot_db import build_conn_str
+from django.db import connection
 
 log = logging.getLogger("livid_bot")
 
@@ -59,75 +59,52 @@ def invalidate_cache() -> None:
     _cache.clear()
 
 
-def _connect():
-    import pyodbc  # lazy: the bot still runs without the DB feature
-    return pyodbc.connect(build_conn_str(), timeout=10)
-
-
 def fetch_policy(folder_id: str) -> Optional[FolderPolicy]:
     """Blocking read of one folder's policy row (latest row wins if LinkID
     was ever duplicated). Use get_policy() from async code."""
-    conn = _connect()
-    try:
-        cur = conn.cursor()
-        cur.execute(
+    with connection.cursor() as cursor:
+        cursor.execute(
             f"SELECT TOP 1 Name, Password FROM {TABLE} WHERE LinkID = ? ORDER BY ID DESC",
             folder_id,
         )
-        row = cur.fetchone()
+        row = cursor.fetchone()
         if row is None:
             return None
         return FolderPolicy(folder_id=folder_id, name=row[0] or "", password=row[1] or None)
-    finally:
-        conn.close()
 
 
 def upsert_policy(folder_id: str, name: str, password: Optional[str]) -> str:
     """Blocking insert-or-update by LinkID. Returns 'inserted' or 'updated'."""
-    conn = _connect()
-    try:
-        cur = conn.cursor()
-        cur.execute(
-            f"UPDATE {TABLE} SET Name = ?, Password = ? WHERE LinkID = ?",
-            name, password, folder_id,
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "UPDATE %s SET Name = %s, Password = %s WHERE LinkID = %s", 
+            [TABLE, name, password, folder_id]
         )
         action = "updated"
-        if cur.rowcount == 0:
-            cur.execute(
-                f"INSERT INTO {TABLE} (Name, LinkID, Password) VALUES (?, ?, ?)",
-                name, folder_id, password,
+        if cursor.rowcount == 0:
+            cursor.execute(
+                "INSERT INTO %s (Name, LinkID, Password) VALUES (%s, %s, %s)",
+                [TABLE, name, folder_id, password]
             )
             action = "inserted"
-        conn.commit()
         return action
-    finally:
-        conn.close()
 
 
 def delete_policy(folder_id: str) -> int:
     """Blocking delete by LinkID. Returns rows removed."""
-    conn = _connect()
-    try:
-        cur = conn.cursor()
-        cur.execute(f"DELETE FROM {TABLE} WHERE LinkID = ?", folder_id)
-        conn.commit()
-        return cur.rowcount
-    finally:
-        conn.close()
+    with connection.cursor() as cursor:
+        cursor.execute(f"DELETE FROM {TABLE} WHERE LinkID = ?", folder_id)
+        return cursor.rowcount
 
 
 def list_policies() -> list[FolderPolicy]:
     """Blocking read of every policy row."""
-    conn = _connect()
-    try:
-        cur = conn.cursor()
-        cur.execute(f"SELECT LinkID, Name, Password FROM {TABLE} ORDER BY Name")
+    with connection.cursor() as cursor:
+        cursor.execute(f"SELECT LinkID, Name, Password FROM {TABLE} ORDER BY Name")
         return [
             FolderPolicy(folder_id=r[0], name=r[1] or "", password=r[2] or None)
-            for r in cur.fetchall()
+            for r in cursor.fetchall()
         ]
-    finally:
-        conn.close()
 
 
 async def get_policy(folder_id: str) -> Optional[FolderPolicy]:

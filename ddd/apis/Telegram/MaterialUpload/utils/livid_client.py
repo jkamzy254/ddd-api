@@ -16,6 +16,18 @@ AUTH
   auth.py (Playwright login) or DevTools -> Application -> Cookies. When calls
   start returning 401/403, log in again for a fresh value.
 
+PAGINATION
+  The list endpoints below (/v2/folders, /v2/folders/{id}, /v1/videos/previews)
+  return at most 25 items per request by default. Two extra query params
+  control that:
+     limit={n}      -> ask for up to n items in one response
+     cursor={id}    -> start the page at that item
+  A truncated response carries "nextCursor" (the id of the first item on the
+  next page) next to "totalCount"; a complete one has no "nextCursor" at all.
+  For /v2/folders both keys live inside the "childFolders" block. This client
+  follows the cursor for you, so list_folders/list_subfolders/list_videos
+  always return the *whole* listing.
+
 FOLDERS
   GET  /v2/folders                          -> top-level folders
   GET  /v2/folders/{id}                     -> a folder's info + child folders
@@ -105,6 +117,22 @@ ProgressCallback = Callable[[float], None]  # receives percent complete, 0-100
 
 PRIVACY_VALUES = ("private", "public", "unlisted", "password")
 
+# How many items to pull per list request (see PAGINATION in the module
+# docstring). We still follow nextCursor, so this is just a round-trip saver.
+PAGE_LIMIT = 100
+
+
+def _videos_page(body: dict) -> tuple[list, Optional[str]]:
+    """(items, next_cursor) for GET /v1/videos/previews."""
+    return body.get("videoPreviews") or [], body.get("nextCursor")
+
+
+def _folders_page(body: dict) -> tuple[list, Optional[str]]:
+    """(items, next_cursor) for GET /v2/folders[/{id}] -- the pagination keys
+    live inside the "childFolders" block rather than at the top level."""
+    child = body.get("childFolders") or {}
+    return child.get("folders") or [], child.get("nextCursor")
+
 
 @dataclass
 class VideoPreview:
@@ -164,6 +192,27 @@ class LividClient:
         self._raise(r)
         return r.json()
 
+    def _paged_get(self, path: str, params: dict, extract) -> tuple[list, dict]:
+        """GET `path`, following `nextCursor` until the listing runs out.
+
+        `extract(body)` pulls the (items, next_cursor) pair out of one response
+        so the same loop serves both response shapes. Returns every item along
+        with the first response body, for callers that also need the rest of it
+        (get_folder's "folder" block)."""
+        params = {**params, "limit": PAGE_LIMIT}
+        first = self._get(path, **params)
+        page, cursor = extract(first)
+        items = list(page)
+
+        seen = set()
+        while cursor and cursor not in seen:
+            seen.add(cursor)
+            page, cursor = extract(self._get(path, cursor=cursor, **params))
+            if not page:
+                break
+            items.extend(page)
+        return items, first
+
     def _put(self, path: str, body: dict) -> dict:
         r = self.session.put(f"{API_BASE}{path}", json=body)
         self._raise(r)
@@ -188,17 +237,25 @@ class LividClient:
 
     def list_folders(self, order_field: str = "createdAt", order_dir: str = "desc") -> list[dict]:
         """Top-level folders."""
-        data = self._get(
-            "/v2/folders", orderByField=order_field, orderByDirection=order_dir
+        folders, _ = self._paged_get(
+            "/v2/folders",
+            {"orderByField": order_field, "orderByDirection": order_dir},
+            _folders_page,
         )
-        return data["childFolders"]["folders"]
+        return folders
 
     def get_folder(self, folder_id: str, order_field: str = "createdAt", order_dir: str = "desc") -> dict:
         """{"folder": {...}, "childFolders": {"folders": [...]}}. folder._count
         has childFolders / videos, useful to decide if it's a leaf folder."""
-        return self._get(
-            f"/v2/folders/{folder_id}", orderByField=order_field, orderByDirection=order_dir
+        folders, data = self._paged_get(
+            f"/v2/folders/{folder_id}",
+            {"orderByField": order_field, "orderByDirection": order_dir},
+            _folders_page,
         )
+        child = data.setdefault("childFolders", {})
+        child["folders"] = folders
+        child.pop("nextCursor", None)  # every page is folded in, so it's stale
+        return data
 
     def list_subfolders(self, folder_id: str, **kw) -> list[dict]:
         return self.get_folder(folder_id, **kw)["childFolders"]["folders"]
@@ -232,12 +289,14 @@ class LividClient:
     # ---------- videos: read ----------
 
     def list_videos(self, folder_id: str, order_field: str = "createdAt", order_dir: str = "desc") -> list[VideoPreview]:
-        """GET /v1/videos/previews?folderId=... -> videos inside a folder."""
-        data = self._get(
+        """GET /v1/videos/previews?folderId=... -> every video inside a folder
+        (all pages, not just the API's default first 25)."""
+        raw, _ = self._paged_get(
             "/v1/videos/previews",
-            folderId=folder_id, orderByField=order_field, orderByDirection=order_dir,
+            {"folderId": folder_id, "orderByField": order_field, "orderByDirection": order_dir},
+            _videos_page,
         )
-        return [VideoPreview.from_json(v) for v in data["videoPreviews"]]
+        return [VideoPreview.from_json(v) for v in raw]
 
     def get_video(self, video_id: str) -> dict:
         """Full video detail. Includes playerConfiguration.id, privacyPage,

@@ -579,6 +579,12 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
                   'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season']}
    
     s,e,timetitle = timevalues[timerange]
+
+    sftnote = str()
+    if g in ('sft1','sft2','sft3','sft4','sft5') and timerange == 'season':
+        s = "'2026-08-20'" # melbSFT result starts on 20 Oct
+        sftnote = '\n<i>Counting from 20 Aug 2026</i>'
+
     
     if timerange == 'lastseason':
         sid = f"(SELECT dbo.lastssnid('{ct}'))"
@@ -631,7 +637,7 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
         
         total = f'Total   [{f}|{m}|{pp}|{p}|{fe}]'
         
-        member = f'<b><u>{g} FMP : {timetitle}</u></b>\n\n<pre>Member  [ F  | M  |PP |P  |FE ]\n\n{member}\n{total}</pre>'
+        member = f'<b><u>{g} FMP : {timetitle}</u></b>{sftnote}\n\n<pre>Member  [ F  | M  |PP |P  |FE ]\n\n{member}\n{total}</pre>'
         member = re.sub(r'\.0',r'  ',member) # Replaces '.0' with empty space
         member = re.sub(r'(\D)0([^.])',r'\1-\2',member)   # Replaces lone '0' with '-'
         print(">>>Return")
@@ -670,6 +676,11 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
                   'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season']}
     
     s,e,timetitle = timevalues[timerange]
+
+    sftnote = str()
+    if d == 'MelbSFT' and timerange == 'season':
+        s = "'2026-08-20'" # melbSFT result starts on 20 Oct
+        sftnote = '\n<i>Counting from 20 Aug 2026</i>'
 
     if timerange == 'lastseason':
         sid = f"(SELECT dbo.lastssnid('{ct}'))"
@@ -730,7 +741,7 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
         
     depttitle = d.replace('D[0-9]%','Youth').replace('MW[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
 
-    fmp = f"<b><u>{depttitle}{tasktitle} FMP : {timetitle}</u></b>\n\n<pre>{spc[6]}\n\n{group}{dept}{total}</pre>"
+    fmp = f"<b><u>{depttitle}{tasktitle} FMP : {timetitle}</u></b>{sftnote}\n\n<pre>{spc[6]}\n\n{group}{dept}{total}</pre>"
     fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
     fmp = re.sub(r'(\D)0([^.])',r'\1-\2',fmp)   # Replaces lone '0' with '-'
     print(">>>Return")
@@ -774,7 +785,14 @@ def taskfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
                   'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season']}
     
     s,e,timetitle = timevalues[timerange]
-    
+
+
+    sftnote = str()
+    if d == 'MelbSFT' and timerange == 'season':
+        s = "'2026-08-20'" # melbSFT result starts on 20 Oct
+        sftnote = '\n<i>Counting from 20 Aug 2026</i>'
+
+
     if timerange == 'lastseason':
         sid = f"(SELECT dbo.lastssnid('{ct}'))"
     else:
@@ -829,7 +847,7 @@ def taskfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
         
     depttitle = d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
 
-    fmp = f"<b><u>{depttitle}{tasktitle} FMP : {timetitle}</u></b>\n\n<pre>{spc[6]}\n\n{group}{dept}{total}</pre>"
+    fmp = f"<b><u>{depttitle}{tasktitle} FMP : {timetitle}</u></b>{sftnote}\n\n<pre>{spc[6]}\n\n{group}{dept}{total}</pre>"
     fmp = re.sub(r'\.0',r'  ',fmp) # Replaces '.0' with empty space
     fmp = re.sub(r'(\D)0([^.])',r'\1-\2',fmp)   # Replaces lone '0' with '-'
     print(">>>Return")

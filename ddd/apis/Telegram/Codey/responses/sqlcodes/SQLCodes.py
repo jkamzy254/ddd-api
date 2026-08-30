@@ -5134,7 +5134,7 @@ def hspreport(g, d, access): # EDU FUNCTIONS
     d = d.capitalize().replace('d','D')
     print(f"Dept Input: {d}")
 
-    deptfilter = f"Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    deptfilter = f"Dept LIKE '{d}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
 
     print(f"Dept Filter: {deptfilter}")
 

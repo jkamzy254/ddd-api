@@ -581,9 +581,9 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
     s,e,timetitle = timevalues[timerange]
 
     sftnote = str()
-    if g in ('sft1','sft2','sft3','sft4','sft5') and timerange == 'season':
+    if g.lower() in ('sft1','sft2','sft3','sft4','sft5') and timerange == 'season':
         s = "'2026-08-20'" # melbSFT result starts on 20 Oct
-        sftnote = '\n<i>Counting from 20 Aug 2026</i>'
+        sftnote = '\n<i>As of 20 Aug 2026</i>'
 
     
     if timerange == 'lastseason':
@@ -678,9 +678,9 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
     s,e,timetitle = timevalues[timerange]
 
     sftnote = str()
-    if d == 'MelbSFT' and timerange == 'season':
+    if d.lower() == 'melbsft' and timerange == 'season':
         s = "'2026-08-20'" # melbSFT result starts on 20 Oct
-        sftnote = '\n<i>Counting from 20 Aug 2026</i>'
+        sftnote = '\n<i>As of 20 Aug 2026</i>'
 
     if timerange == 'lastseason':
         sid = f"(SELECT dbo.lastssnid('{ct}'))"
@@ -788,9 +788,9 @@ def taskfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
 
 
     sftnote = str()
-    if d == 'MelbSFT' and timerange == 'season':
+    if d.lower() == 'melbsft' and timerange == 'season':
         s = "'2026-08-20'" # melbSFT result starts on 20 Oct
-        sftnote = '\n<i>Counting from 20 Aug 2026</i>'
+        sftnote = '\n<i>As of 20 Aug 2026</i>'
 
 
     if timerange == 'lastseason':
@@ -1111,16 +1111,18 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
     else:
         grpdept = d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
         
-    codeybbstatusmembers = 'CodeyBBStatusMembers2' if v2 else 'CodeyBBStatusMembers'
+    codeybbstatusmembers = f"CodeyBBStatusMembers2('{sid}')" if v2 else f"CodeyBBStatusMembers('{sid}')"
+    if d.lower() == 'melbsft' or g.lower() in ('sft1','sft2','sft3','sft4','sft5'):
+        codeybbstatusmembers = f"CodeyBBStatusMembersAsOf('2026-08-20','{sid}')"
     fe_col = ', FE' if v2 else ''
     fe_sum = ', SUM(FE)FE' if v2 else ''
     
     print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'          v2 = {v2}")
     
-    bb_mem    = f"SELECT Dept, Grp, MemberCode, pNew, pOld{fe_col}, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM {codeybbstatusmembers}('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_group  = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers}('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept   = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers}('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth  = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers}('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_mem    = f"SELECT Dept, Grp, MemberCode, pNew, pOld{fe_col}, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM {codeybbstatusmembers} WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_group  = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers} WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_dept   = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers} WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_youth  = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers} WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
     
     print(bb_group)
     
@@ -1252,16 +1254,18 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
                  'btm' : [q.upper(), f"{btmfilt} AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
     
-    codeybbtstatusmembers = 'CodeyBBTStatusMembers2' if v2 else 'CodeyBBTStatusMembers'
+    codeybbtstatusmembers = f"CodeyBBTStatusMembers2('{sid}')" if v2 else f"CodeyBBTStatusMembers('{sid}')"
+    if d.lower() == 'melbsft' or g.lower() in ('sft1','sft2','sft3','sft4','sft5'):
+        codeybbtstatusmembers = f"CodeyBBTStatusMembersAsOf('2026-08-20','{sid}')"
     # d_filt = '%' if v2 and d in ('D[0-9]%','%') else d
     d_filt = d
     fe_col = ', FE' if v2 else ''
     fe_sum = ', SUM(FE)FE' if v2 else ''
     
-    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld{fe_col}, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM {codeybbtstatusmembers}('{sid}') WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} ORDER BY GID, {name}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers}('{sid}') WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers}('{sid}') WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers}('{sid}') WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld{fe_col}, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM {codeybbtstatusmembers} WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} ORDER BY GID, {name}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers} WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers} WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers} WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
     
     print(bb_group)
     
@@ -2155,6 +2159,10 @@ def bblist(d, g, sid, access):
         grpdept = 'Youth' if '%' in d else format_display_name(d)
 
     sql = f"SET NOCOUNT ON; EXEC CodeyBBList2 @sid='{sid}'"
+    if d.lower() == 'melbsft' or g.lower() in ('sft1','sft2','sft3','sft4','sft5'):
+        sql = f"SET NOCOUNT ON; EXEC CodeyBBList2AsOf @d = '2026-08-20', @sid='{sid}'"
+        sftnote = '\n<i>As of 20 Aug 2026</i>'
+
     print(sql)
     with odbc.connect(conn_str) as conn:
         df = pd.read_sql(sql, conn)
@@ -2214,7 +2222,7 @@ def bblist(d, g, sid, access):
 
     body = ''.join(parts)
     result = (
-        f"<b><u>📚{grpdept} BB Fruit List📚</u></b>\n\n"
+        f"<b><u>📚{grpdept} BB Fruit List📚</u></b>{sftnote}\n\n"
         f"<i>▫️Status▫️\n#. [LastClassDate] [Pts] - Fruit - L1 / L2 - BBT - LastTopic → [NextClassDate]</i>\n\n"
         f"{body}"
         f"<b><i><u>Total: {total_pts} Pts</u></i></b>"
@@ -2707,6 +2715,16 @@ def bbtlist(q, d, g, sid, access): # BBT FUNCTIONS
         f"@gyjfilter={params['gyjfilter']}"
         )
 
+    if d.lower() == 'melbsft' or g.lower() in ('sft1','sft2','sft3','sft4','sft5'):
+            sql = (
+                f"EXEC CodeyBBTList2AsOf @d = '2026-08-20', @sid='{params['sid']}', @bbtg='{params['bbtg']}', "
+                f"@bbtd='{params['bbtd']}', "
+                f"@bbtstatus={'NULL' if params['bbtstatus'] is None else chr(39)+params['bbtstatus']+chr(39)}, "
+                f"@btmno={'NULL' if params['btmno'] is None else chr(39)+params['btmno']+chr(39)}, "
+                f"@gyjfilter={params['gyjfilter']}"
+                )
+            sftnote = '\n<i>As of 20 Aug 2026</i>'
+
     print(sql)
 
     with odbc.connect(conn_str) as conn:
@@ -2749,7 +2767,7 @@ def bbtlist(q, d, g, sid, access): # BBT FUNCTIONS
 
     body = ''.join(parts)
     result = (
-        f"<b><u>📖{grpdept} {bbttype} Student List📖</u></b>\n\n"
+        f"<b><u>📖{grpdept} {bbttype} Student List📖</u></b>{sftnote}\n\n"
         f"<i>▫️Status▫️\n#. [LastClassDate] BBT - Student - Leaf1 / Leaf2 - LastTopic → [NextClassDate]</i>\n\n"
         f"{body}"
         f"<b><i><u>Total: {total} Pts</u></i></b>"

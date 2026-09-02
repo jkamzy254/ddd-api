@@ -107,6 +107,10 @@ urlpatterns = [
 	path('evGetMember/', ev.GetMemberViewSet.as_view()),
 	path('evCheckHistory/', ev.FMPCheckFruitHistoryViewSet.as_view()),
 	path('evUnlockFruit/', ev.FMPUnlockFruitViewSet.as_view()), 
+	path('evGetMeetings/', ev.FMPGetMeetingsViewSet.as_view()),
+	path('evDeleteMeeting/', ev.FMPDeleteMeetingViewSet.as_view()),
+	path('evUpdateMeeting/', ev.FMPUpdateMeetingViewSet.as_view()),
+	path('evExtendLock/', ev.FMPExtendLockViewSet.as_view()), 
  
 	#Sept Exam System
 	path('sepExamGetMember/', se.GetMemberViewSet.as_view()),

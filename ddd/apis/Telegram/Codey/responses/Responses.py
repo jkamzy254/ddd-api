@@ -68,7 +68,7 @@ def bot_responses(id, tname, input_text):
             try:
                 print('//')
                 command, d = user_message.split('//')
-                d = d.capitalize().replace('sft', 'SFT')
+                d = d.capitalize().replace('Sft', 'SFT').replace('sft', 'SFT')
                 d = {'youth': 'D[0-9]%',
                      'mw': 'MW[0-9]%',
                      'church': '%'}.get(d.lower(), d)

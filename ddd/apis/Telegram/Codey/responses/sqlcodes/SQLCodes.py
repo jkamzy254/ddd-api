@@ -1110,10 +1110,12 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
         grpdept = d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
-        
+
+    sftnote = str()
     codeybbstatusmembers = f"CodeyBBStatusMembers2('{sid}')" if v2 else f"CodeyBBStatusMembers('{sid}')"
     if d.lower() == 'melbsft' or g.lower() in ('sft1','sft2','sft3','sft4','sft5'):
         codeybbstatusmembers = f"CodeyBBStatusMembersAsOf('2026-08-20','{sid}')"
+        sftnote = '\n<i>As of 20 Aug 2026</i>'
     fe_col = ', FE' if v2 else ''
     fe_sum = ', SUM(FE)FE' if v2 else ''
     
@@ -1218,7 +1220,7 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
     
     ab = 'FE | ' if v2 else ''
     header = f"     [ NP | OP | {ab}AB | CA | ME | CI | FP | FA | TOT ]"
-    summary = f"<b><u>{grpdept} BB Status Summary</u></b>\n\n<pre>{header}\n\n{member}{group}{dept}{total}</pre>"
+    summary = f"<b><u>{grpdept} BB Status Summary</u></b>\n\n<pre>{header}{sftnote}\n\n{member}{group}{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     print(">>>Return")
@@ -1253,10 +1255,12 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm' : [q.upper(), f"{btmfilt} AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
-    
+
+    sftnote = str()
     codeybbtstatusmembers = f"CodeyBBTStatusMembers2('{sid}')" if v2 else f"CodeyBBTStatusMembers('{sid}')"
     if d.lower() == 'melbsft' or g.lower() in ('sft1','sft2','sft3','sft4','sft5'):
         codeybbtstatusmembers = f"CodeyBBTStatusMembersAsOf('2026-08-20','{sid}')"
+        sftnote = '\n<i>As of 20 Aug 2026</i>'
     # d_filt = '%' if v2 and d in ('D[0-9]%','%') else d
     d_filt = d
     fe_col = ', FE' if v2 else ''
@@ -1361,7 +1365,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     
     ab = 'FE| ' if v2 else ''
     header = f"     [ NP| OP| {ab}AB| CA| ME| CI| FP| FA|TOT]"
-    summary = f"<b><u>{grpdept} {bbttype} Status Summary</u></b>\n\n<pre>{header}\n\n{member}{group}{dept}{total}</pre>"
+    summary = f"<b><u>{grpdept} {bbttype} Status Summary</u></b>\n\n<pre>{header}{sftnote}\n\n{member}{group}{dept}{total}</pre>"
     summary = re.sub(r'\.0',r'  ',summary) # Replaces '.0' with empty space
     summary = re.sub(r'(\D)0([^.])',r'\1-\2',summary)   # Replaces lone '0' with '-'
     print(">>>Return")
@@ -2158,6 +2162,7 @@ def bblist(d, g, sid, access):
     else:
         grpdept = 'Youth' if '%' in d else format_display_name(d)
 
+    sftnote = str()
     sql = f"SET NOCOUNT ON; EXEC CodeyBBList2 @sid='{sid}'"
     if d.lower() == 'melbsft' or g.lower() in ('sft1','sft2','sft3','sft4','sft5'):
         sql = f"SET NOCOUNT ON; EXEC CodeyBBList2AsOf @d = '2026-08-20', @sid='{sid}'"
@@ -2715,6 +2720,7 @@ def bbtlist(q, d, g, sid, access): # BBT FUNCTIONS
         f"@gyjfilter={params['gyjfilter']}"
         )
 
+    sftnote = str()
     if d.lower() == 'melbsft' or g.lower() in ('sft1','sft2','sft3','sft4','sft5'):
             sql = (
                 f"EXEC CodeyBBTList2AsOf @d = '2026-08-20', @sid='{params['sid']}', @bbtg='{params['bbtg']}', "

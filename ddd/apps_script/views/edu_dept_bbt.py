@@ -330,9 +330,8 @@ class GetCurrentCTBBTDataViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
               
 class GetBTMListViewSet(APIView):
-    def post(self, request):
-        print(request.data['btm'])
-        btm = request.data['btm']
+    def get(self, request):
+        btm = request.GET.get('btm')
         try:
             with connection.cursor() as cursor:
                 cursor.execute(f"SELECT * FROM BTMBBListFunction('{btm}')")
@@ -341,47 +340,11 @@ class GetBTMListViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)        
-    def post(self, request):
-        print(request.data['season'])
-        data = int(float(request.data['season']))
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT M.Group_IMWY 'Dept', GI.Grp 'Group', M.Name, B.FruitName FROM BBData B
-                    LEFT JOIN MemberData M ON B.BBT_ID = M.UID
-                    LEFT JOIN (Select * From GroupLog Where EndDate IS NULL) G ON G.UID = M.UID
-                    LEFT JOIN GroupInfo GI ON GI.GID = G.GID
-                    WHERE Season = {0} AND Stat_Abbr NOT IN ('CCT','FA')
-                    ORDER By G.GID, M.Internal_Position
-                """.format(data))
-                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-
-            return Response(result, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-              
-class GetFebCTDataViewSet(APIView):
-    def get(self, request):
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute("""
-                        SELECT B.* FROM BBTPerformanceView B
-                        LEFT JOIN MemberData BBT ON BBT.UID = B.UID
-                        LEFT JOIN (Select * From GroupLog Where EndDate IS NULL) GL ON GL.UID = B.UID
-                        LEFT JOIN GroupInfo GI ON GL.GID = GI.GID
-                        ORDER BY GI.GID, Internal_Position
-                    """)
-                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                
-            return Response(result, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GetCurrentCTPerLeafViewSet(APIView):
-    def post(self, request):
-        print(request.data['season'])
-        season = request.data['season']
+    def get(self, request):
+        season = request.GET.get('season')
         try:
             with connection.cursor() as cursor:
                 cursor.execute(f"EXEC spSheetCurrentCTPerLeaf {season}")
@@ -414,9 +377,9 @@ class GetPViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GetBTMFruitsViewSet(APIView):
-    def post(self, request):
-        btm = int(float(request.data['btm']))
-        ssn = int(float(request.data['season']))
+    def get(self, request):
+        btm = request.GET.get('btm')
+        ssn = request.GET.get('season')
         try:
             with connection.cursor() as cursor:
                 cursor.execute("spGetBTMFruits @BTM = '{0}', @SSN = {1}".format(btm, ssn))
@@ -487,3 +450,80 @@ class GetCTAttendanceViewSet(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+        
+class EduGetBTMListViewSet(APIView):
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"Select * From BTMListTable")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)      
+
+        
+class EduCreateBTMViewSet(APIView):
+    def post(self, request):
+        data =request.data
+        user = data.get('User')
+        btmName = data.get('BTMName')
+        btmStart = data.get('BTMStart')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spEduDeptCreateBTM @User = '{user}', @Name = '{btmName}', @Start = '{btmStart}'")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)      
+
+        
+class EduUpdateBTMViewSet(APIView):
+    def post(self, request):
+        data =request.data
+        user = data.get('User')
+        btmID = data.get('BTMID')
+        btmName = data.get('BTMName')
+        btmStart = data.get('BTMStart')
+        btmEnd = data.get('BTMEnd')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spEduDeptUpdateBTM @User = '{user}', @ID = '{btmID}' @Name = '{btmName}', @Start = '{btmStart}', @End = '{btmEnd}'")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
+
+        
+class EduGetPotentialBTMViewSet(APIView):
+    def get(self, request):
+        user = request.GET.get('User')
+        evid = request.GET.get('EVID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spEduDeptGetPotentialBTM @User = '{user}', @EVID = '{evid}'")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)   
+
+        
+class EduAddBTMMemberViewSet(APIView):
+    def get(self, request):
+        data =request.data
+        user = data.get('User')
+        uid = data.get('UID')
+        btmID = data.get('BTMID')
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spEduDeptAddBTMMember @User = '{user}', @UID = '{uid}', @BTMID = '{btmID}'")
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)   

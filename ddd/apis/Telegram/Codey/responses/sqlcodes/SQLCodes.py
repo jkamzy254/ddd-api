@@ -5714,7 +5714,7 @@ def memberbbt(timerange,g,sid,ss,access): # BBT FUNCTIONS
 
 
 
-def deptbbt(timerange,d,sid,ss,access,bbtdept): # BBT FUNCTIONS
+def deptbbt(timerange,d,sid,ss,ct,access,bbtdept): # BBT FUNCTIONS
     print(f"\n>>>deptbbt: timerange={timerange}, dept={d}, sid={sid}, seasonstart={ss}, access={access}")
     
     if timerange in {'today','yesterday'}:
@@ -5732,10 +5732,16 @@ def deptbbt(timerange,d,sid,ss,access,bbtdept): # BBT FUNCTIONS
     
     s,e,timetitle = timevalues[timerange]
     
-    memberQ = f"SELECT Grp, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    deptQ   = f"SELECT Dept, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    totalQ  = f"SELECT SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    memberQ = f"SELECT Grp, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT({sid}, {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    deptQ   = f"SELECT Dept, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT({sid}, {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    totalQ  = f"SELECT SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT({sid}, {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
     print(memberQ)
+
+
+    if timerange == 'lastseason':
+        sid = f"(SELECT dbo.lastssnid('{ct}'))"
+    else:
+        sid = f"'{sid}'" # Adding quotes as sometimes sid can be '%' which is a string
 
     with odbc.connect(conn_str) as conn:
         dm = pd.read_sql(memberQ, conn)

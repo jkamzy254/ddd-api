@@ -75,7 +75,7 @@ class FMPDeleteMeetingViewSet(APIView):
         meetingKey = request.GET.get('MeetingKey')
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"EXEC spEVDeleteMeeting @User = '{user}', @UID = '{meetingKey}'")
+                cursor.execute(f"EXEC spEVDeleteMeeting @User = '{user}', @MeetingKey = '{meetingKey}'")
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

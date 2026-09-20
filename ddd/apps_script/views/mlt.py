@@ -40,7 +40,7 @@ class MLTGetMaterialViewSet(APIView):
         uid = request.GET.get("UID")
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"SELECT * FROM MLTMaterialTable")
+                cursor.execute("SELECT * FROM MLTMaterialFunction(%s)", [uid,])
                 res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
             return Response(res, status=status.HTTP_200_OK)
         except Exception as e:

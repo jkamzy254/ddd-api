@@ -51,6 +51,13 @@ urlpatterns = [
     path('ctGetTransfers/',        ca.CTGetTransfersViewSet.as_view()),
     path('ctCreateTransfer/',      ca.CTCreateTransferViewSet.as_view()),
     path('ctResolveTransfer/',     ca.CTResolveTransferViewSet.as_view()),
+    path('ctTransferRunDue/',      ca.CTTransferRunDueViewSet.as_view()),
+    path('ctAdminOverview/',       ca.CTAdminOverviewViewSet.as_view()),
+    path('ctStaffCatalogue/',      ca.CTStaffCatalogueViewSet.as_view()),
+    path('ctStaffAllocate/',       ca.CTStaffAllocateViewSet.as_view()),
+    path('ctCourseSave/',          ca.CTCourseSaveViewSet.as_view()),
+    path('ctSessionSave/',         ca.CTSessionSaveViewSet.as_view()),
+    path('ctCloseFinished/',       ca.CTCloseFinishedViewSet.as_view()),
  
 	#HSP
 	path('eduGetMember/', ep.GetMemberViewSet.as_view()),

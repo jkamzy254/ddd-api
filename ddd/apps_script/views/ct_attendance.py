@@ -283,6 +283,7 @@ def call_proc(sql, params):
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 
+
 class CTUpdateStudentNameViewSet(APIView):
     def post(self, request):
         rec = request.data
@@ -375,6 +376,78 @@ class CTCreateTransferViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class CTAdminOverviewViewSet(APIView):
+    """Every session scored for an admin (principal / secretary / IT), with a ProxyUID each."""
+
+    def get(self, request):
+        finished = str(request.GET.get('Finished', '0')).lower() in ('1', 'true', 'yes')
+        try:
+            result = call_proc(
+                "EXEC spCTAdminOverview @UID = %s, @IncludeFinished = %s",
+                [request.GET.get('UID'), 1 if finished else 0],
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        
+class CTCloseFinishedViewSet(APIView):
+    """
+    Nightly tidy: sessions past their EndDate become inactive, their open
+    staff rows close on that date, courses whose sessions have all ended
+    become inactive. See spCTCloseFinished for the exact rules.
+
+    GET  ?dry=1            report only
+    POST {students: true}  also close student schedule rows (off by default)
+    """
+
+    def get(self, request):
+        return self._run(dry=True, students=False)
+
+    def post(self, request):
+        rec = request.data or {}
+        return self._run(dry=str(rec.get('dry', '0')).lower() in ('1', 'true'),
+                         students=str(rec.get('students', '0')).lower() in ('1', 'true'))
+
+    def _run(self, dry, students):
+        try:
+            result = call_proc(
+                "EXEC spCTCloseFinished @DryRun = %s, @CloseStaff = 1, @CloseStudents = %s",
+                [1 if dry else 0, 1 if students else 0],
+            )
+            return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class CTTransferRunDueViewSet(APIView):
+    """
+    Applies approved transfers whose effective date has arrived.
+
+    Azure SQL Database has no SQL Server Agent, so this is called on a schedule
+    from outside — see applyDueTransfers() and installTransferTrigger() in
+    Code.js. It is idempotent, so an extra call costs a scan of an empty set.
+
+    spCTTransferRunDue returns exactly one summary row (Due, Applied, Failed,
+    RunAt, Res, Ok) because it calls spCTTransferApply with @Quiet = 1 — without
+    that it would emit one rowset per transfer and this view would report a
+    single transfer's outcome as the whole run's.
+    """
+
+    def post(self, request):
+        try:
+            result = call_proc("EXEC spCTTransferRunDue", [])
+            if not result:
+                return Response({'Due': 0, 'Applied': 0, 'Failed': 0,
+                                 'Res': 'Nothing due.', 'Ok': 1},
+                                status=status.HTTP_200_OK)
+            return Response(result[0], status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class CTResolveTransferViewSet(APIView):
     def post(self, request):
         rec = request.data
@@ -440,3 +513,97 @@ class CTUpdateStudentStatusViewSet(APIView):
             return Response(result[0], status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class CTStaffCatalogueViewSet(APIView):
+    """Courses, sessions, current staff allocations and allocatable members, as JSON columns."""
+
+    def get(self, request):
+        finished = str(request.GET.get('Finished', '0')).lower() in ('1', 'true', 'yes')
+        try:
+            result = call_proc(
+                "EXEC spCTStaffCatalogue @UID = %s, @IncludeFinished = %s",
+                [request.GET.get('UID'), 1 if finished else 0],
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTStaffAllocateViewSet(APIView):
+    """Add | Transfer | End a staff member on a session. See spCTStaffAllocate."""
+
+    def post(self, request):
+        rec = request.data
+        try:
+            result = call_proc(
+                "EXEC spCTStaffAllocate "
+                "@ActorUID = %s, @StaffUID = %s, @Mode = %s, @ToCTID = %s, @FromCTID = %s, "
+                "@NumRole = %s, @EffectiveDate = %s, @ReassignTo = %s, @Note = %s",
+                [
+                    rec.get('ActorUID'),
+                    rec.get('StaffUID'),
+                    rec.get('Mode'),
+                    rec.get('ToCTID'),
+                    rec.get('FromCTID'),
+                    rec.get('NumRole'),
+                    rec.get('EffectiveDate') or None,
+                    rec.get('ReassignTo') or None,
+                    rec.get('Note') or None,
+                ],
+            )
+            return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTCourseSaveViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        try:
+            result = call_proc(
+                "EXEC spCTCourseSave @ActorUID = %s, @ID = %s, @Name = %s, "
+                "@Is_Active = %s, @StartDate = %s, @EndDate = %s",
+                [
+                    rec.get('ActorUID'),
+                    rec.get('ID'),
+                    rec.get('Name'),
+                    1 if rec.get('Is_Active') in (1, '1', True, None) else 0,
+                    rec.get('StartDate') or None,
+                    rec.get('EndDate') or None,
+                ],
+            )
+            return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTSessionSaveViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        try:
+            result = call_proc(
+                "EXEC spCTSessionSave @ActorUID = %s, @ID = %s, @ClassID = %s, @Name = %s, "
+                "@Season = %s, @CTSched = %s, @Is_Active = %s, @StartDate = %s, "
+                "@EndDate = %s, @SunClass = %s",
+                [
+                    rec.get('ActorUID'),
+                    rec.get('ID'),
+                    rec.get('ClassID'),
+                    rec.get('Name'),
+                    rec.get('Season'),
+                    rec.get('CTSched') or None,
+                    1 if rec.get('Is_Active') in (1, '1', True, None) else 0,
+                    rec.get('StartDate') or None,
+                    rec.get('EndDate') or None,
+                    None if rec.get('SunClass') in (None, '') else (1 if rec.get('SunClass') in (1, '1', True) else 0),
+                ],
+            )
+            return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

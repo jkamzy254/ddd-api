@@ -86,7 +86,8 @@ urlpatterns = [
 	path('hspGetWeeklySessions/', ep.HSPGetEduWeeklySessionsViewSet.as_view()),   
 	path('hspGetSessionScores/', ep.HSPGetEduSessionScoresViewSet.as_view()),   
 	path('hspGetMWScores/', ep.HSPGetMWScoresViewSet.as_view()),    
-	path('hspGetLoyaltyCard/', ep.HSPGetMemberLoyaltyCard.as_view()),     
+	path('hspGetLoyaltyCard/', ep.HSPGetMemberLoyaltyCard.as_view()),    
+	path('hspGetTraineeSchedule/', ep.HSPGetTraineeScheduleViewSet.as_view()),    
      
 	#Edu Dept BBT System
 	path('eduBBTGetMember/', eb.GetMemberViewSet.as_view()),

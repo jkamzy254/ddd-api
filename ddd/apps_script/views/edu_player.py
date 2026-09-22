@@ -421,5 +421,19 @@ class HSPGetMWScoresViewSet(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+
+class HSPGetTraineeScheduleViewSet(APIView):
+    def get(self, request):
+        grpid = request.GET.get("GroupID")
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM dbo.HSPTraineeSessionFunction(%s)', (grpid,))
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()][0]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle exceptions here, e.g., logging or returning an error response
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
         
      

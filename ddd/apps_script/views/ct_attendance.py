@@ -607,3 +607,48 @@ class CTSessionSaveViewSet(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+
+class CTWeekSummaryViewSet(APIView):
+    """The week grid: CT days by week, the roster, and a tally per student per week.
+
+    Returns the procedure's single row as JSON columns (Days / Students /
+    Cells), the same shape the catalogue endpoint uses. The client parses
+    them; nothing here needs to understand the contents.
+    """
+
+    def get(self, request):
+        weeks = request.GET.get('Weeks')
+        try:
+            result = call_proc(
+                "EXEC spCTWeekSummary @UID = %s, @Weeks = %s",
+                [request.GET.get('UID'), int(weeks) if weeks else None],
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTScheduleDaySaveViewSet(APIView):
+    """Add, move or remove one CT day. The procedure does the role check."""
+
+    def post(self, request):
+        rec = request.data
+        try:
+            result = call_proc(
+                "EXEC spCTScheduleDaySave @ActorUID = %s, @Mode = %s, @ID = %s, "
+                "@CTID = %s, @CTDate = %s, @Topic = %s, @Force = %s",
+                [
+                    rec.get('ActorUID'),
+                    rec.get('Mode') or 'Save',
+                    rec.get('ID') or None,
+                    rec.get('CTID') or None,
+                    rec.get('CTDate') or None,
+                    rec.get('Topic') or None,
+                    1 if rec.get('Force') in (1, '1', True) else 0,
+                ],
+            )
+            return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

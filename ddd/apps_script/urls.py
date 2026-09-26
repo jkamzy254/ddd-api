@@ -105,7 +105,12 @@ urlpatterns = [
 	path('eduBBTCheckTransferCT/', eb.CheckCTTransferViewSet.as_view()),  
 	path('eduBBTTransferCenter/', eb.BBTransferCenterViewSet.as_view()), 
 	path('eduBBTGetCurrentCCT/', eb.GetCurrentCCTUIDViewSet.as_view()),   
-	path('eduBBTUpdateCCTEdu/', eb.UpdateCCTEduViewSet.as_view()),    
+	path('eduBBTUpdateCCTEdu/', eb.UpdateCCTEduViewSet.as_view()),   
+	path('eduBBTGetBTMList/',      eb.EduGetBTMListViewSet.as_view()),
+	path('eduBBTCreateBTM/',       eb.EduCreateBTMViewSet.as_view()),
+	path('eduBBTUpdateBTM/',       eb.EduUpdateBTMViewSet.as_view()),
+	path('eduBBTGetPotentialBTM/', eb.EduGetPotentialBTMViewSet.as_view()),
+	path('eduBBTAddBTMMember/',    eb.EduAddBTMMemberViewSet.as_view()), 
  
 	#Tribe Exam System
 	path('examGetMember/', ex.GetMemberViewSet.as_view()),

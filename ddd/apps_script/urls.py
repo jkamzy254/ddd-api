@@ -10,6 +10,7 @@ from .views import tribe_exam as ex
 from .views import sept_exam as se
 from .views import mlt as mlt
 from .views import ev_dept_admin as ev
+from .views import church_regrouping as cr
 from django.views.generic.base import TemplateView
 
 from django.urls import path
@@ -139,5 +140,34 @@ urlpatterns = [
 	path('sepExamGetMyGroup/', se.GetMyGroupViewSet.as_view()),
 	path('sepExamUpdateScore/', se.UpdateExamScoreViewSet.as_view()),
 	path('sepExamUpdateScoreSheets/', se.UpdateExamScoreSheetsViewSet.as_view()),
+ 
+	#Church Regrouping
+    path('churchRegrpGetMember/',      cr.ChurchRegrpGetMemberViewSet.as_view()),
+    path('churchRegrpGetContext/',     cr.ChurchRegrpGetContextViewSet.as_view()),
+    path('churchRegrpGetGroups/',      cr.ChurchRegrpGetGroupsViewSet.as_view()),
+    path('churchRegrpGetTasks/',       cr.ChurchRegrpGetTasksViewSet.as_view()),
+    path('churchRegrpGetTaskRefs/',    cr.ChurchRegrpGetTaskRefsViewSet.as_view()),
+    path('churchRegrpGetMembers/',     cr.ChurchRegrpGetMembersViewSet.as_view()),
+    path('churchRegrpGetRequests/',    cr.ChurchRegrpGetRequestsViewSet.as_view()),
+    path('churchRegrpSearchMembers/',  cr.ChurchRegrpSearchMembersViewSet.as_view()),
+    path('churchRegrpSaveRequest/',    cr.ChurchRegrpSaveRequestViewSet.as_view()),
+    path('churchRegrpResolve/',        cr.ChurchRegrpResolveViewSet.as_view()),
+    path('churchRegrpSetDeptLeader/',  cr.ChurchRegrpSetDeptLeaderViewSet.as_view()),
+    path('churchRegrpMoveGroup/',      cr.ChurchRegrpMoveGroupViewSet.as_view()),
+    path('churchRegrpGroupHistory/',   cr.ChurchRegrpGroupHistoryViewSet.as_view()),
+    path('churchRegrpArchive/',        cr.ChurchRegrpArchiveViewSet.as_view()),
+    path('churchRegrpSetGroupRule/',   cr.ChurchRegrpSetGroupRuleViewSet.as_view()),
+    path('churchRegrpSetMemberProfile/', cr.ChurchRegrpSetMemberProfileViewSet.as_view()),
+    path('churchRegrpProfileHistory/', cr.ChurchRegrpProfileHistoryViewSet.as_view()),
+    path('churchRegrpCTGetMembers/',   cr.ChurchRegrpCTGetMembersViewSet.as_view()),
+    path('churchRegrpCTGetGroups/',    cr.ChurchRegrpCTGetGroupsViewSet.as_view()),
+    path('churchRegrpCTMove/',         cr.ChurchRegrpCTMoveViewSet.as_view()),
+    path('churchRegrpCTSetLeader/',    cr.ChurchRegrpCTSetLeaderViewSet.as_view()),
+    path('churchRegrpCTHistory/',      cr.ChurchRegrpCTHistoryViewSet.as_view()),
+    path('churchRegrpCTSaveGroup/',    cr.ChurchRegrpCTSaveGroupViewSet.as_view()),
+    path('churchRegrpGetSubdivisions/', cr.ChurchRegrpGetSubdivisionsViewSet.as_view()),
+    path('churchRegrpSetSubdivLeader/', cr.ChurchRegrpSetSubdivLeaderViewSet.as_view()),
+    path('churchRegrpMemberSheet/',    cr.ChurchRegrpMemberSheetViewSet.as_view()),   # needs X-Sync-Key
+
  
 ]

@@ -573,6 +573,27 @@ class EduAddBTMMemberViewSet(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class EduGetStudentViewSet(APIView):
+    """Open Bible studies for one phone number, with their reports (BBGetStudentFunction)."""
+
+    def get(self, request):
+        phone = ''.join(ch for ch in request.GET.get('Phone', '') if ch.isdigit())
+        if not phone:
+            return Response({'error': 'Phone number must contain digits.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT * FROM dbo.BBGetStudentFunction(%s)", [int(phone)])
+                result = fetch_rows(cursor)
+
+            # FOR JSON PATH comes back as a string; send it on as a list.
+            for row in result:
+                raw = row.get('BBReports')
+                row['BBReports'] = json.loads(raw) if raw else []
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # --- urls.py ------------------------------------------------------------------------
 

@@ -112,6 +112,8 @@ urlpatterns = [
 	path('eduBBTUpdateBTM/',       eb.EduUpdateBTMViewSet.as_view()),
 	path('eduBBTGetPotentialBTM/', eb.EduGetPotentialBTMViewSet.as_view()),
 	path('eduBBTAddBTMMember/',    eb.EduAddBTMMemberViewSet.as_view()), 
+  	path('eduBBTGetStudent/',      eb.EduGetStudentViewSet.as_view()),
+
  
 	#Tribe Exam System
 	path('examGetMember/', ex.GetMemberViewSet.as_view()),

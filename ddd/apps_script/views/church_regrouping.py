@@ -64,12 +64,18 @@ def blank_to_none(value):
 
 def sql_error(e):
     """
-    The procedures THROW sentences meant for the user. pyodbc wraps them as
-    "... [SQL Server]You do not have access to this department. (50002) (SQLExecDirectW)";
-    return just the sentence, or the whole text when it is some other error.
+    The procedures THROW sentences meant for the user, with error numbers
+    50000 and up. pyodbc wraps them as
+    "... [SQL Server]You do not have access to this department. (50002) (SQLExecDirectW)".
+    Only those sentences are passed on. Anything else (a missing object, a
+    type error, a lost connection) would show the database's structure, so it
+    goes to the server log and the page gets a plain message.
     """
-    found = re.findall(r'\[SQL Server\](.*?)\s*\(\d+\)', str(e))
-    return found[-1].strip() if found else str(e)
+    found = re.findall(r'\[SQL Server\](.*?)\s*\((\d+)\)', str(e))
+    if found and int(found[-1][1]) >= 50000:
+        return found[-1][0].strip()
+    print('Church Regrouping — server error:', e)
+    return 'The server could not complete that. Please try again, or tell the administrator if it keeps happening.'
 
 
 def error_response(e):

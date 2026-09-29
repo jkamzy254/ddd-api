@@ -595,9 +595,38 @@ class EduGetStudentViewSet(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# --- urls.py ------------------------------------------------------------------------
 
+class EduAddBBExceptionViewSet(APIView):
+    """Puts a student on BBExceptionTable (spBBAddException); returns their exception row."""
+
+    def post(self, request):
+        data = request.data
+        uid = data.get('UID')
+        reporter = data.get('User')
+
+        if not uid or not reporter:
+            return Response({'error': 'UID and User are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "EXEC spBBAddException @UID = %s, @Reason = %s, @Reporter = %s",
+                    [uid, data.get('Reason') or None, reporter]
+                )
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# --- urls.py ------------------------------------------------------------------------
 #
-# eduBBTUpdateStatus/ and eduBBTGetCurrentCCT/ keep their existing routes.
-# If eduBBTGetCurrentCCT/ points at a different view, add the BLTDone / InterviewDT /
-# InterviewDone columns to whatever it returns — the CCT page reads those keys.
+#   path('eduBBTGetBTMList/',      EduGetBTMListViewSet.as_view()),
+#   path('eduBBTCreateBTM/',       EduCreateBTMViewSet.as_view()),
+#   path('eduBBTUpdateBTM/',       EduUpdateBTMViewSet.as_view()),
+#   path('eduBBTGetPotentialBTM/', EduGetPotentialBTMViewSet.as_view()),
+#   path('eduBBTAddBTMMember/',    EduAddBTMMemberViewSet.as_view()),
+#   path('eduBBTGetStudent/',      EduGetStudentViewSet.as_view()),
+#   path('eduBBTAddException/',    EduAddBBExceptionViewSet.as_view()),
+#

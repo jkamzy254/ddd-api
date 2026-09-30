@@ -422,10 +422,17 @@ class ChurchRegrpSetMemberProfileViewSet(APIView):
 
         try:
             with connection.cursor() as cursor:
-                cursor.execute(
-                    "EXEC spChurchRegrpSetMemberProfile @ActorUID = %s, @UID = %s, @Category = %s, @Schedule = %s",
-                    [actor, uid, blank_to_none(data.get('Category')), blank_to_none(data.get('Schedule'))]
-                )
+                # Gender is written to Registration by its own procedure; the rest is the profile.
+                if 'Gender' in data:
+                    cursor.execute(
+                        "EXEC spChurchRegrpSetMemberGender @ActorUID = %s, @UID = %s, @Gender = %s",
+                        [actor, uid, blank_to_none(data.get('Gender'))]
+                    )
+                else:
+                    cursor.execute(
+                        "EXEC spChurchRegrpSetMemberProfile @ActorUID = %s, @UID = %s, @Category = %s, @Schedule = %s",
+                        [actor, uid, blank_to_none(data.get('Category')), blank_to_none(data.get('Schedule'))]
+                    )
                 result = fetch_rows(cursor)
 
             return Response(result, status=status.HTTP_200_OK)

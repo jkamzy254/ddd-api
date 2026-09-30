@@ -583,13 +583,27 @@ class EduGetStudentViewSet(APIView):
 
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM dbo.BBGetStudentFunction(%s)", [int(phone)])
+                # The exception join is done in SQL, not Python: SQL Server ignores
+                # trailing spaces and case when comparing UIDs, a Python dict does not.
+                cursor.execute(
+                    """
+                    SELECT S.*,
+                           E.ID AS ExcID, E.Timestamp AS ExcTimestamp,
+                           E.Reason AS ExcReason, E.Reporter AS ExcReporter
+                    FROM dbo.BBGetStudentFunction(%s) S
+                    LEFT JOIN BBExceptionTable E ON E.UID = S.UID
+                    """,
+                    [int(phone)]
+                )
                 result = fetch_rows(cursor)
 
-            # FOR JSON PATH comes back as a string; send it on as a list.
             for row in result:
+                # FOR JSON PATH comes back as a string; send it on as a list.
                 raw = row.get('BBReports')
                 row['BBReports'] = json.loads(raw) if raw else []
+
+                exc = {k: row.pop('Exc' + k) for k in ('ID', 'Timestamp', 'Reason', 'Reporter')}
+                row['Exception'] = exc if exc['ID'] is not None else None
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:

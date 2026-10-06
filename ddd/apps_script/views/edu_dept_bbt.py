@@ -634,6 +634,22 @@ class EduAddBBExceptionViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+# --- CT attendance ------------------------------------------------------------------
+
+class EduGetCTAttendanceViewSet(APIView):
+    """spBBGetCTAttendance: one row per CT student with Day1..Day6 attendance."""
+
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spBBGetCTAttendance")
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 # --- urls.py ------------------------------------------------------------------------
 #
 #   path('eduBBTGetBTMList/',      EduGetBTMListViewSet.as_view()),
@@ -643,4 +659,8 @@ class EduAddBBExceptionViewSet(APIView):
 #   path('eduBBTAddBTMMember/',    EduAddBTMMemberViewSet.as_view()),
 #   path('eduBBTGetStudent/',      EduGetStudentViewSet.as_view()),
 #   path('eduBBTAddException/',    EduAddBBExceptionViewSet.as_view()),
+#   path('eduBBTGetCTAttendance/', EduGetCTAttendanceViewSet.as_view()),
 #
+# eduBBTUpdateStatus/ and eduBBTGetCurrentCCT/ keep their existing routes.
+# If eduBBTGetCurrentCCT/ points at a different view, add the BLTDone / InterviewDT /
+# InterviewDone columns to whatever it returns — the CCT page reads those keys.

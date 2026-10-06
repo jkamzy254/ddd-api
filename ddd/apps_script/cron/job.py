@@ -74,3 +74,43 @@ def ct_close_finished():
         summary = dict(zip([c[0] for c in cursor.description], row))
 
     print("ct_close_finished: %s" % summary.get("Res"))
+
+# =============================================================================
+# Season history — Django side. Four pieces, each goes into an existing file.
+# Run server/season_history.sql first; the job calls spEVSeasonHistoryAdd.
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# 1. cron/job.py — add alongside the other jobs (imports are already there)
+# -----------------------------------------------------------------------------
+
+def ev_season_history_add():
+    """
+    Snapshots every Melbourne season whose ClosingDate has passed into
+    SeasonHistoryTable, one row per season.
+
+    Runs daily rather than on Wednesdays: most seasons close on a Wednesday but
+    not all of them (2021-12-19, 2022-12-19), and a daily run picks up a night
+    the server was down. On the other 364 nights it finds nothing missing and
+    adds nothing.
+
+    Idempotent and safe under several workers — the procedure takes a range
+    lock and SeasonID is unique. Do not wrap in transaction.atomic(); the
+    procedure owns its transaction.
+    """
+    close_old_connections()
+
+    with connection.cursor() as cursor:
+        cursor.execute("EXEC spEVSeasonHistoryAdd")
+        row = cursor.fetchone() if cursor.description else None
+        if row is None:
+            print("ev_season_history_add: no summary returned")
+            return
+        summary = dict(zip([c[0] for c in cursor.description], row))
+
+    # Added / Names / Res / Ok / RunAt
+    print("ev_season_history_add: %s" % summary.get("Res"))
+
+    if not summary.get("Ok"):
+        print("ev_season_history_add: SNAPSHOT FAILED — nothing was added, the next run retries")

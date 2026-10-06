@@ -2,7 +2,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from pytz import timezone
 
-from .job import ct_add_classes, ct_transfer_run_due, ct_close_finished
+from .job import ct_add_classes, ct_transfer_run_due, ct_close_finished, ev_season_history_add
 
 
 def start():
@@ -36,6 +36,18 @@ def start():
         ct_close_finished,
         CronTrigger(hour=1, minute=45, timezone=local_tz),
         id='ct_close_finished',
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+        misfire_grace_time=3600,
+    )
+
+    # A season closing Wednesday 23:59 is snapshotted at 01:30 Thursday.
+    # Clear of the 01:45 / 02:00 / 02:15 CT jobs so the log stays readable.
+    scheduler.add_job(
+        ev_season_history_add,
+        CronTrigger(hour=1, minute=30, timezone=local_tz),
+        id='ev_season_history_add',
         replace_existing=True,
         max_instances=1,
         coalesce=True,
@@ -170,3 +182,19 @@ def start():
    symptom of the job not running — the log still reads 'Approved' and the UI
    still shows the transfer as scheduled, so nothing else surfaces it.
 """
+
+# -----------------------------------------------------------------------------
+# 2. cron/updater.py
+#
+#    from .job import ct_add_classes, ct_transfer_run_due, ct_close_finished, \
+#                     ev_season_history_add
+#
+#    and inside start(), before scheduler.start():
+# -----------------------------------------------------------------------------
+
+    # A season closing Wednesday 23:59 is snapshotted at 01:30 Thursday.
+    # Clear of the 01:45 / 02:00 / 02:15 CT jobs so the log stays readable.
+
+    # Wednesday nights only, if you would rather (00:30 Thursday is the first
+    # moment a Wednesday closing has passed):
+    #   CronTrigger(day_of_week='thu', hour=0, minute=30, timezone=local_tz)

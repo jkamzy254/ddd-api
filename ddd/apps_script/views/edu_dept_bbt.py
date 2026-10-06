@@ -665,6 +665,35 @@ class EduGetWeeklyBBViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+# --- Season performance -------------------------------------------------------------
+
+def next_rows(cursor):
+    """Rows of the next result set that has columns, skipping any row-count-only sets."""
+    while cursor.nextset():
+        if cursor.description is not None:
+            return fetch_rows(cursor)
+    return []
+
+
+class EduGetBBTSeasonPerformanceViewSet(APIView):
+    """
+    spBBGetBBTSeasonPerformance: CCTs per BBT over the last six seasons.
+    seasons lists the season columns in order; each bbts row carries one count per season,
+    keyed by that season's Col (its NickName).
+    """
+
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spBBGetBBTSeasonPerformance")
+                seasons = fetch_rows(cursor)
+                bbts = next_rows(cursor)
+
+            return Response({'seasons': seasons, 'bbts': bbts}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 # --- urls.py ------------------------------------------------------------------------
 #
 #   path('eduBBTGetBTMList/',      EduGetBTMListViewSet.as_view()),
@@ -676,6 +705,7 @@ class EduGetWeeklyBBViewSet(APIView):
 #   path('eduBBTAddException/',    EduAddBBExceptionViewSet.as_view()),
 #   path('eduBBTGetCTAttendance/', EduGetCTAttendanceViewSet.as_view()),
 #   path('eduBBTGetWeeklyBB/',     EduGetWeeklyBBViewSet.as_view()),
+#   path('eduBBTGetBBTSeasonPerformance/', EduGetBBTSeasonPerformanceViewSet.as_view()),
 #
 # eduBBTUpdateStatus/ and eduBBTGetCurrentCCT/ keep their existing routes.
 # If eduBBTGetCurrentCCT/ points at a different view, add the BLTDone / InterviewDT /

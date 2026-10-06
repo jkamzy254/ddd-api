@@ -116,6 +116,7 @@ urlpatterns = [
   	path('eduBBTAddException/',    eb.EduAddBBExceptionViewSet.as_view()),
   	path('eduBBTGetCTAttendance/', eb.EduGetCTAttendanceViewSet.as_view()),
   	path('eduBBTGetWeeklyBB/',     eb.EduGetWeeklyBBViewSet.as_view()),
+  	path('eduBBTGetBBTSeasonPerformance/', eb.EduGetBBTSeasonPerformanceViewSet.as_view()),
 
  
 	#Tribe Exam System
@@ -139,7 +140,8 @@ urlpatterns = [
 	path('evUpdateMeeting/', ev.FMPUpdateMeetingViewSet.as_view()),
 	path('evExtendLock/', ev.FMPExtendLockViewSet.as_view()), 
 	path('evSeasonHistory/', ev.FMPEvSeasonHistoryViewSet.as_view()), 
-	path('evGroupPerformance/', ev.FMPEvGroupPerformanceViewSet.as_view()), 
+	path('evGroupPerformance/', ev.FMPEvGroupPerformanceViewSet.as_view()),
+  	path('evTGWPerformance/', ev.FMPEvTGWPerformanceViewSet.as_view(), name='evTGWPerformance'), 
  
 	#Sept Exam System
 	path('sepExamGetMember/', se.GetMemberViewSet.as_view()),

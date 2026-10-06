@@ -115,6 +115,7 @@ urlpatterns = [
   	path('eduBBTGetStudent/',      eb.EduGetStudentViewSet.as_view()),
   	path('eduBBTAddException/',    eb.EduAddBBExceptionViewSet.as_view()),
   	path('eduBBTGetCTAttendance/', eb.EduGetCTAttendanceViewSet.as_view()),
+  	path('eduBBTGetWeeklyBB/',     eb.EduGetWeeklyBBViewSet.as_view()),
 
  
 	#Tribe Exam System

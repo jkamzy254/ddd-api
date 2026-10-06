@@ -649,6 +649,21 @@ class EduGetCTAttendanceViewSet(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# --- Weekly BB ----------------------------------------------------------------------
+
+class EduGetWeeklyBBViewSet(APIView):
+    """spBBGetWeeklyBB: P / NP / FE / ABB / IBB per week of the current Melbourne season."""
+
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spBBGetWeeklyBB")
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 # --- urls.py ------------------------------------------------------------------------
 #
@@ -660,6 +675,7 @@ class EduGetCTAttendanceViewSet(APIView):
 #   path('eduBBTGetStudent/',      EduGetStudentViewSet.as_view()),
 #   path('eduBBTAddException/',    EduAddBBExceptionViewSet.as_view()),
 #   path('eduBBTGetCTAttendance/', EduGetCTAttendanceViewSet.as_view()),
+#   path('eduBBTGetWeeklyBB/',     EduGetWeeklyBBViewSet.as_view()),
 #
 # eduBBTUpdateStatus/ and eduBBTGetCurrentCCT/ keep their existing routes.
 # If eduBBTGetCurrentCCT/ points at a different view, add the BLTDone / InterviewDT /

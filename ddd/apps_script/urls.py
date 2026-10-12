@@ -117,6 +117,7 @@ urlpatterns = [
   	path('eduBBTGetCTAttendance/', eb.EduGetCTAttendanceViewSet.as_view()),
   	path('eduBBTGetWeeklyBB/',     eb.EduGetWeeklyBBViewSet.as_view()),
   	path('eduBBTGetBBTSeasonPerformance/', eb.EduGetBBTSeasonPerformanceViewSet.as_view()),
+  	path('eduBBTGetCTExpectedAttendance/', eb.EduGetCTExpectedAttendanceViewSet.as_view()),
 
  
 	#Tribe Exam System

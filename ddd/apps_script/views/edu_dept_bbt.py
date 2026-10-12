@@ -694,6 +694,22 @@ class EduGetBBTSeasonPerformanceViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+# --- CT report ----------------------------------------------------------------------
+
+class EduGetCTExpectedAttendanceViewSet(APIView):
+    """spBBGetCTExpectedAttendance: expected vs attended points per group, per class, Day1..Day6."""
+
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spBBGetCTExpectedAttendance")
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 # --- urls.py ------------------------------------------------------------------------
 #
 #   path('eduBBTGetBTMList/',      EduGetBTMListViewSet.as_view()),
@@ -706,6 +722,7 @@ class EduGetBBTSeasonPerformanceViewSet(APIView):
 #   path('eduBBTGetCTAttendance/', EduGetCTAttendanceViewSet.as_view()),
 #   path('eduBBTGetWeeklyBB/',     EduGetWeeklyBBViewSet.as_view()),
 #   path('eduBBTGetBBTSeasonPerformance/', EduGetBBTSeasonPerformanceViewSet.as_view()),
+#   path('eduBBTGetCTExpectedAttendance/', EduGetCTExpectedAttendanceViewSet.as_view()),
 #
 # eduBBTUpdateStatus/ and eduBBTGetCurrentCCT/ keep their existing routes.
 # If eduBBTGetCurrentCCT/ points at a different view, add the BLTDone / InterviewDT /

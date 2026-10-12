@@ -95,13 +95,16 @@ class FMPUpdateMeetingViewSet(APIView):
             metpicker = request.GET.get('MetPicker')
             bbtid = rec.get('BBTID') if rec.get('BBTID') else "NULL"
             outcome = request.GET.get('Outcome') if rec.get('Outcome') else "NULL"
+
+            query = f"""EXEC spEVUpdateMeeting 
+                        @User = '{user}', @MeetingKey = '{meetingKey}',
+                        @Attendee1 = {attendee1}, @Attendee2 = {attendee2}, 
+                        @MeetDate = {meetdate}, @MetPicker = {metpicker}, 
+                        @BBTID = {bbtid}, @Outcome = {outcome};
+                    """
+
             with connection.cursor() as cursor:
-                cursor.execute(f"""EXEC spEVUpdateMeeting 
-                                    @User = '{user}', @MeetingKey = '{meetingKey}',
-                                    @Attendee1 = {attendee1}, @Attendee2 = {attendee2}, 
-                                    @MeetDate = {meetdate}, @MetPicker = {metpicker}, 
-                                    @BBTID = {bbtid}, @Outcome = {outcome};
-                                    """)
+                cursor.execute(query)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)

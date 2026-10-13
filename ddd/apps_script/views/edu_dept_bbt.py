@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from django.db import connection
 
 import json
+import re
 import pandas as pd
 
 # Create your views here.
@@ -710,6 +711,38 @@ class EduGetCTExpectedAttendanceViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+def sp_message(error):
+    """The text of a THROW 5xxxx from a procedure, or None for any other error."""
+    match = re.search(r'\[SQL Server\]([^\[]+?)\s*\(5\d{4}\)', str(error))
+    return match.group(1).strip() if match else None
+
+class EduEndBBTLicenseViewSet(APIView):
+    """
+    spBBEndBBTLicense: ends a BBT's licence by dating their open BBTLog record (status
+    untouched), or with Reopen clears that end date again. Returns the latest BBTLog row.
+    """
+
+    def post(self, request):
+        data = request.data
+        uid = data.get('UID')
+        if not uid:
+            return Response({'error': 'UID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "EXEC spBBEndBBTLicense @UID = %s, @EndDate = %s, @Reopen = %s",
+                    [uid, data.get('EndDate') or None, 1 if data.get('Reopen') else 0]
+                )
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            message = sp_message(e)
+            if message:
+                return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 # --- urls.py ------------------------------------------------------------------------
 #
 #   path('eduBBTGetBTMList/',      EduGetBTMListViewSet.as_view()),
@@ -723,6 +756,7 @@ class EduGetCTExpectedAttendanceViewSet(APIView):
 #   path('eduBBTGetWeeklyBB/',     EduGetWeeklyBBViewSet.as_view()),
 #   path('eduBBTGetBBTSeasonPerformance/', EduGetBBTSeasonPerformanceViewSet.as_view()),
 #   path('eduBBTGetCTExpectedAttendance/', EduGetCTExpectedAttendanceViewSet.as_view()),
+#   path('eduBBTEndLicense/',      EduEndBBTLicenseViewSet.as_view()),
 #
 # eduBBTUpdateStatus/ and eduBBTGetCurrentCCT/ keep their existing routes.
 # If eduBBTGetCurrentCCT/ points at a different view, add the BLTDone / InterviewDT /

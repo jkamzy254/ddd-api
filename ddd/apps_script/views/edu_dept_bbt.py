@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from django.db import connection
 
 import json
+import re
 import pandas as pd
 
 # Create your views here.
@@ -143,37 +144,6 @@ class BBTransferCenterViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-        
-class UpdateBBTStatusViewSet(APIView):
-    def post(self, request):
-        data =request.data
-        uid = data.get('UID')
-        btm = data.get('BTM')
-        bb_status = data.get('Status')
-
-        try:
-            with connection.cursor() as cursor:
-                
-                cursor.execute(f"EXEC spBBUpdateBBTStatus @UID = '{uid}', @BTM = '{btm}', @Status = {bb_status}")
-                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-                print("Result: ", result)
-                
-            return Response(result, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-        
-class GetCurrentCCTUIDViewSet(APIView):
-    def get(self, request):
-        uid = request.GET.get('UID')
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute(f"EXEC spBBGetCurrentCCTUID {uid}")
-                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-
-            return Response(result, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class UpdateCCTEduViewSet(APIView):
     def post(self, request):
@@ -449,81 +419,345 @@ class GetCTAttendanceViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+  
+
+            
+def fetch_rows(cursor):
+    """Rows as dicts; [] when the statement returned no result set."""
+    if cursor.description is None:
+        return []
+    columns = [column[0] for column in cursor.description]
+    return [dict(zip(columns, record)) for record in cursor.fetchall()]
 
 
-        
+# --- changed: parameterised ------------------------------------------------------
+
+class UpdateBBTStatusViewSet(APIView):
+    def post(self, request):
+        data = request.data
+        uid = data.get('UID')
+        btm = data.get('BTM')
+        bb_status = data.get('Status')
+
+        if not uid or not btm or not bb_status:
+            return Response({'error': 'UID, BTM and Status are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "EXEC spBBUpdateBBTStatus @UID = %s, @BTM = %s, @Status = %s",
+                    [uid, str(btm), bb_status]
+                )
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# --- changed: parameterised (the UID used to go in unquoted) ---------------------
+
+class GetCurrentCCTUIDViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('UID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spBBGetCurrentCCTUID %s", [uid])
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# --- BTMs tab -------------------------------------------------------------------
+
 class EduGetBTMListViewSet(APIView):
     def get(self, request):
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"Select * From BTMListTable")
-                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                cursor.execute("SELECT ID, Name, StartDate, EndDate, Is_Active FROM BTMListTable ORDER BY ID DESC")
+                result = fetch_rows(cursor)
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)      
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        
+
 class EduCreateBTMViewSet(APIView):
     def post(self, request):
-        data =request.data
+        data = request.data
         user = data.get('User')
-        btmName = data.get('BTMName')
-        btmStart = data.get('BTMStart')
+        btm_name = (data.get('BTMName') or '').strip()
+        btm_start = data.get('BTMStart')     # yyyy-mm-dd
+
+        if not btm_name or not btm_start:
+            return Response({'error': 'BTM name and start date are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"EXEC spEduDeptCreateBTM @User = '{user}', @Name = '{btmName}', @Start = '{btmStart}'")
-                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                cursor.execute("SELECT 1 FROM BTMListTable WHERE Name = %s", [btm_name])
+                if cursor.fetchone():
+                    return Response({'error': f'BTM {btm_name} already exists.'}, status=status.HTTP_409_CONFLICT)
+
+                cursor.execute(
+                    "EXEC spEduDeptCreateBTM @User = %s, @Name = %s, @Start = %s",
+                    [user, btm_name, btm_start]
+                )
+                result = fetch_rows(cursor)
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)      
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        
+
+# --- fixed: the old version was missing the comma before @Name ---------------------
+
 class EduUpdateBTMViewSet(APIView):
     def post(self, request):
-        data =request.data
-        user = data.get('User')
-        btmID = data.get('BTMID')
-        btmName = data.get('BTMName')
-        btmStart = data.get('BTMStart')
-        btmEnd = data.get('BTMEnd')
+        data = request.data
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"EXEC spEduDeptUpdateBTM @User = '{user}', @ID = '{btmID}' @Name = '{btmName}', @Start = '{btmStart}', @End = '{btmEnd}'")
-                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                cursor.execute(
+                    "EXEC spEduDeptUpdateBTM @User = %s, @ID = %s, @Name = %s, @Start = %s, @End = %s",
+                    [data.get('User'), data.get('BTMID'), data.get('BTMName'),
+                     data.get('BTMStart'), data.get('BTMEnd') or None]
+                )
+                result = fetch_rows(cursor)
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) 
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        
+
+# --- Add member tab -----------------------------------------------------------------
+
 class EduGetPotentialBTMViewSet(APIView):
     def get(self, request):
         user = request.GET.get('User')
-        evid = request.GET.get('EVID')
+        evid = request.GET.get('EVID', '')
+        if not evid.isdigit():
+            return Response({'error': 'Member ID must be a number.'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"EXEC spEduDeptGetPotentialBTM @User = '{user}', @EVID = '{evid}'")
-                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                cursor.execute("EXEC spEduDeptGetPotentialBTM @User = %s, @EVID = %s", [user, int(evid)])
+                result = fetch_rows(cursor)
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)   
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        
+
+# fixed: was a GET reading request.data, so UID / BTMID always arrived empty.
 class EduAddBTMMemberViewSet(APIView):
-    def get(self, request):
-        data =request.data
+    def post(self, request):
+        data = request.data
         user = data.get('User')
         uid = data.get('UID')
-        btmID = data.get('BTMID')
+        btm_id = data.get('BTMID')
+
+        if not uid or not btm_id:
+            return Response({'error': 'UID and BTMID are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             with connection.cursor() as cursor:
-                cursor.execute(f"EXEC spEduDeptAddBTMMember @User = '{user}', @UID = '{uid}', @BTMID = '{btmID}'")
-                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+                cursor.execute(
+                    "EXEC spEduDeptAddBTMMember @User = %s, @UID = %s, @BTMID = %s",
+                    [user, uid, int(btm_id)]
+                )
+                # The procedure returns nothing, so read back the entry it just wrote.
+                cursor.execute("SELECT TOP 1 * FROM BBTLog WHERE UID = %s ORDER BY StartDate DESC, ID DESC", [uid])
+                result = fetch_rows(cursor)
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)   
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class EduGetStudentViewSet(APIView):
+    """Open Bible studies for one phone number, with their reports (BBGetStudentFunction)."""
+
+    def get(self, request):
+        phone = ''.join(ch for ch in request.GET.get('Phone', '') if ch.isdigit())
+        if not phone:
+            return Response({'error': 'Phone number must contain digits.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                # The exception join is done in SQL, not Python: SQL Server ignores
+                # trailing spaces and case when comparing UIDs, a Python dict does not.
+                cursor.execute(
+                    """
+                    SELECT S.*,
+                           E.ID AS ExcID, E.Timestamp AS ExcTimestamp,
+                           E.Reason AS ExcReason, E.Reporter AS ExcReporter
+                    FROM dbo.BBGetStudentFunction(%s) S
+                    LEFT JOIN BBExceptionTable E ON E.UID = S.UID
+                    """,
+                    [int(phone)]
+                )
+                result = fetch_rows(cursor)
+
+            for row in result:
+                # FOR JSON PATH comes back as a string; send it on as a list.
+                raw = row.get('BBReports')
+                row['BBReports'] = json.loads(raw) if raw else []
+
+                exc = {k: row.pop('Exc' + k) for k in ('ID', 'Timestamp', 'Reason', 'Reporter')}
+                row['Exception'] = exc if exc['ID'] is not None else None
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class EduAddBBExceptionViewSet(APIView):
+    """Puts a student on BBExceptionTable (spBBAddException); returns their exception row."""
+
+    def post(self, request):
+        data = request.data
+        uid = data.get('UID')
+        reporter = data.get('User')
+
+        if not uid or not reporter:
+            return Response({'error': 'UID and User are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "EXEC spBBAddException @UID = %s, @Reason = %s, @Reporter = %s",
+                    [uid, data.get('Reason') or None, reporter]
+                )
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# --- CT attendance ------------------------------------------------------------------
+
+class EduGetCTAttendanceViewSet(APIView):
+    """spBBGetCTAttendance: one row per CT student with Day1..Day6 attendance."""
+
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spBBGetCTAttendance")
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# --- Weekly BB ----------------------------------------------------------------------
+
+class EduGetWeeklyBBViewSet(APIView):
+    """spBBGetWeeklyBB: P / NP / FE / ABB / IBB per week of the current Melbourne season."""
+
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spBBGetWeeklyBB")
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# --- Season performance -------------------------------------------------------------
+
+def next_rows(cursor):
+    """Rows of the next result set that has columns, skipping any row-count-only sets."""
+    while cursor.nextset():
+        if cursor.description is not None:
+            return fetch_rows(cursor)
+    return []
+
+
+class EduGetBBTSeasonPerformanceViewSet(APIView):
+    """
+    spBBGetBBTSeasonPerformance: CCTs per BBT over the last six seasons.
+    seasons lists the season columns in order; each bbts row carries one count per season,
+    keyed by that season's Col (its NickName).
+    """
+
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spBBGetBBTSeasonPerformance")
+                seasons = fetch_rows(cursor)
+                bbts = next_rows(cursor)
+
+            return Response({'seasons': seasons, 'bbts': bbts}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# --- CT report ----------------------------------------------------------------------
+
+class EduGetCTExpectedAttendanceViewSet(APIView):
+    """spBBGetCTExpectedAttendance: expected vs attended points per group, per class, Day1..Day6."""
+
+    def get(self, request):
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spBBGetCTExpectedAttendance")
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def sp_message(error):
+    """The text of a THROW 5xxxx from a procedure, or None for any other error."""
+    match = re.search(r'\[SQL Server\]([^\[]+?)\s*\(5\d{4}\)', str(error))
+    return match.group(1).strip() if match else None
+
+class EduEndBBTLicenseViewSet(APIView):
+    """
+    spBBEndBBTLicense: ends a BBT's licence by dating their open BBTLog record (status
+    untouched), or with Reopen clears that end date again. Returns the latest BBTLog row.
+    """
+
+    def post(self, request):
+        data = request.data
+        uid = data.get('UID')
+        if not uid:
+            return Response({'error': 'UID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "EXEC spBBEndBBTLicense @UID = %s, @EndDate = %s, @Reopen = %s",
+                    [uid, data.get('EndDate') or None, 1 if data.get('Reopen') else 0]
+                )
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            message = sp_message(e)
+            if message:
+                return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# --- urls.py ------------------------------------------------------------------------
+#
+#   path('eduBBTGetBTMList/',      EduGetBTMListViewSet.as_view()),
+#   path('eduBBTCreateBTM/',       EduCreateBTMViewSet.as_view()),
+#   path('eduBBTUpdateBTM/',       EduUpdateBTMViewSet.as_view()),
+#   path('eduBBTGetPotentialBTM/', EduGetPotentialBTMViewSet.as_view()),
+#   path('eduBBTAddBTMMember/',    EduAddBTMMemberViewSet.as_view()),
+#   path('eduBBTGetStudent/',      EduGetStudentViewSet.as_view()),
+#   path('eduBBTAddException/',    EduAddBBExceptionViewSet.as_view()),
+#   path('eduBBTGetCTAttendance/', EduGetCTAttendanceViewSet.as_view()),
+#   path('eduBBTGetWeeklyBB/',     EduGetWeeklyBBViewSet.as_view()),
+#   path('eduBBTGetBBTSeasonPerformance/', EduGetBBTSeasonPerformanceViewSet.as_view()),
+#   path('eduBBTGetCTExpectedAttendance/', EduGetCTExpectedAttendanceViewSet.as_view()),
+#   path('eduBBTEndLicense/',      EduEndBBTLicenseViewSet.as_view()),
+#
+# eduBBTUpdateStatus/ and eduBBTGetCurrentCCT/ keep their existing routes.
+# If eduBBTGetCurrentCCT/ points at a different view, add the BLTDone / InterviewDT /
+# InterviewDone columns to whatever it returns — the CCT page reads those keys.

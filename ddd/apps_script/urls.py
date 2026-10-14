@@ -10,6 +10,7 @@ from .views import tribe_exam as ex
 from .views import sept_exam as se
 from .views import mlt as mlt
 from .views import ev_dept_admin as ev
+from .views import church_regrouping as cr
 from django.views.generic.base import TemplateView
 
 from django.urls import path
@@ -51,6 +52,15 @@ urlpatterns = [
     path('ctGetTransfers/',        ca.CTGetTransfersViewSet.as_view()),
     path('ctCreateTransfer/',      ca.CTCreateTransferViewSet.as_view()),
     path('ctResolveTransfer/',     ca.CTResolveTransferViewSet.as_view()),
+    path('ctTransferRunDue/',      ca.CTTransferRunDueViewSet.as_view()),
+    path('ctAdminOverview/',       ca.CTAdminOverviewViewSet.as_view()),
+    path('ctStaffCatalogue/',      ca.CTStaffCatalogueViewSet.as_view()),
+    path('ctStaffAllocate/',       ca.CTStaffAllocateViewSet.as_view()),
+    path('ctCourseSave/',          ca.CTCourseSaveViewSet.as_view()),
+    path('ctSessionSave/',         ca.CTSessionSaveViewSet.as_view()),
+    path('ctCloseFinished/',       ca.CTCloseFinishedViewSet.as_view()),
+    path('ctWeekSummary/',         ca.CTWeekSummaryViewSet.as_view()),
+    path('ctScheduleDaySave/',     ca.CTScheduleDaySaveViewSet.as_view()),
  
 	#HSP
 	path('eduGetMember/', ep.GetMemberViewSet.as_view()),
@@ -79,7 +89,8 @@ urlpatterns = [
 	path('hspGetWeeklySessions/', ep.HSPGetEduWeeklySessionsViewSet.as_view()),   
 	path('hspGetSessionScores/', ep.HSPGetEduSessionScoresViewSet.as_view()),   
 	path('hspGetMWScores/', ep.HSPGetMWScoresViewSet.as_view()),    
-	path('hspGetLoyaltyCard/', ep.HSPGetMemberLoyaltyCard.as_view()),     
+	path('hspGetLoyaltyCard/', ep.HSPGetMemberLoyaltyCard.as_view()),    
+	path('hspGetTraineeSchedule/', ep.HSPGetTraineeScheduleViewSet.as_view()),    
      
 	#Edu Dept BBT System
 	path('eduBBTGetMember/', eb.GetMemberViewSet.as_view()),
@@ -95,7 +106,20 @@ urlpatterns = [
 	path('eduBBTCheckTransferCT/', eb.CheckCTTransferViewSet.as_view()),  
 	path('eduBBTTransferCenter/', eb.BBTransferCenterViewSet.as_view()), 
 	path('eduBBTGetCurrentCCT/', eb.GetCurrentCCTUIDViewSet.as_view()),   
-	path('eduBBTUpdateCCTEdu/', eb.UpdateCCTEduViewSet.as_view()),    
+	path('eduBBTUpdateCCTEdu/', eb.UpdateCCTEduViewSet.as_view()),   
+	path('eduBBTGetBTMList/',      eb.EduGetBTMListViewSet.as_view()),
+	path('eduBBTCreateBTM/',       eb.EduCreateBTMViewSet.as_view()),
+	path('eduBBTUpdateBTM/',       eb.EduUpdateBTMViewSet.as_view()),
+	path('eduBBTGetPotentialBTM/', eb.EduGetPotentialBTMViewSet.as_view()),
+	path('eduBBTAddBTMMember/',    eb.EduAddBTMMemberViewSet.as_view()), 
+  	path('eduBBTGetStudent/',      eb.EduGetStudentViewSet.as_view()),
+  	path('eduBBTAddException/',    eb.EduAddBBExceptionViewSet.as_view()),
+  	path('eduBBTGetCTAttendance/', eb.EduGetCTAttendanceViewSet.as_view()),
+  	path('eduBBTGetWeeklyBB/',     eb.EduGetWeeklyBBViewSet.as_view()),
+  	path('eduBBTGetBBTSeasonPerformance/', eb.EduGetBBTSeasonPerformanceViewSet.as_view()),
+  	path('eduBBTGetCTExpectedAttendance/', eb.EduGetCTExpectedAttendanceViewSet.as_view()),
+  	path('eduBBTEndLicense/',      eb.EduEndBBTLicenseViewSet.as_view()),
+
  
 	#Tribe Exam System
 	path('examGetMember/', ex.GetMemberViewSet.as_view()),
@@ -117,6 +141,9 @@ urlpatterns = [
 	path('evDeleteMeeting/', ev.FMPDeleteMeetingViewSet.as_view()),
 	path('evUpdateMeeting/', ev.FMPUpdateMeetingViewSet.as_view()),
 	path('evExtendLock/', ev.FMPExtendLockViewSet.as_view()), 
+	path('evSeasonHistory/', ev.FMPEvSeasonHistoryViewSet.as_view()), 
+	path('evGroupPerformance/', ev.FMPEvGroupPerformanceViewSet.as_view()),
+  	path('evTGWPerformance/', ev.FMPEvTGWPerformanceViewSet.as_view(), name='evTGWPerformance'), 
  
 	#Sept Exam System
 	path('sepExamGetMember/', se.GetMemberViewSet.as_view()),
@@ -124,5 +151,34 @@ urlpatterns = [
 	path('sepExamGetMyGroup/', se.GetMyGroupViewSet.as_view()),
 	path('sepExamUpdateScore/', se.UpdateExamScoreViewSet.as_view()),
 	path('sepExamUpdateScoreSheets/', se.UpdateExamScoreSheetsViewSet.as_view()),
+ 
+	#Church Regrouping
+    path('churchRegrpGetMember/',      cr.ChurchRegrpGetMemberViewSet.as_view()),
+    path('churchRegrpGetContext/',     cr.ChurchRegrpGetContextViewSet.as_view()),
+    path('churchRegrpGetGroups/',      cr.ChurchRegrpGetGroupsViewSet.as_view()),
+    path('churchRegrpGetTasks/',       cr.ChurchRegrpGetTasksViewSet.as_view()),
+    path('churchRegrpGetTaskRefs/',    cr.ChurchRegrpGetTaskRefsViewSet.as_view()),
+    path('churchRegrpGetMembers/',     cr.ChurchRegrpGetMembersViewSet.as_view()),
+    path('churchRegrpGetRequests/',    cr.ChurchRegrpGetRequestsViewSet.as_view()),
+    path('churchRegrpSearchMembers/',  cr.ChurchRegrpSearchMembersViewSet.as_view()),
+    path('churchRegrpSaveRequest/',    cr.ChurchRegrpSaveRequestViewSet.as_view()),
+    path('churchRegrpResolve/',        cr.ChurchRegrpResolveViewSet.as_view()),
+    path('churchRegrpSetDeptLeader/',  cr.ChurchRegrpSetDeptLeaderViewSet.as_view()),
+    path('churchRegrpMoveGroup/',      cr.ChurchRegrpMoveGroupViewSet.as_view()),
+    path('churchRegrpGroupHistory/',   cr.ChurchRegrpGroupHistoryViewSet.as_view()),
+    path('churchRegrpArchive/',        cr.ChurchRegrpArchiveViewSet.as_view()),
+    path('churchRegrpSetGroupRule/',   cr.ChurchRegrpSetGroupRuleViewSet.as_view()),
+    path('churchRegrpSetMemberProfile/', cr.ChurchRegrpSetMemberProfileViewSet.as_view()),
+    path('churchRegrpProfileHistory/', cr.ChurchRegrpProfileHistoryViewSet.as_view()),
+    path('churchRegrpCTGetMembers/',   cr.ChurchRegrpCTGetMembersViewSet.as_view()),
+    path('churchRegrpCTGetGroups/',    cr.ChurchRegrpCTGetGroupsViewSet.as_view()),
+    path('churchRegrpCTMove/',         cr.ChurchRegrpCTMoveViewSet.as_view()),
+    path('churchRegrpCTSetLeader/',    cr.ChurchRegrpCTSetLeaderViewSet.as_view()),
+    path('churchRegrpCTHistory/',      cr.ChurchRegrpCTHistoryViewSet.as_view()),
+    path('churchRegrpCTSaveGroup/',    cr.ChurchRegrpCTSaveGroupViewSet.as_view()),
+    path('churchRegrpGetSubdivisions/', cr.ChurchRegrpGetSubdivisionsViewSet.as_view()),
+    path('churchRegrpSetSubdivLeader/', cr.ChurchRegrpSetSubdivLeaderViewSet.as_view()),
+    path('churchRegrpMemberSheet/',    cr.ChurchRegrpMemberSheetViewSet.as_view()),   # needs X-Sync-Key
+
  
 ]

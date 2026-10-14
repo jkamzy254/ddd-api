@@ -95,13 +95,16 @@ class FMPUpdateMeetingViewSet(APIView):
             metpicker = request.GET.get('MetPicker')
             bbtid = rec.get('BBTID') if rec.get('BBTID') else "NULL"
             outcome = request.GET.get('Outcome') if rec.get('Outcome') else "NULL"
+
+            query = f"""EXEC spEVUpdateMeeting 
+                        @User = '{user}', @MeetingKey = '{meetingKey}',
+                        @Attendee1 = {attendee1}, @Attendee2 = {attendee2}, 
+                        @MeetDate = {meetdate}, @MetPicker = {metpicker}, 
+                        @BBTID = {bbtid}, @Outcome = {outcome};
+                    """
+
             with connection.cursor() as cursor:
-                cursor.execute(f"""EXEC spEVUpdateMeeting 
-                                    @User = '{user}', @MeetingKey = '{meetingKey}',
-                                    @Attendee1 = {attendee1}, @Attendee2 = {attendee2}, 
-                                    @MeetDate = {meetdate}, @MetPicker = {metpicker}, 
-                                    @BBTID = {bbtid}, @Outcome = {outcome};
-                                    """)
+                cursor.execute(query)
                 result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
 
             return Response(result, status=status.HTTP_200_OK)
@@ -123,3 +126,82 @@ class FMPExtendLockViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class FMPEvSeasonHistoryViewSet(APIView):
+    def get(self, request):
+        user = request.GET.get('User')
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    SELECT ID, SeasonID, Name, CTOpen, Yr,
+                        F, M, PP, P, FE, ABB, CCT, AddedAt
+                    FROM dbo.SeasonHistoryTable
+                    ORDER BY CTOpen
+                """)
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            # JsonResponse's encoder writes CTOpen as 'YYYY-MM-DD', which the page parses.
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class FMPEvGroupPerformanceViewSet(APIView):
+    def get(self, request):
+        user = request.GET.get('User')
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC dbo.spEVGroupPerformance")
+
+                # The temp-table steps run under SET NOCOUNT ON, so the final SELECT
+                # should be the first result set. Stepping past anything without
+                # columns keeps this working if someone drops the NOCOUNT later.
+                while cursor.description is None and cursor.nextset():
+                    pass
+
+                if cursor.description is None:
+                    return Response([], status=status.HTTP_200_OK)
+
+                result = [dict(zip([column[0] for column in cursor.description], record))
+                          for record in cursor.fetchall()]
+
+            # Points are DECIMAL in SQL and arrive as Decimal, which DRF writes as a
+            # string ("3.50"). The page converts with Number(), so that is fine as is.
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class FMPEvTGWPerformanceViewSet(APIView):
+    def get(self, request):
+        user = request.GET.get('User')
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC dbo.spEVTGWPerformance")
+
+                # Step past any result without columns (only possible if the
+                # procedure ever loses its SET NOCOUNT ON).
+                while cursor.description is None and cursor.nextset():
+                    pass
+
+                if cursor.description is None:
+                    return Response([], status=status.HTTP_200_OK)
+
+                result = [dict(zip([column[0] for column in cursor.description], record))
+                          for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# -----------------------------------------------------------------------------
+# 2. urls.py — next to evGroupPerformance/
+# -----------------------------------------------------------------------------
+
+#   path('evTGWPerformance/', FMPEvTGWPerformanceViewSet.as_view(), name='evTGWPerformance'),

@@ -55,15 +55,17 @@ def bot_responses(id, tname, input_text):
     if access in ('None','GGN'):
         print(f"\nAccess level {access} does not have permission to use the bot.")
         return '-'
-
+    
+    
     if access in ['All', 'MW', 'IT', 'MT', 'EDU']:
-        d = {'All': '%',
-             'MW': 'MW[0-9]%',
-             'IT': '%',
-             'MT': 'D[0-9]%',
-             'EDU': 'D[0-9]%',}.get(access)
-        g = '%' if access in ('MT') else g
-        print(f"\nAccess level {access} set d to {d} and g to {g}")
+        if access in ['All', 'MW', 'IT', 'MT', 'EDU']:
+            d = {'All': '%',
+                'MW': 'MW[0-9]%',
+                'IT': '%',
+                'MT': 'D[0-9]%',
+                'EDU': 'D[0-9]%',}.get(access)
+            g = '%' if access in ('MT') else g
+            print(f"\nAccess level {access} set d to {d} and g to {g}")
         if '//' in user_message:
             try:
                 print('//')
@@ -75,6 +77,7 @@ def bot_responses(id, tname, input_text):
                 access = d if access not in ('MT') else access
                 print(f"\nParsed command: {command}, d: {d}, access: {access}")
             except ValueError:
+                print('Format error [1]')
                 return 'Format error: Too many "/"s'
         elif '/' in user_message:
             try:
@@ -82,6 +85,7 @@ def bot_responses(id, tname, input_text):
                 g = g.replace('g', 'G')
                 access = 'Group' if access != 'MT' else 'MT'
             except ValueError:
+                print('Format error [2]')
                 return 'Format error: Too many "/"s'
             print(f"\nGroup info for {g}: d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, bb_sid={bb_sid}, bb_ss={bb_ss}")
             d, fmp_sid, fmp_ss, bb_sid, bb_ss = SQLCodes.groupinfo(g).split('/')
@@ -91,11 +95,19 @@ def bot_responses(id, tname, input_text):
     elif access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','Senior','NF']:
         d = access if access not in ('Dept') else d
         print(f"\nAccess level {access} set d to {d}")
-        if '/' in user_message:
+        if access in frozenset(('Senior','NF')) and '//' in user_message: # These are the "divisions" where some depts can be specified but not all
+            print(f"\nAccess in frozenset ('Senior','NF') detected. Checking department access for user_message: {user_message}")
+            allowed_depts = SQLCodes.accessdept(access) # Therefore, accessdept function is needed to filter which depts they can access using '//'
+            print('//')
+            command, d = user_message.split('//')
+            if d not in allowed_depts: # Depts they cannot access
+                return 'Sorry, this department is outside your division!'
+        elif '/' in user_message:
             try:
                 command, g = user_message.split('/')
                 g = g.lower().replace('mw','MW') if g.lower().startswith('mw') else g.replace('g', 'G')
             except ValueError:
+                print('Format error [3]')
                 return 'Format error: Too many "/"s'
             # Only call groupinfo and deptgroup when actually needed
             d, fmp_sid, fmp_ss, bb_sid, bb_ss = SQLCodes.groupinfo(g).split('/')

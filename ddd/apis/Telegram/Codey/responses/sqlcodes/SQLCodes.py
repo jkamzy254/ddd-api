@@ -34,6 +34,26 @@ conn_str = """
 # EDU FUNCTIONS
 # MT FUNCTIONS
 
+def global_dept_list(d):
+    filt = {
+    "24": "(SELECT Dept FROM GroupInfo WHERE Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL'))",
+    "MW[0-9]%" :"(SELECT Dept FROM GroupInfo WHERE Grp LIKE 'MW[0-9]%')",
+    "NF": "(SELECT Dept FROM GroupInfo WHERE DeptCategory = 'NF')",
+    "Senior": "(SELECT Dept FROM GroupInfo WHERE DeptCategory = 'Senior')"
+    }.get(d,f"(SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')")
+    return filt
+    
+def global_group_list(g):
+    filt = {
+    "24": "(SELECT Grp FROM GroupInfo WHERE Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL'))",
+    "MW[0-9]%" :"(SELECT Grp FROM GroupInfo WHERE Grp LIKE 'MW[0-9]%')",
+    "NF": "(SELECT Grp FROM GroupInfo WHERE DeptCategory = 'NF')",
+    "Senior": "(SELECT Grp FROM GroupInfo WHERE DeptCategory = 'Senior')"
+    }.get(g,f"(SELECT Grp FROM GroupInfo WHERE Grp LIKE '{g}')")
+    return filt
+
+
+
 def format_display_name(value): # EDU FUNCTIONS (used in bb "list" functions that use case-sensitive pandas filtering to avoid the slow "OR" condition filtering in SQL when searching both leaves. Potentially could be used in any bb or fmp function involving both leaf )
     print(f"\n>>>calling format_display_name: value={value}")
     """Format g or d for display in the header only"""
@@ -153,8 +173,9 @@ def approve_new_user_request(userUID,telID): # ACCESS FUNCTIONS
 
 def deptgroup(d): # ACCESS FUNCTIONS
     print(f"\n>>>deptgroup: d={d}")
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    group_query = f"SELECT Grp FROM GroupInfo WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    group_query = f"SELECT Grp FROM GroupInfo WHERE Dept IN {depts}"
     ga = pd.read_sql(group_query, conn)
     conn.cursor().close()
     grouplist = []
@@ -590,8 +611,10 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
         sid = f"(SELECT dbo.lastssnid('{ct}'))"
     else:
         sid = f"'{sid}'" # Adding quotes as sometimes sid can be '%' which is a string
-        
-    memberQ = f"""SELECT {name}, F, M, PP, P, FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Grp LIKE '{g}'
+
+    groups = global_group_list(g)
+
+    memberQ = f"""SELECT {name}, F, M, PP, P, FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Grp IN {groups}
                   ORDER BY CASE
                   WHEN Title = 'GYJN' THEN 1
                   WHEN Task = 'OEV' AND Title = 'TJN' THEN 2
@@ -602,7 +625,7 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
                   ELSE 7
                   END, MemberCode"""
     
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Grp LIKE '{g}'"
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Grp IN {groups}"
     print(memberQ)
     
     with odbc.connect(conn_str) as conn:
@@ -648,7 +671,7 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
 
 def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
     print(f"\n>>>deptfmp: task={task}, timerange={timerange}, dept={d}, sid={sid}, seasonstart={ss}, ct={ct},    access={access}")
-    
+
     displayGroups = False if task == 'dept' and access in ('All','IT','EDU') else True
     topleft = 'Grp ' if displayGroups == True else 'Dept'
        
@@ -687,11 +710,10 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
     else:
         sid = f"'{sid}'" # Adding quotes as sometimes sid can be '%' which is a string
 
-        
-       
-    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    depts = global_dept_list(d)
+    memberQ = f"SELECT Grp, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Dept IN {depts}{taskQ} GROUP BY Grp, GID ORDER BY GID"
+    deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Dept IN {depts}{taskQ} GROUP BY Dept, DID ORDER BY DID"
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) WHERE Dept IN {depts}{taskQ}"
     # The "Dept In" is necessary to avoid slow SQL execution plans (>1 min) caused by "Dept LIKE 'D[0-9]%'" which assumes 3 rows, but returns about 900 rows
     print(memberQ)
 
@@ -729,7 +751,7 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
         dept = f'{dept}{dpt}[{f}|{m}|{pp}|{p}|{fe}]\n'
     dept = dept + '\n'
     
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
         pp = ' '*(spc[3]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
@@ -797,11 +819,12 @@ def taskfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
         sid = f"(SELECT dbo.lastssnid('{ct}'))"
     else:
         sid = f"'{sid}'" # Adding quotes as sometimes sid can be '%' which is a string
-       
-    baseQ   = f"{name}, F, M, PP, P, FE FROM CodeyFMPPP({sid}, {s}, {e}) s WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    
+    depts = global_dept_list(d)       
+    baseQ   = f"{name}, F, M, PP, P, FE FROM CodeyFMPPP({sid}, {s}, {e}) s WHERE Dept IN {depts}{taskquery}"
     memberQ = f"SELECT Grp, {baseQ} ORDER BY GID"
     deptQ   = f"SELECT Dept, SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM (SELECT Dept, DID, {baseQ})b GROUP BY Dept, DID ORDER BY DID"
-    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) s WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    totalQ  = f"SELECT SUM(F)F, SUM(M)M, SUM(PP)PP, SUM(P)P, SUM(FE)FE FROM CodeyFMPPP({sid}, {s}, {e}) s WHERE Dept IN {depts}{taskquery}"
     print(deptQ)
     
     with odbc.connect(conn_str) as conn:
@@ -837,7 +860,7 @@ def taskfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
     dept = dept + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
         pp = ' '*(spc[3]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
@@ -858,9 +881,10 @@ def taskfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
 def youthmxpx(d): # FMP FUNCTIONS
     print(f"\n>>>youthmxpx: dept={d}")
     conn = odbc.connect(conn_str)
-    exp_group = f"SELECT Grp, SUM(Mx)Mx, SUM(Px)Px FROM ScottFutureMxPx WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Grp ORDER BY LEN(Grp),Grp".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    exp_dept = f"SELECT Dept, SUM(Mx)Mx, SUM(Px)Px FROM ScottFutureMxPx WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Dept".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    exp_youth = f"SELECT SUM(Mx)Mx, SUM(Px)Px FROM ScottFutureMxPx WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    depts = global_dept_list(d)
+    exp_group = f"SELECT Grp, SUM(Mx)Mx, SUM(Px)Px FROM ScottFutureMxPx WHERE Dept IN {depts} GROUP BY Grp ORDER BY LEN(Grp),Grp"
+    exp_dept = f"SELECT Dept, SUM(Mx)Mx, SUM(Px)Px FROM ScottFutureMxPx WHERE Dept IN {depts} GROUP BY Dept"
+    exp_youth = f"SELECT SUM(Mx)Mx, SUM(Px)Px FROM ScottFutureMxPx WHERE Dept IN {depts}"
     
     dg = pd.read_sql(exp_group, conn)
     dd = pd.read_sql(exp_dept, conn)
@@ -1111,6 +1135,9 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
     else:
         grpdept = d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
 
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
+    
     sftnote = str()
     codeybbstatusmembers = f"CodeyBBStatusMembers2('{sid}')" if v2 else f"CodeyBBStatusMembers('{sid}')"
     if d.lower() == 'melbsft' or g.lower() in ('sft1','sft2','sft3','sft4','sft5'):
@@ -1121,10 +1148,10 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
     
     print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'          v2 = {v2}")
     
-    bb_mem    = f"SELECT Dept, Grp, MemberCode, pNew, pOld{fe_col}, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM {codeybbstatusmembers} WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_group  = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers} WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept   = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers} WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth  = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers} WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_mem    = f"SELECT Dept, Grp, MemberCode, pNew, pOld{fe_col}, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM {codeybbstatusmembers} WHERE Dept IN {depts} AND Grp IN {groups} ORDER BY GID"
+    bb_group  = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers} WHERE Dept IN {depts} AND Grp IN {groups} GROUP BY Grp, GID ORDER BY GID"
+    bb_dept   = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers} WHERE Dept IN {depts} AND Grp IN {groups} GROUP BY Dept, DID ORDER BY DID"
+    bb_youth  = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbstatusmembers} WHERE Dept IN {depts} AND Grp IN {groups}"
     
     print(bb_group)
     
@@ -1205,7 +1232,7 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
         dept = dept + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(4-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -1246,6 +1273,11 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     else:
         grpdept = d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
     
+
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
+
+
     prebbtfilt = f" AND BtmNo = '{q[6:]}'" if q[6:] != '' else ''
     btmfilt = f" AND BtmNo = '{q[3:]}'" if q[3:] != '' else ''
 
@@ -1261,15 +1293,15 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
     if d.lower() == 'melbsft' or g.lower() in ('sft1','sft2','sft3','sft4','sft5'):
         codeybbtstatusmembers = f"CodeyBBTStatusMembersAsOf('2026-08-20','{sid}')"
         sftnote = '\n<i>As of 20 Aug 2026</i>'
-    # d_filt = '%' if v2 and d in ('D[0-9]%','%') else d
+    # d_filt = '%' if v2 and d in ('Senior','NF','D[0-9]%','%') else d
     d_filt = d
     fe_col = ', FE' if v2 else ''
     fe_sum = ', SUM(FE)FE' if v2 else ''
     
-    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld{fe_col}, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM {codeybbtstatusmembers} WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} ORDER BY GID, {name}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers} WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers} WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers} WHERE Dept LIKE '{d_filt}' AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp LIKE '{g}'{query}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld{fe_col}, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM {codeybbtstatusmembers} WHERE Dept IN {depts} AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp IN {groups}{query} ORDER BY GID, {name}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')")
+    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers} WHERE Dept IN {depts} AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp IN {groups}{query} GROUP BY Grp, GID ORDER BY GID"
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers} WHERE Dept IN {depts} AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp IN {groups}{query} GROUP BY Dept, DID ORDER BY DID"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld{fe_sum}, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM {codeybbtstatusmembers} WHERE Dept IN {depts} AND Grp NOT IN ('SCM','MWSCM','Inert') AND Grp IN {groups}{query}"
     
     print(bb_group)
     
@@ -1350,7 +1382,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
         dept = dept + '\n'
         
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         pn  = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(3-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -1386,14 +1418,16 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
         grpdept = d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
-        
+
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
     
     print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'")
     
     table = f"CodeyBBStatusMembersUBB('{sid}')"
     cols = "Dept, Grp, MemberCode, pNew, pOld, pFA, FE, bbA, cct1, cct2, cctI, UBB, bbME, bbFA, Total"
     sums = "SUM(pNew)pNew, SUM(pOld)pOld, SUM(pFA)pFA, SUM(FE)FE, SUM(bbA)bbA, SUM(cct1)cct1, SUM(cct2)cct2, SUM(cctI)cctI, SUM(UBB)UBB, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(Total)Total"
-    conditions = f"Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    conditions = f"Dept IN (SELECT Dept FROM GroupInfo WHERE Dept IN {depts}) AND Grp IN {groups}"
     
     bb_mem    = f"SELECT {cols} FROM {table} WHERE {conditions} ORDER BY GID"
     bb_group  = f"SELECT Grp, {sums} FROM {table} WHERE {conditions} GROUP BY Grp, GID ORDER BY GID"
@@ -1494,7 +1528,7 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         pf  = ' '*(4-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
@@ -1537,11 +1571,13 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
-    
+
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
     table = f"CodeyBBTStatusMembersUBB('{sid}')"
     cols = f"Dept, Grp, {name}, pNew, pOld, pFA, FE, bbA, cct1, cct2, cctI, UBB, bbME, bbFA, Total"
     sums = "SUM(pNew)pNew, SUM(pOld)pOld, SUM(pFA)pFA, SUM(FE)FE, SUM(bbA)bbA, SUM(cct1)cct1, SUM(cct2)cct2, SUM(cctI)cctI, SUM(UBB)UBB, SUM(bbME)bbME, SUM(bbFA)bbFA, SUM(Total)Total"
-    conditions = f"Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'{query}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    conditions = f"Dept IN (SELECT Dept FROM GroupInfo WHERE Dept IN {depts}) AND Grp IN {groups}{query}"
     
     conn = odbc.connect(conn_str)
     bb_mem = f"SELECT {cols} FROM {table} WHERE {conditions} ORDER BY GID, {name}"
@@ -1643,7 +1679,7 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
     #     region = region + '\n'
         
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         pn  = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         pf  = ' '*(3-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
@@ -1681,8 +1717,10 @@ def deptbbtstatus(q, d, r, access): # BBT FUNCTIONS
     bbttype,query = bbtvalues[i]
     
     conn = odbc.connect(conn_str)
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){query} Group BY Dept".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){query}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    
+    depts = global_dept_list(d)
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts}{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts}{query}"
     
     dd = pd.read_sql(bb_dept, conn)
     dy = pd.read_sql(bb_youth, conn)
@@ -1750,12 +1788,14 @@ def bbtactive(q, g, d, r, access): # BBT FUNCTIONS
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
-    
+
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'{query} ORDER BY LEN(Grp), Grp, {name}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'{query} Group BY Grp ORDER BY LEN(Grp), Grp".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'{query} Group BY Dept".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'{query}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts} AND Grp IN {groups}{query} ORDER BY LEN(Grp), Grp, {name}"
+    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts} AND Grp IN {groups}{query} Group BY Grp ORDER BY LEN(Grp), Grp"
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts} AND Grp IN {groups}{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts} AND Grp IN {groups}{query}"
     
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
@@ -1836,10 +1876,11 @@ def deptbbtactive(q, d, r, access): # BBT FUNCTIONS
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
-    
+
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){query} Group BY Dept".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){query}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts}{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts}{query}"
     
     dd = pd.read_sql(bb_dept, conn)
     dy = pd.read_sql(bb_youth, conn)
@@ -1899,12 +1940,14 @@ def bbtinactive(q, g, d, r, access): # BBT FUNCTIONS
                  'gyj' : ['GYJN BBT',  " AND UID IN (SELECT UID FROM TGWPositionCurrent WHERE PID = 30)"],
                  'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
-    
+
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'{query} ORDER BY LEN(Grp), Grp, {name}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'{query} Group BY Grp ORDER BY LEN(Grp), Grp".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'{query} Group BY Dept".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'{query}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_mem = f"SELECT Dept, Grp, {name}, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts} AND Grp IN {groups}{query} ORDER BY LEN(Grp), Grp, {name}"
+    bb_group = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts} AND Grp IN {groups}{query} Group BY Grp ORDER BY LEN(Grp), Grp"
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts} AND Grp IN {groups}{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts} AND Grp IN {groups}{query}"
     
     dm = pd.read_sql(bb_mem, conn)
     dg = pd.read_sql(bb_group, conn)
@@ -1991,9 +2034,10 @@ def deptbbtinactive(q, d, r, access): # BBT FUNCTIONS
                  'btm' : [q.upper(), f" AND BtmNo = '{q[3:]}' AND BBTStatus = 'BTM'"]}
     bbttype,query = bbtvalues[i]
     
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){query} Group BY Dept".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){query}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_dept = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts}{query} Group BY Dept"
+    bb_youth = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBTStatusMembers('{r}') WHERE Dept IN {depts}{query}"
     
     dd = pd.read_sql(bb_dept, conn)
     dy = pd.read_sql(bb_youth, conn)
@@ -3274,9 +3318,10 @@ def youthfm(d): # FMP FUNCTIONS
     header = f"{str(d).replace('D[0-9]%','Youth')} FMs"
     conn = odbc.connect(conn_str)
     
-    bb_group = f"SELECT Grp, NewM mNew, OldM mOld FROM ScottOldNewMGrp WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept = f"SELECT Dept, SUM(NewM)mNew, SUM(OldM)mOld FROM ScottOldNewMGrp WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Dept ORDER BY LEN(Dept),Dept".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth = f"SELECT SUM(NewM)mNew, SUM(OldM)mOld FROM ScottOldNewMGrp WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    depts = global_dept_list(d)
+    bb_group = f"SELECT Grp, NewM mNew, OldM mOld FROM ScottOldNewMGrp WHERE Dept IN {depts}"
+    bb_dept = f"SELECT Dept, SUM(NewM)mNew, SUM(OldM)mOld FROM ScottOldNewMGrp WHERE Dept IN {depts} GROUP BY Dept ORDER BY LEN(Dept),Dept"
+    bb_youth = f"SELECT SUM(NewM)mNew, SUM(OldM)mOld FROM ScottOldNewMGrp WHERE Dept IN {depts}"
     
     dg = pd.read_sql(bb_group, conn)
     dd = pd.read_sql(bb_dept, conn)
@@ -3338,13 +3383,15 @@ def bbactive(g, d, sid, access): # BB FUNCTIONS
     
     print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'")
     
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    bb_mem    = f"SELECT Dept, Grp, MemberCode, Total SP, pNew, bbA, cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_group  = f"SELECT Grp, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept   = f"SELECT Dept, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    # bb_region = f"SELECT District, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY District".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth  = f"SELECT SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    
+    bb_mem    = f"SELECT Dept, Grp, MemberCode, Total SP, pNew, bbA, cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts} AND Grp IN {groups} ORDER BY GID"
+    bb_group  = f"SELECT Grp, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts} AND Grp IN {groups} GROUP BY Grp, GID ORDER BY GID"
+    bb_dept   = f"SELECT Dept, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts} AND Grp IN {groups} GROUP BY Dept, DID ORDER BY DID"
+    # bb_region = f"SELECT District, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts} AND Grp IN {groups} GROUP BY District"
+    bb_youth  = f"SELECT SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts} AND Grp IN {groups}"
+
     print(bb_group)
     
     dm = pd.read_sql(bb_mem, conn)
@@ -3407,7 +3454,7 @@ def bbactive(g, d, sid, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba  = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -3442,13 +3489,15 @@ def bbactive2(g, d, sid, access): # BB FUNCTIONS
     
     print(f"bbstatus parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'")
     
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    bb_mem    = f"SELECT Dept, Grp, MemberCode, Total SP, pNew, FE, bbA, cctA FROM CodeyBBStatusMembers2('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_group  = f"SELECT Grp, SUM(Total)SP, SUM(pNew)pNew, SUM(FE)FE, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers2('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept   = f"SELECT Dept, SUM(Total)SP, SUM(pNew)pNew, SUM(FE)FE, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers2('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    # bb_region = f"SELECT District, SUM(Total)SP, SUM(pNew)pNew, SUM(FE)FE, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers2('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY District".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth  = f"SELECT SUM(Total)SP, SUM(pNew)pNew, SUM(FE)FE, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers2('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    
+    bb_mem    = f"SELECT Dept, Grp, MemberCode, Total SP, pNew, FE, bbA, cctA FROM CodeyBBStatusMembers2('{sid}') WHERE Dept IN {depts} AND Grp IN {groups} ORDER BY GID"
+    bb_group  = f"SELECT Grp, SUM(Total)SP, SUM(pNew)pNew, SUM(FE)FE, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers2('{sid}') WHERE Dept IN {depts} AND Grp IN {groups} GROUP BY Grp, GID ORDER BY GID"
+    bb_dept   = f"SELECT Dept, SUM(Total)SP, SUM(pNew)pNew, SUM(FE)FE, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers2('{sid}') WHERE Dept IN {depts} AND Grp IN {groups} GROUP BY Dept, DID ORDER BY DID"
+    # bb_region = f"SELECT District, SUM(Total)SP, SUM(pNew)pNew, SUM(FE)FE, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers2('{sid}') WHERE Dept IN {depts} AND Grp IN {groups} GROUP BY District"
+    bb_youth  = f"SELECT SUM(Total)SP, SUM(pNew)pNew, SUM(FE)FE, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers2('{sid}') WHERE Dept IN {depts} AND Grp IN {groups}"
+
     print(bb_group)
     
     dm = pd.read_sql(bb_mem, conn)
@@ -3515,7 +3564,7 @@ def bbactive2(g, d, sid, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         fe  = ' '*(5-len(str(dy.loc[0,'FE']))) + str(dy.loc[0,'FE'])
@@ -3543,10 +3592,11 @@ def deptbbactive(d, sid, access): # BB FUNCTIONS
     
     print(f"bbstatus parameters:          d = '{d}'          sid = {sid}          access = '{access}'")
     
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    bb_dept   = f"SELECT Dept, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    # bb_region = f"SELECT District, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY District".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth  = f"SELECT SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_dept   = f"SELECT Dept, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts} GROUP BY Dept, DID ORDER BY DID"
+    # bb_region = f"SELECT District, SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts} GROUP BY District"
+    bb_youth  = f"SELECT SUM(Total)SP, SUM(pNew)pNew, SUM(bbA)bbA, SUM(cctA)cctA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts}"
     
     dd = pd.read_sql(bb_dept, conn)
     # dr = pd.read_sql(bb_region, conn)
@@ -3582,7 +3632,7 @@ def deptbbactive(d, sid, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba  = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -3614,12 +3664,13 @@ def bbinactive(g, d, sid, access): # BB FUNCTIONS
     
     print(f"bbinactive parameters:          g = '{g}'          d = '{d}'          sid = {sid}          access = '{access}'")
     
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    bb_mem    = f"SELECT Dept, Grp, MemberCode, pOld, bbME, cctI, pFA, bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_group  = f"SELECT Grp, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept   = f"SELECT Dept, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    # bb_region = f"SELECT District, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY District".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth  = f"SELECT SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_mem    = f"SELECT Dept, Grp, MemberCode, pOld, bbME, cctI, pFA, bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts} AND Grp LIKE '{g}' ORDER BY GID"
+    bb_group  = f"SELECT Grp, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts} AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
+    bb_dept   = f"SELECT Dept, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts} AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
+    # bb_region = f"SELECT District, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts} AND Grp LIKE '{g}' GROUP BY District"
+    bb_youth  = f"SELECT SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'"
     
     print(bb_group)
     
@@ -3687,7 +3738,7 @@ def bbinactive(g, d, sid, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         bm  = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         ci  = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -3713,10 +3764,11 @@ def deptbbinactive(d, sid, access): # BB FUNCTIONS
         
     print(f"bbinactive parameters:          d = '{d}'          sid = {sid}          access = '{access}'")
     
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    bb_dept   = f"SELECT Dept, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    # bb_region = f"SELECT District, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY District".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth  = f"SELECT SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_dept   = f"SELECT Dept, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts} GROUP BY Dept, DID ORDER BY DID"
+    # bb_region = f"SELECT District, SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts} GROUP BY District"
+    bb_youth  = f"SELECT SUM(pOld)pOld, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA FROM CodeyBBStatusMembers('{sid}') WHERE Dept IN {depts}"
         
     dd = pd.read_sql(bb_dept, conn)
     # dr = pd.read_sql(bb_region, conn)
@@ -3754,7 +3806,7 @@ def deptbbinactive(d, sid, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         bm  = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         ci  = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -4201,7 +4253,7 @@ def classes(g, d, access, time): # BBT FUNCTIONS
             cl  = ' '*(3-len(str(dd.loc[r,'Classes']))) + str(dd.loc[r,'Classes'])
             dept = f'{dept}{dpt}[{cl}]\n'
             
-    youth = f"\nTot  [{' '*(3-len(str(dy.loc[0,'Classes'])))}{dy.loc[0,'Classes']}]\n" if g == '%' and d in ('D[0-9]%','%') else str()
+    youth = f"\nTot  [{' '*(3-len(str(dy.loc[0,'Classes'])))}{dy.loc[0,'Classes']}]\n" if g == '%' and d in ('Senior','NF','D[0-9]%','%') else str()
     
     result = f"""<b><u>{grpdept} BB Classes {timetitle} </u></b>\n\n<pre>{bbtgrp}  [#Cl]\n{member}{group}{dept}{youth}</pre>"""
     result = re.sub(r'\.0',r'  ',result) # Replaces '.0' with empty space
@@ -4246,11 +4298,13 @@ def edu(day, g, d, access): # EDU FUNCTIONS
     
     print(f"edu parameters:   day = '{day}'       g = '{g}'          d = '{d}'          access = '{access}'")
     
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    edu_group  = f"SELECT Grp, {days[day][0]} FROM CodeyEduWeekBreakdown WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    edu_dept   = f"SELECT Dept, {days[day][1]} FROM CodeyEduWeekBreakdown WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    # edu_region = f"SELECT Region, {days[day][1]} FROM CodeyEduWeekBreakdown WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Region".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    edu_youth  = f"SELECT {days[day][1]} FROM CodeyEduWeekBreakdown WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    edu_group  = f"SELECT Grp, {days[day][0]} FROM CodeyEduWeekBreakdown WHERE Dept IN {depts} AND Grp LIKE '{g}'"
+    edu_dept   = f"SELECT Dept, {days[day][1]} FROM CodeyEduWeekBreakdown WHERE Dept IN {depts} AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
+    # edu_region = f"SELECT Region, {days[day][1]} FROM CodeyEduWeekBreakdown WHERE Dept IN {depts} AND Grp LIKE '{g}' GROUP BY Region"
+    edu_youth  = f"SELECT {days[day][1]} FROM CodeyEduWeekBreakdown WHERE Dept IN {depts} AND Grp LIKE '{g}'"
     
     print(edu_group)
     
@@ -4300,7 +4354,7 @@ def edu(day, g, d, access): # EDU FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         at  = ' '*(2-len(str(dy.loc[0,'Att']))) + str(dy.loc[0,'Att'])
         on  = ' '*(2-len(str(dy.loc[0,'Onl']))) + str(dy.loc[0,'Onl'])
         rp  = ' '*(2-len(str(dy.loc[0,'Rep']))) + str(dy.loc[0,'Rep'])
@@ -4330,11 +4384,13 @@ def edurev(g, d, access): # EDU FUNCTIONS
         
     print(f"edu parameters:   g = '{g}'          d = '{d}'          access = '{access}'")
     
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    edu_group  = f"SELECT Grp, RevS, RevNS FROM CodeyEduWeekBreakdown WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    edu_dept   = f"SELECT Dept, SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    # edu_region = f"SELECT Region, SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Region".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    edu_youth  = f"SELECT SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    edu_group  = f"SELECT Grp, RevS, RevNS FROM CodeyEduWeekBreakdown WHERE Dept IN {depts} AND Grp LIKE '{g}'"
+    edu_dept   = f"SELECT Dept, SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept IN {depts} AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
+    # edu_region = f"SELECT Region, SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept IN {depts} AND Grp LIKE '{g}' GROUP BY Region"
+    edu_youth  = f"SELECT SUM(RevS), SUM(RevNS) FROM CodeyEduWeekBreakdown WHERE Dept IN {depts} AND Grp LIKE '{g}'"
     
     print(edu_group)
     
@@ -4378,7 +4434,7 @@ def edurev(g, d, access): # EDU FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         rs  = ' '*(2-len(str(dy.loc[0,'RevS']))) + str(dy.loc[0,'RevS'])
         rn  = ' '*(2-len(str(dy.loc[0,'RevNS']))) + str(dy.loc[0,'RevNS'])
         total = f'Total[{rs}|{rn}]'
@@ -4423,13 +4479,15 @@ def bbstatusdate(g, d, ct, dt, access): # BB FUNCTIONS
     
     print(f"bbstatus parameters:          g = '{g}'          d = '{d}'       ct = '{ct}'       dt = '{dt}'       access = '{access}'")
     
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    bb_mem    = f"SELECT Dept, Grp, MemberCode, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_group  = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept   = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    # bb_region = f"SELECT District, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY District".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth  = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    
+    bb_mem    = f"SELECT Dept, Grp, MemberCode, pNew, pOld, bbA, cctA, bbME, cctI, pFA, bbFA, Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept IN {depts} AND Grp LIKE '{g}' ORDER BY GID"
+    bb_group  = f"SELECT Grp, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept IN {depts} AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID"
+    bb_dept   = f"SELECT Dept, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept IN {depts} AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID"
+    # bb_region = f"SELECT District, SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept IN {depts} AND Grp LIKE '{g}' GROUP BY District"
+    bb_youth  = f"SELECT SUM(pNew)pNew, SUM(pOld)pOld, SUM(bbA)bbA, SUM(cctA)cctA, SUM(bbME)bbME, SUM(cctI)cctI, SUM(pFA)pFA, SUM(bbFA)bbFA, SUM(Total)Total FROM CodeyBBStatusDateCT('{dt}','{ct}') WHERE Dept IN {depts} AND Grp LIKE '{g}'"
+
     print(bb_group)
     
     dm = pd.read_sql(bb_mem, conn)
@@ -4512,7 +4570,7 @@ def bbstatusdate(g, d, ct, dt, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(4-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -4541,8 +4599,10 @@ def bbtmission(sid, d, g, standard, ct, access): # BBT FUNCTIONS
     gd = 'Dept' if access in ('IT','EDU','All') else 'Grp '
     d = d.capitalize()
 
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
     sqlfn = f"ABB, P FROM BBTMissionTieBreaker('{sid}',{filt})" if standard == 'tie' else f"ActiveBBTs, TotalBBTs FROM ActiveBBTsFn('{sid}',{filt},'{standard}')"
-    sql = f"SELECT Dept, PercentActive, {sqlfn} WHERE (Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}') OR Dept = ''".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    sql = f"SELECT Dept, PercentActive, {sqlfn} WHERE (Dept IN {depts} AND Grp IN {groups}) OR Dept = ''"
     print(sql)
 
     conn = odbc.connect(conn_str)
@@ -4593,12 +4653,14 @@ def pickfe(g, d, access): # FMP FUNCTIONS
         grpdept = re.sub(r'(¹|²)g([0-9]*)',r'\1G\2',g)
     else:
         grpdept = d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('24', '24 Dept').replace('%', 'Church')
-        
+
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    bb_mem    = f"SELECT Dept, Grp, MemberCode, PhysP, PhysFE, OnP, OnFE FROM CodeyPFE WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_group  = f"SELECT Grp, SUM(PhysP)PhysP, SUM(PhysFE)PhysFE, SUM(OnP)OnP, SUM(OnFE)OnFE FROM CodeyPFE WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept   = f"SELECT Dept, SUM(PhysP)PhysP, SUM(PhysFE)PhysFE, SUM(OnP)OnP, SUM(OnFE)OnFE FROM CodeyPFE WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth  = f"SELECT SUM(PhysP)PhysP, SUM(PhysFE)PhysFE, SUM(OnP)OnP, SUM(OnFE)OnFE FROM CodeyPFE WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_mem    = f"SELECT Dept, Grp, MemberCode, PhysP, PhysFE, OnP, OnFE FROM CodeyPFE WHERE Dept IN {depts} AND Grp IN {groups} ORDER BY GID"
+    bb_group  = f"SELECT Grp, SUM(PhysP)PhysP, SUM(PhysFE)PhysFE, SUM(OnP)OnP, SUM(OnFE)OnFE FROM CodeyPFE WHERE Dept IN {depts} AND Grp IN {groups} GROUP BY Grp, GID ORDER BY GID"
+    bb_dept   = f"SELECT Dept, SUM(PhysP)PhysP, SUM(PhysFE)PhysFE, SUM(OnP)OnP, SUM(OnFE)OnFE FROM CodeyPFE WHERE Dept IN {depts} AND Grp IN {groups} GROUP BY Dept, DID ORDER BY DID"
+    bb_youth  = f"SELECT SUM(PhysP)PhysP, SUM(PhysFE)PhysFE, SUM(OnP)OnP, SUM(OnFE)OnFE FROM CodeyPFE WHERE Dept IN {depts} AND Grp IN {groups}"
     
     print(bb_group)
     
@@ -4649,7 +4711,7 @@ def pickfe(g, d, access): # FMP FUNCTIONS
         dept = dept + '\n'
     
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         pp  = ' '*(4-len(str(dy.loc[0,'PhysP'])))  + str(dy.loc[0,'PhysP'])
         pf  = ' '*(4-len(str(dy.loc[0,'PhysFE']))) + str(dy.loc[0,'PhysFE'])
         op  = ' '*(4-len(str(dy.loc[0,'OnP'])))    + str(dy.loc[0,'OnP'])
@@ -4667,13 +4729,13 @@ def pickfe(g, d, access): # FMP FUNCTIONS
 def test1(): # IT FUNCTIONS
     print(f"\n>>>test1")
     print(">>>Return")
-    return "[D1 Va](https://drive.google.com/drive/folders/1xZ_VjGcOPp-xZmRtnlXpfBoQTMuE7sB4?usp=drive_link)\n[G1 Janel - Akot 🌟](https://docs.google.com/spreadsheets/d/1BqLj6p_Tw220zDs3w6s7JlVnZSiTFsWO3NLvnrk4W5M/edit?usp=drive_link)\n[G2 AJ - Natasha](https://docs.google.com/spreadsheets/d/1-Vw04M9YWeaEeLYN5fEKhiwj_Tl77jkjyq47HlMXAPs/edit?usp=drive_link)\n[G3 Karen - Mycah](https://docs.google.com/spreadsheets/d/1qXpYHxMUauxvLB1wCF1npw4Ol_1f4J7O5TwGc-R73SI/edit?usp=drive_link)\n[G4 Rohit - Ku Mo ❤️](https://docs.google.com/spreadsheets/d/1VTTUwilcpUUUuEsnbS1gaYMlY6tsxkyGogEoXcwmKq8/edit?usp=drive_link)\n\n[D2 Lun](https://drive.google.com/drive/folders/1dv0hvgh955L3AG0Bj9YTo8X76aTAhkHT?usp=drive_link)\n[G5 Wei Kin - Kiana 🌟](https://docs.google.com/spreadsheets/d/1HfzGRBESpDARQdVltQM5DtWA0EnSh51FnNxuRQ36iKc/edit?usp=drive_link)\n[G6 Priscilla - Vanessa ❤️](https://docs.google.com/spreadsheets/d/1l0zuKDcvGPMoaoiLbmwMjqyu-i0oI2LhNs59TOaamQA/edit?usp=drive_link)\n[G7 Kupa - Iokapeta ❤️](https://docs.google.com/spreadsheets/d/1l8qDSt-YDqmShvGwq91_RwNcguLOj9kkaqPRq6TF8dc/edit?usp=drive_link)\n[G8 Donia - Doreen](https://docs.google.com/spreadsheets/d/1zGLftSi4ldy1FzQ67ofeZdVE0O-iE9QGK4YGhO4Ciow/edit?usp=drive_link)\n\n[D3 King](https://drive.google.com/drive/folders/12Lx7EHVoUuciFeSm6MdT6qLx5hAuPgMP?usp=drive_link)\n[G9 Trucilla - Jhanice ❤️](https://docs.google.com/spreadsheets/d/13BkTDU5q0vS-_EUbet0H2ZxFFWQ02wvtkW0XUQEHb1Q/edit?usp=drive_link)\n[G10 Mary - Nic ❤️](https://docs.google.com/spreadsheets/d/1gJrP6ap3Dl0Lo9fK_72fvXhDCvxEHf_vMtds0HCco5g/edit?usp=drive_link)\n[G11 Aman - Yazmin ❤️](https://docs.google.com/spreadsheets/d/1gr1LMXtbshQ3MH7-mJH4ZLuKLgHvP2OJaZ38YRNDOpQ/edit?usp=drive_link)\n[G12 Alliza - Rachel 🌟](https://docs.google.com/spreadsheets/d/19bOGWcnArmwQUtfHEMb87dHnV-rnQ_LNNjtvbZlb2uE/edit?usp=drive_link)\n\n[D4 Nicola](https://drive.google.com/drive/folders/1JY318Dc_bWLj1jQwRQmsdF92AW_WqvUs?usp=drive_link)\n[G13 Rejie - Malu ❤️](https://docs.google.com/spreadsheets/d/1kJKvK5RT_S-A2n4GHBVu5_Ne_BC6Y6QjgpCwQtdxdJ4/edit?usp=drive_link)\n[G14 Lamy - Riz ❤️](https://docs.google.com/spreadsheets/d/1wceJg6hoghi2fwKRZXyQapcdp9YJ7rUD0ktJYU8y4Hg/edit?usp=drive_link)\n[G15 Mayom - Bianca 🌟](https://docs.google.com/spreadsheets/d/1gdv8_WSbu1i0P4Ffsp6QlV3HsSaCeXbMYOGQx3VSP3Q/edit?usp=drive_link)\n[G16 Cheyanne - Rachel ❤️](https://docs.google.com/spreadsheets/d/1jtDpQHdX2iOmGiv8g6KxIg4t1vsrOT5Y_pZt3ihiuDI/edit?usp=drive_link)\n\n[D5 Chelley](https://drive.google.com/drive/folders/1JY318Dc_bWLj1jQwRQmsdF92AW_WqvUs?usp=drive_link)\n[G17 Sosna - Ara ❤️](https://docs.google.com/spreadsheets/d/1qL5RbKq4X3UepKg9Tec9PsfG5l_E2YB6ICFxb9WaUGw/edit?usp=drive_link)\n[G18 Pamela - Tina ❤️](https://docs.google.com/spreadsheets/d/1fPWL4Fl7Z9iBDPFghlpogMAASK-8vCKi7zsB_zkhhTo/edit?usp=drive_link)\n[G19 Victoria - Josh ❤️](https://docs.google.com/spreadsheets/d/1TBwsSCREBGqGourVm_JadMGnufB_aPaMtMJvdxvSe54/edit?usp=drive_link)\n[G20 Matt K - Gabriel 🌟❤️](https://docs.google.com/spreadsheets/d/1hy9Kpf-k0nQAuHRrGz8TMGsSQXS1AmRcknaWQRDvPGk/edit?usp=drive_link)"
+    return "[D1](https://drive.google.com/drive/folders/1xZ_VjGcOPp-xZmRtnlXpfBoQTMuE7sB4?usp=drive_link)\n[G1](https://docs.google.com/spreadsheets/d/1u5MfnuY17x_ozJGhlKnSMWgoHZ34O_XuukTfY7_vM-s/edit?usp=drive_link)\n[G2](https://docs.google.com/spreadsheets/d/1oeGDByDjSgo03XEAvHTubAAi0n4adaiIqGi5MVwYbzc/edit?usp=drive_link)\n[G3](https://docs.google.com/spreadsheets/d/1mE19E3W9feiWHXs27JKQvqAGp9gCWcR6Z84J5nZYoSk/edit?usp=drive_link)\n[G4](https://docs.google.com/spreadsheets/d/1TJ9nKGC99wIhZkToFvV8ueIr_hcilUiRmVPE0nRMczo/edit?usp=drive_link)\n\n[D2](https://drive.google.com/drive/folders/1dv0hvgh955L3AG0Bj9YTo8X76aTAhkHT?usp=drive_link)\n[G5](https://docs.google.com/spreadsheets/d/1F1qIIvpxsCt7LXmU9ZIu726jvH2DZXadf_S4tBUF9Sk/edit?usp=drive_link)\n[G6](https://docs.google.com/spreadsheets/d/1x_A6KN0J7EbjOBqcKxGHM9stQM8wk62J31f9jkGeQDk/edit?usp=drive_link)\n[G7](https://docs.google.com/spreadsheets/d/1kXrFVyCQfO1wGGxvPOR5I9quqlWJdkQt2RtwZOQvpHw/edit?usp=drive_link)\n[G8](https://docs.google.com/spreadsheets/d/1dfLayGAt1gfxcLdKiYQy1NKIg_7kPwtfov_zkoKHBy0/edit?usp=drive_link)\n\n[D3](https://drive.google.com/drive/folders/12Lx7EHVoUuciFeSm6MdT6qLx5hAuPgMP?usp=drive_link)\n[G9](https://docs.google.com/spreadsheets/d/1UwaC2i-EOmqN_wba1ON34Fc8xYi_QwvmnZmmdElnFmI/edit?usp=drive_link)\n[G10](https://docs.google.com/spreadsheets/d/1GQ2xjI2k8pJfThipWdFlX9B5HKM_fS2RqJWoyT8r_ZM/edit?usp=drive_link)\n[G11](https://docs.google.com/spreadsheets/d/1P5LMoRK5vZiUsNTOGZsytwCXMH579a4uFDfRh8iGVfQ/edit?usp=drive_link)\n[G12](https://docs.google.com/spreadsheets/d/15D9xjPn-CLtRyMgG66fZn56RFjrJuhzzZWngOs5V4-o/edit?usp=drive_link)\n\n[D4](https://drive.google.com/drive/folders/1JY318Dc_bWLj1jQwRQmsdF92AW_WqvUs?usp=drive_link)\n[G13](https://docs.google.com/spreadsheets/d/1LHDsjwDkzh4MlC02Hf4iYj6VcNvemfDwyEqN3S9GyZ8/edit?usp=drive_link)\n[G14](https://docs.google.com/spreadsheets/d/1k8KB43e1Q5La3UQf_6_a-IfPyvrfuZXvOKz9H8jSHEo/edit?usp=drive_link)\n[G15](https://docs.google.com/spreadsheets/d/1XeEML62UzTPmub2TdxbeXE9OyINv6IDdclPzIEnb7DQ/edit?usp=drive_link)\n[G16](https://docs.google.com/spreadsheets/d/1MgemlxMljOZUOb5C5xatZxhkxkGwFp-Emxt3gDQn6KA/edit?usp=drive_link)\n\n[D5](https://drive.google.com/drive/folders/1JY318Dc_bWLj1jQwRQmsdF92AW_WqvUs?usp=drive_link)\n[G17](https://docs.google.com/spreadsheets/d/17iGbnnzcSsAQuXwrBoj3gIpvOyWAf0H6eZz7NzpicFQ/edit?usp=drive_link)\n[G18](https://docs.google.com/spreadsheets/d/1AvZf4wsgLKqmAx6U5rNu_gGPrAZRMI9Y1Gk7cZU9FWw/edit?usp=drive_link)\n[G19](https://docs.google.com/spreadsheets/d/15XQf7_KJsrTpy1SiW5qCyyyXfqdjrcx7V6zvL1JUaEY/edit?usp=drive_link)\n[G20](https://docs.google.com/spreadsheets/d/1q9HXaD5Fxpq1mXTXnI-qefWQ5B6W3gSYSD4F_56NOT4/edit?usp=drive_link)"
 
 def test2(): # IT FUNCTIONS
     print(f"\n>>>test2")
 
     print(">>>Return")
-    return "[D6 James](https://drive.google.com/drive/folders/1DQ0TK8j0PcKCjPDRCh6CpXN0C9G4vww-?usp=drive_link)\n[G21 Melvin - Flavi](https://docs.google.com/spreadsheets/d/1UAgd22ec2U9gHlml8rq3fiZw3mcsM4byV6Jnk883If0/edit?usp=drive_link)\n[G22 Sindy - Carys 🌟](https://docs.google.com/spreadsheets/d/1WPldJVSASulBAkgU-O7bc1smOtPYi1YYgnatY9UDvk4/edit?usp=drive_link)\n[G23 Maria - Charlotte](https://docs.google.com/spreadsheets/d/1CPkxTxHun4SgqBhwhdXMz9QVwCe1cHSZlN7L-yydLOc/edit?usp=drive_link)\n[G24 Vivian - Zephaniah❤️](https://docs.google.com/spreadsheets/d/1ZVzJBEwZrTGhVkJ1GYHl2IJ3EoJxFWuCVEUWoV-JVi4/edit?usp=drive_link)\n\n[D7 Kim](https://drive.google.com/drive/folders/1Ljt6hunDOWqeVJSMPRK6gHtWTHP2xQJv?usp=drive_link)\n[G25 Shiv - Tiam](https://docs.google.com/spreadsheets/d/1MmSyc111yFDtkpnkzC9wlkgkYkavYbQLMGRApKqHRKI/edit?usp=drive_link)\n[G26 Kathleen - Richard](https://docs.google.com/spreadsheets/d/1J3Di_todMI2Ax7J3Sn4eapwFRV0CyEbcfR2Hz1AiIBU/edit?usp=drive_link)\n[G27 Shaun - Janice](https://docs.google.com/spreadsheets/d/16rPrPDXVKyNJCtFXtbNEZyGpATx9p_DESya9h8diNx4/edit?usp=drive_link)\n[G28 Marielle - Sian 🌟❤️](https://docs.google.com/spreadsheets/d/1PoKIH4XjfKBPQQdjNLffX9TDG4pBwcr0v0aoelsrUnQ/edit?usp=drive_link)\n\n[D8 Christian](https://drive.google.com/drive/folders/1I6phtHFzs4VAOC526dgdpBUXzi70GXLH?usp=drive_link)\n[G29 Zindzi - Cherry 158 ❤️](https://docs.google.com/spreadsheets/d/1adoNCuOqs_sKlbBMl7I7jrtOVMJIPhXwSrkNV5OgppU/edit?usp=drive_link)\n[G30 John L - James](https://docs.google.com/spreadsheets/d/1az9JHj2LtLLlFHEs-CgZqKIH_XPLNJ4EAOktmvO8uJY/edit?usp=drive_link)\n[G31 Tam - Noah](https://docs.google.com/spreadsheets/d/1aNyl6GjFSe0tExdDhZF6_fc7wkuv1mmV2yXhDAtqSYc/edit?usp=drive_link)\n[G32 Chen Yee - Joshmar 🌟](https://docs.google.com/spreadsheets/d/14__SWTLgOBhLO-t634n0gnOW7lhAfW8TLfb1MfPiLS8/edit?usp=drive_link)\n\n[D9 Nahom](https://drive.google.com/drive/folders/1mgPLQbH9Yp451ZMMyfFog56SwKvMwNAc?usp=drive_link)\n[G33 Za Duh - Kaitu’u](https://docs.google.com/spreadsheets/d/1utd4bbPrLdJsYUDle9zKxGvNE8uxHr5SClPTgVDd958/edit?usp=drive_link)\n[G34 Genesis - Nelson 🌟](https://docs.google.com/spreadsheets/d/12QRCrRXq3_oGGYwW7tgOLh2ahKxb4icYvhKdiN_G5Wo/edit?usp=drive_link)\n[G35 Jeice - Cates](https://docs.google.com/spreadsheets/d/1klefvcXSXCHQjMlCuOvuxbHFHKPHqqMaItV5gUsNCXs/edit?usp=drive_link)\n[G36 Zia - Cardin❤️](https://docs.google.com/spreadsheets/d/1USrPxVlFaTK4JM_ofal7hGJvUvOuL3GQm_ZY4AH7nYE/edit?usp=drive_link)\n\n[D10 Hayden](https://drive.google.com/drive/folders/1Ik3XlftMrAyABj6ZG1BkdeMeYWaS91df?usp=drive_link)\n[G37 Mikko - Moana ❤️](https://docs.google.com/spreadsheets/d/1gSMqWSnN6okc38MOdQSzlljWHIxcIUOIqnHb3lrY0Fo/edit?usp=drive_link)\n[G38 Erica - Ivy ❤️](https://docs.google.com/spreadsheets/d/1Ni7D-pc0B6VfJJwHVysOSAYBT4Z9cHYYWIE0VFdrrrs/edit?usp=drive_link)\n[G39 Monica - Thao 🌟](https://docs.google.com/spreadsheets/d/1kcsiVPeoXplAfkriu7A80Unx3NLNEzh7lT7n58GYrPA/edit?usp=drive_link)\n[G40 Seena - Bez ❤️](https://docs.google.com/spreadsheets/d/1I9u_7KDfJBtKbbHjrOVvoFYTkT51ml133q_Yzb2kzHc/edit?usp=drive_link)\n\n[D11 Jade](https://drive.google.com/drive/folders/1pfWYyhw2kmVvcIij5Qar4ra-GzxUKBTc?usp=drive_link)\n[G41 Janice - Evan❤️](https://docs.google.com/spreadsheets/d/1dmrec5M7tsw3L-ebcwslZ-g4A8Fsfkzlv0_Qg92FbGQ/edit?usp=drive_link)\n[G42 Dilan - Juma❤️](https://docs.google.com/spreadsheets/d/1MjItYN8e-iucmSNOII1Kjkb_eAxUga_Sd_99GKfY0j8/edit?usp=drive_link)\n[G43 Micah - Larmay🌟❤️](https://docs.google.com/spreadsheets/d/1s6wT7diqG-pMEz52LwLKuK3uJLAlr9MRf0tOIoECMbk/edit?usp=drive_link)\n[G44 Elijah - Mia❤️](https://docs.google.com/spreadsheets/d/183wcSKMbsZxiIjIeRP09tFoMZlZqWReooYNTWHYFMfM/edit?usp=drive_link)"
+    return "[D6](https://drive.google.com/drive/folders/1DQ0TK8j0PcKCjPDRCh6CpXN0C9G4vww-?usp=drive_link)\n[G21](https://docs.google.com/spreadsheets/d/1b22KrXnPLExsKnaZqhRSnAaRri7RvWNeli8eZ9FZggg/edit?usp=drive_link)\n[G22](https://docs.google.com/spreadsheets/d/1t2kFn7XLkz28RC9H5wJgncq6ITWIbXBBjUhnA4T7klw/edit?usp=drive_link)\n[G23](https://docs.google.com/spreadsheets/d/1nSymsaNRi9NN42dK-6DfvNyPX35EgV-cdbJOr24KfQU/edit?usp=drive_link)\n[G24](https://docs.google.com/spreadsheets/d/1zBa6mx_622jtJywbRTgMcs4ENbuf7DWkEK4QQtE7O84/edit?usp=drive_link)\n\n[D7](https://drive.google.com/drive/folders/1Ljt6hunDOWqeVJSMPRK6gHtWTHP2xQJv?usp=drive_link)\n[G25](https://docs.google.com/spreadsheets/d/1eOu7YaLcVkqr-FXziJtVJ7IcazA_LPsJf33dA3fj9KA/edit?usp=drive_link)\n[G26](https://docs.google.com/spreadsheets/d/1eHtdN3ZmLjnsz9nHCtTqGq4uC5Wuosn4TwgC_fq-LEQ/edit?usp=drive_link)\n[G27](https://docs.google.com/spreadsheets/d/1G8poFNumFo4zjzrNPk3qBA7eoJG4as0eC25n1_ECzzg/edit?usp=drive_link)\n[G28](https://docs.google.com/spreadsheets/d/1lMhePXfilBMFhNYfEAtOFQwP7gd04TghuGRoyEdDUvg/edit?usp=drive_link)\n\n[D8](https://drive.google.com/drive/folders/1I6phtHFzs4VAOC526dgdpBUXzi70GXLH?usp=drive_link)\n[G29](https://docs.google.com/spreadsheets/d/1xr3-T4ebOYzUD3tKIUy9bsaVWKXMTAEEZBjNJvNikpc/edit?usp=drive_link)\n[G30](https://docs.google.com/spreadsheets/d/1zTJoI21JAu7eGSRcAbmtRlFtw-z1ExzGJ-oXojuT-vY/edit?usp=drive_link)\n[G31](https://docs.google.com/spreadsheets/d/1Z6aIfB9tfRpfsSFyT_XPCLRWxOQkxG2k_VvGUnQtjiM/edit?usp=drive_link)\n[G32](https://docs.google.com/spreadsheets/d/1pkCdN2l4vWBnZyksyFLteQDVgceB0khHpIEj6_EH2BE/edit?usp=drive_link)\n\n[D9](https://drive.google.com/drive/folders/1mgPLQbH9Yp451ZMMyfFog56SwKvMwNAc?usp=drive_link)\n[G33](https://docs.google.com/spreadsheets/d/199d6QkoZeYe2d7mFsP0N46DBZ776E49j-jcPoFwjt3s/edit?usp=drive_link)\n[G34](https://docs.google.com/spreadsheets/d/1DdifmiwBRF7tebjQFHv-i1TfNW59Kmg04CTaScPrB68/edit?usp=drive_link)\n[G35](https://docs.google.com/spreadsheets/d/1TizIbvGKHDdSQ3EQCfwLsBCEYxYc-_0jzt25m0aOo5k/edit?usp=drive_link)\n[G36](https://docs.google.com/spreadsheets/d/16_SJ4aTC53NNUYsyBDRbnTquU5n0PxsspQ9ykE8KHIo/edit?usp=drive_link)\n\n[D10](https://drive.google.com/drive/folders/1Ik3XlftMrAyABj6ZG1BkdeMeYWaS91df?usp=drive_link)\n[G37](https://docs.google.com/spreadsheets/d/1AvTuhQZ_g-vJow3qW9mS-2vWmz6BuMhVHVvIvLI4VCU/edit?usp=drive_link)\n[G38](https://docs.google.com/spreadsheets/d/1NZ6t2VgmzpG7Fp5zztVurY6Lw0EcVHwqzW_v9zPxRDw/edit?usp=drive_link)\n[G39](https://docs.google.com/spreadsheets/d/1L25U4nC7aynlgMNX4yVEsi61f7opB8LZKgaEa7p_pIw/edit?usp=drive_link)\n[G40](https://docs.google.com/spreadsheets/d/1KZZ0swnOtuR2vynruBHGpxn33XlNyTGyIZNPk4zJYtw/edit?usp=drive_link)\n\n[D11](https://drive.google.com/drive/folders/1pfWYyhw2kmVvcIij5Qar4ra-GzxUKBTc?usp=drive_link)\n[G41](https://docs.google.com/spreadsheets/d/1ly4hZ7jfsNfsiApJ-XpfIkcsoEV0u8zJh20l3zHFk5Y/edit?usp=drive_link)\n[G42](https://docs.google.com/spreadsheets/d/1sJRgrn0r0Hpm73-kV0TTXFGBQB4ApVqu94CC1Jfasbo/edit?usp=drive_link)\n[G43](https://docs.google.com/spreadsheets/d/1W4lQMQQIqDlpynkHGYI_9aQBrdB1_e1DS5IaJlaYZLc/edit?usp=drive_link)"
 
 
 
@@ -4954,11 +5016,13 @@ def bbmission(g, d, standard, ct, access): # BB FUNCTIONS, BBT FUNCTIONS
     d = d.capitalize().replace('d','D')
     grpdept = g.capitalize() if access in ('Group','CUL') else d.replace('D[0-9]%','Youth')
     
+    groups = global_group_list(g)
+    depts = global_dept_list(d)
     conn = odbc.connect(conn_str)
-    bb_mem = f"SELECT Dept, Grp, {name}, X, P, FE, SE FROM {view}('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' ORDER BY GID, {name}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_group = f"SELECT Grp, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_dept = f"SELECT Dept, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}' GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    bb_youth = f"SELECT SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') AND Grp LIKE '{g}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    bb_mem = f"SELECT Dept, Grp, {name}, X, P, FE, SE FROM {view}('{r}') WHERE Dept IN {depts} AND Grp IN {groups} ORDER BY GID, {name}"
+    bb_group = f"SELECT Grp, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept IN {depts} AND Grp IN {groups} GROUP BY Grp, GID ORDER BY GID"
+    bb_dept = f"SELECT Dept, SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept IN {depts} AND Grp IN {groups} GROUP BY Dept, DID ORDER BY DID"
+    bb_youth = f"SELECT SUM(X)X, SUM(AchP)P, SUM(AchFE)FE, SUM(AchSE)SE FROM {view}('{r}') WHERE Dept IN {depts} AND Grp IN {groups}"
     seasons = f"SELECT SeasonName FROM EVSeason WHERE GETDATE() BETWEEN StartDate AND EndDate AND Region LIKE '{r}'"
 
     print(bb_group)
@@ -5011,7 +5075,7 @@ def bbmission(g, d, standard, ct, access): # BB FUNCTIONS, BBT FUNCTIONS
         dept = dept + '\n'
         
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         x = ' '*(3-len(str(dy.loc[0,'X']))) + str(dy.loc[0,'X'])
         p  = ' '*(3-len(str(dy.loc[0,'P']))) + str(dy.loc[0,'P'])
         f  = ' '*(3-len(str(dy.loc[0,'FE']))) + str(dy.loc[0,'FE'])
@@ -5176,7 +5240,7 @@ def hspreport(g, d, access, division): # EDU FUNCTIONS
     d = '%' if access in ('Group','GGN') else d.capitalize().replace('d','D')
     print(f"Dept Input: {d}")
 
-    deptfilter = f"Dept LIKE '{d}'".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    deptfilter = f"Dept LIKE '{d}'"
 
     print(f"Dept Filter: {deptfilter}")
 
@@ -5524,9 +5588,10 @@ def deptpp(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
     
     s,e,timetitle = timevalues[timerange]
        
-    memberQ = f"SELECT Grp, SUM(PP)PP FROM CodeyPP('{sid}', {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ} GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    deptQ   = f"SELECT Dept, SUM(PP)PP FROM CodeyPP('{sid}', {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ} GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")  
-    totalQ  = f"SELECT SUM(PP)PP FROM CodeyPP('{sid}', {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskQ}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    depts = global_dept_list(d)
+    memberQ = f"SELECT Grp, SUM(PP)PP FROM CodeyPP('{sid}', {s}, {e}) WHERE Dept IN {depts} GROUP BY Grp, GID ORDER BY GID"
+    deptQ   = f"SELECT Dept, SUM(PP)PP FROM CodeyPP('{sid}', {s}, {e}) WHERE Dept IN {depts} GROUP BY Dept, DID ORDER BY DID"  
+    totalQ  = f"SELECT SUM(PP)PP FROM CodeyPP('{sid}', {s}, {e}) WHERE Dept IN {depts}"
     print(memberQ)
 
     with odbc.connect(conn_str) as conn:
@@ -5555,7 +5620,7 @@ def deptpp(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
         dept = f'{dept}{dpt}[{pp}]\n'
     dept = dept + '\n'
 
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         pp = ' '*(spc[3]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
         total = f'{spc[7]}[{pp}]\n'
     else:
@@ -5607,10 +5672,12 @@ def taskpp(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
     
     s,e,timetitle = timevalues[timerange]
        
-    baseQ   = f"{name}, PP FROM CodeyPP('{sid}', {s}, {e}) s WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+
+    depts = global_dept_list(d)
+    baseQ   = f"{name}, PP FROM CodeyPP('{sid}', {s}, {e}) s WHERE Dept IN {depts}{taskquery}"
     memberQ = f"SELECT Grp, {baseQ} ORDER BY GID"
     deptQ   = f"SELECT Dept, SUM(PP)PP FROM (SELECT Dept, DID, {baseQ})b GROUP BY Dept, DID ORDER BY DID"
-    totalQ  = f"SELECT SUM(PP)PP FROM CodeyPP('{sid}', {s}, {e}) s WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}'){taskquery}".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'Mw[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    totalQ  = f"SELECT SUM(PP)PP FROM CodeyPP('{sid}', {s}, {e}) s WHERE Dept IN {depts}{taskquery}"
     
     print(deptQ)
     
@@ -5639,7 +5706,7 @@ def taskpp(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
     dept = dept + '\n'
 
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         pp = ' '*(spc[3]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
         total = f'{spc[7]}[{pp}]\n'
         
@@ -5668,8 +5735,9 @@ def memberbbt(timerange,g,sid,ss,access): # BBT FUNCTIONS
    
     s,e,title = timevalues[timerange]
         
-    memberQ = f"SELECT {name}, PP, P, FE, CL, CT FROM CodeyFMPPPBBT('{sid}', {s}, {e}) WHERE Grp LIKE '{g}'"
-    totalQ  = f"SELECT SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', {s}, {e}) WHERE Grp LIKE '{g}'"
+    groups = global_group_list(g)
+    memberQ = f"SELECT {name}, PP, P, FE, CL, CT FROM CodeyFMPPPBBT('{sid}', {s}, {e}) WHERE Grp IN {groups}"
+    totalQ  = f"SELECT SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT('{sid}', {s}, {e}) WHERE Grp IN {groups}"
     print(memberQ)
     
     with odbc.connect(conn_str) as conn:
@@ -5732,9 +5800,10 @@ def deptbbt(timerange,d,sid,ss,ct,access,bbtdept): # BBT FUNCTIONS
     
     s,e,timetitle = timevalues[timerange]
     
-    memberQ = f"SELECT Grp, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT({sid}, {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Grp, GID ORDER BY GID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    deptQ   = f"SELECT Dept, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT({sid}, {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}') GROUP BY Dept, DID ORDER BY DID".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
-    totalQ  = f"SELECT SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT({sid}, {s}, {e}) WHERE Dept IN (SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')".replace("Dept LIKE '24'","Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')").replace("Dept LIKE 'MW[0-9]%'","Grp LIKE 'MW[0-9]%'")
+    depts = global_dept_list(d)
+    memberQ = f"SELECT Grp, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT({sid}, {s}, {e}) WHERE Dept IN {depts} GROUP BY Grp, GID ORDER BY GID"
+    deptQ   = f"SELECT Dept, SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT({sid}, {s}, {e}) WHERE Dept IN {depts} GROUP BY Dept, DID ORDER BY DID"
+    totalQ  = f"SELECT SUM(PP)PP, SUM(P)P, SUM(FE)FE, SUM(CL)CL, SUM(CT)CT FROM CodeyFMPPPBBT({sid}, {s}, {e}) WHERE Dept IN {depts}"
     print(memberQ)
 
 
@@ -5778,7 +5847,7 @@ def deptbbt(timerange,d,sid,ss,ct,access,bbtdept): # BBT FUNCTIONS
         dept = dept + '\n'
 
     total = str()
-    if d in ('D[0-9]%','%'):
+    if d in ('Senior','NF','D[0-9]%','%'):
         pp = ' '*(spc[1]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
         p  = ' '*(spc[2]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
         fe = ' '*(spc[3]-len(str(dt.loc[0,'FE']))) + str(dt.loc[0,'FE'])

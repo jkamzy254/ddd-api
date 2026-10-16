@@ -698,15 +698,25 @@ class EduGetBBTSeasonPerformanceViewSet(APIView):
 # --- CT report ----------------------------------------------------------------------
 
 class EduGetCTExpectedAttendanceViewSet(APIView):
-    """spBBGetCTExpectedAttendance: expected vs attended points per group, per class, Day1..Day6."""
+    """
+    spBBGetCTExpectedAttendance: expected vs attended points per group, per class, Day1..Day6.
+    groups is the per-group rows, days the student head-counts per class per day (with
+    each class's Season), seasons one row per season (title and grouping date for the
+    printable report, which is split by season), and participation the members with fruit
+    expected / attending per season per group.
+    """
 
     def get(self, request):
         try:
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spBBGetCTExpectedAttendance")
-                result = fetch_rows(cursor)
+                groups = fetch_rows(cursor)
+                days = next_rows(cursor)
+                seasons = next_rows(cursor)
+                participation = next_rows(cursor)
 
-            return Response(result, status=status.HTTP_200_OK)
+            return Response({'groups': groups, 'days': days, 'seasons': seasons, 'participation': participation},
+                            status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

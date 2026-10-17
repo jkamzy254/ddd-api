@@ -170,6 +170,19 @@ def approve_new_user_request(userUID,telID): # ACCESS FUNCTIONS
     return [reply_message,member_message,member_id]
 
 
+def accessdept(access):
+    print(f"\n>>>accessdept: access={access}")
+    depts = global_dept_list(access)
+    dept_query = f"SELECT DISTINCT Dept FROM GroupInfo WHERE Dept IN {depts}"
+    conn = odbc.connect(conn_str)
+    da = pd.read_sql(dept_query, conn)
+    conn.cursor().close()
+    deptlist = []
+    for n in range(len(da)):
+        deptlist.append(da.iloc[n,0].lower())
+    print(">>>Return")
+    return deptlist
+
 
 def deptgroup(d): # ACCESS FUNCTIONS
     print(f"\n>>>deptgroup: d={d}")

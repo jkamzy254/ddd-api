@@ -16,7 +16,6 @@ cachetools==5.5.2
 certifi==2024.2.2
 cffi==2.0.0
 charset-normalizer==3.3.2
-choreographer==1.2.1
 click==8.1.7
 colorama==0.4.6
 cryptography==49.0.0
@@ -63,9 +62,8 @@ iniconfig==2.3.0
 isodate==0.7.2
 isort==5.12.0
 jira==3.8.0
-kaleido==1.2.0
 lazy-object-proxy==1.9.0
-logistro==2.0.1
+matplotlib==3.11.2
 mccabe==0.7.0
 msgpack==1.1.0
 mssql-django==1.3
@@ -80,7 +78,6 @@ pandas==3.0.0
 pillow==12.1.0
 platformdirs==4.5.1
 playwright==1.62.0
-plotly==6.5.2
 pluggy==1.6.0
 proto-plus==1.27.0
 protobuf==5.29.5

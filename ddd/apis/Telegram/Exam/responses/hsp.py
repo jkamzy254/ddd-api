@@ -6,29 +6,37 @@ import datetime
 import tempfile
 from django.db import connection
 from asgiref.sync import async_to_sync, sync_to_async
-import plotly.graph_objects as go
+from .chart import render_pass_rate_chart
 import pandas as pd
 
 
-async def get_scores(excel):
-    
-    exam_rec = await sync_to_async(get_db_exam)()
-    recs = []
-    
-    if exam_rec and 'ID' in exam_rec:
-        exam_id = exam_rec['ID'] 
-        recs = await sync_to_async(get_db_recs)(exam_id)
-        print(f"Found exam ID: {exam_id}. Fetched {len(recs)} result records.")
-    else:
-        print("No eligible exam record found in HSP ExamListTable.")
+def get_title(exam_rec):
+    return f"AUS church(Melbourne) HSP Exam ({exam_rec.get('ExamName')}) Result"
 
-    excel_out = await sync_to_async(get_excel)(exam_rec, recs)
-    score_text = await sync_to_async(get_text)(recs)
-    chart_out = await sync_to_async(get_chart)(exam_rec)
-    excel_out.append(score_text)
-    excel_out.append(chart_out)
-    
-    return excel_out
+
+async def get_scores():
+    exam_rec = await sync_to_async(get_db_exam)()
+    if not exam_rec:
+        return None, "No eligible exam record found in HSP ExamListTable."
+
+    recs = await sync_to_async(get_db_recs)(exam_rec['ID'])
+    print(f"Found exam ID: {exam_rec['ID']}. Fetched {len(recs)} result records.")
+    return get_title(exam_rec), get_text(recs)
+
+
+async def get_excel_report():
+    exam_rec = await sync_to_async(get_db_exam)()
+    if not exam_rec:
+        return None
+    return await sync_to_async(get_excel)(exam_rec)
+
+
+async def get_chart_report():
+    exam_rec = await sync_to_async(get_db_exam)()
+    if not exam_rec:
+        return None
+    chart_path = await sync_to_async(get_chart)(exam_rec)
+    return chart_path, get_title(exam_rec)
 
 def get_db_exam():
     with connection.cursor() as cursor:
@@ -83,14 +91,14 @@ def get_text(recs):
     
 
 
-def get_excel(exam_rec, recs):
+def get_excel(exam_rec):
 
     wb = openpyxl.load_workbook('apis/Telegram/Exam/assets/Exam_Template.xlsx')
     ws = wb.active # Or specify the sheet name
     
     exam_name = exam_rec.get('ExamName')
     
-    exam_title = f"AUS church(Melbourne) HSP Exam ({exam_name}) Result"
+    exam_title = get_title(exam_rec)
     
     ws["A1"] = exam_title
     
@@ -153,91 +161,8 @@ def get_chart(exam_rec):
 
     df = pd.DataFrame(recs)
 
-    fig = go.Figure()
-
-    # Stacked Bars
-    fig.add_trace(go.Bar(
-        x=df["Dept"],
-        y=df["Passed"],
-        name="Passed",
-        marker=dict(
-            color=df["PassRate"],          # numeric values
-            colorscale=[          # ✅ custom gradient
-                [0, "#A8E6CF"],   # light green
-                [1, "#05668D"]    # dark teal
-            ],       # built-in gradient
-            showscale=False              # hide color bar if you don’t want it
-        ),
-        text=df["Passed"],
-        textposition="inside",
-        textfont=dict(color="white", size=12)
-    ))
-
-    # Failed bars with gradient based on value
-    fig.add_trace(go.Bar(
-        x=df["Dept"],
-        y=df["Failed"],
-        name="Failed",
-        marker=dict(
-            color=(100 - df["PassRate"]),
-            colorscale=[
-                [0.0, "#FFCCCC"],   # light red
-                [0.5, "#FF6666"],   # medium red
-                [1.0, "#990000"]    # dark red
-            ],
-            showscale=False
-        ),
-        text=df["Failed"],
-        textposition="inside",
-        textfont=dict(color="white", size=12)
-    ))
-
-    # --- Pass Rate Line ---
-    fig.add_trace(go.Scatter(
-        x=df["Dept"],
-        y=df["PassRate"],
-        name="Pass Rate (%)",
-        yaxis="y2",
-        mode="lines+markers+text",
-        text=[f"{r:.1f}%" for r in df["PassRate"]],
-        textposition="top center",
-        textfont=dict(color="#1A8DAA", size=12, weight="bold", shadow=4),
-        line=dict(color="#0DCDFD", width=1),
-        marker=dict(size=8)
-    ))
-
-    # --- Add Total Labels above bars ---
-    # This shows Passed / Total above the stacked bar
-    # for i, row in df.iterrows():
-    #     fig.add_annotation(
-    #         x=row["Dept"],
-    #         y=row["Total"] + 2,  # a bit above the top bar
-    #         text=f"{int(row['Passed'])}/{int(row['Total'])}",
-    #         showarrow=False,
-    #         font=dict(color="black", size=13, family="Arial Black")
-    #     )
-
-    # --- Layout ---
-    fig.update_layout(
-        title=f"{exam_name} Exam Results by Department",
-        xaxis=dict(title="Department"),
-        yaxis=dict(title="Number of Students"),
-        yaxis2=dict(
-            title="Pass Rate (%)",
-            overlaying="y",
-            side="right",
-            range=[0, 100]
-        ),
-        barmode="stack",
-        legend=dict(x=0.02, y=0.98),
-        plot_bgcolor="white",
-        margin=dict(l=40, r=40, t=50, b=40),
-        font=dict(family="Arial", size=12)
-    )
-
-    # Save chart as PNG using Kaleido
     chart_path = "apis/Telegram/Exam/assets/exam_summary_chart.png"
-    fig.write_image(chart_path, width=1000, height=600)
+    render_pass_rate_chart(df, exam_name, chart_path)
 
     return chart_path
     

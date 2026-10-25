@@ -200,6 +200,45 @@ class FMPEvTGWPerformanceViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
+class FMPEvFruitReportViewSet(APIView):
+    def get(self, request):
+        user = request.GET.get('User')
+
+        # Empty or junk Ssn falls back to the procedure's default season.
+        try:
+            ssn = int(request.GET.get('Ssn') or 0) or None
+        except (TypeError, ValueError):
+            ssn = None
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC dbo.spEVFruitReport @Ssn = %s", [ssn])
+
+                # Collect every result set that has columns, in order.
+                sets = []
+                while True:
+                    if cursor.description is not None:
+                        columns = [column[0] for column in cursor.description]
+                        sets.append([dict(zip(columns, record)) for record in cursor.fetchall()])
+                    if not cursor.nextset():
+                        break
+
+            return Response({
+                'rows':    sets[0] if len(sets) > 0 else [],
+                'seasons': sets[1] if len(sets) > 1 else [],
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# -----------------------------------------------------------------------------
+# 2. urls.py — next to evTGWPerformance/
+# -----------------------------------------------------------------------------
+
+#   path('evFruitReport/', FMPEvFruitReportViewSet.as_view(), name='evFruitReport'),
+
+
 # -----------------------------------------------------------------------------
 # 2. urls.py — next to evGroupPerformance/
 # -----------------------------------------------------------------------------

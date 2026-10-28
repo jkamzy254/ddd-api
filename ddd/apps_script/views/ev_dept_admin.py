@@ -232,15 +232,32 @@ class FMPEvFruitReportViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class FMPEvLeafCompetitionViewSet(APIView):
+    def get(self, request):
+        user = request.GET.get('User')
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC dbo.spEVLeafCompetition")
+
+                # Step past any result without columns (only possible if the
+                # procedure does not SET NOCOUNT ON).
+                while cursor.description is None and cursor.nextset():
+                    pass
+
+                if cursor.description is None:
+                    return Response([], status=status.HTTP_200_OK)
+
+                result = [dict(zip([column[0] for column in cursor.description], record))
+                          for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 # -----------------------------------------------------------------------------
 # 2. urls.py — next to evTGWPerformance/
 # -----------------------------------------------------------------------------
 
-#   path('evFruitReport/', FMPEvFruitReportViewSet.as_view(), name='evFruitReport'),
-
-
-# -----------------------------------------------------------------------------
-# 2. urls.py — next to evGroupPerformance/
-# -----------------------------------------------------------------------------
-
-#   path('evTGWPerformance/', FMPEvTGWPerformanceViewSet.as_view(), name='evTGWPerformance'),
+#   path('evLeafCompetition/', FMPEvLeafCompetitionViewSet.as_view(), name='evLeafCompetition'),

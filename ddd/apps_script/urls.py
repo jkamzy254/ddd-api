@@ -146,6 +146,7 @@ urlpatterns = [
 	path('evGroupPerformance/', ev.FMPEvGroupPerformanceViewSet.as_view()),
   	path('evTGWPerformance/', ev.FMPEvTGWPerformanceViewSet.as_view(), name='evTGWPerformance'), 
   	path('evFruitReport/', ev.FMPEvFruitReportViewSet.as_view(), name='evFruitReport'),
+  	path('evLeafCompetition/', ev.FMPEvLeafCompetitionViewSet.as_view(), name='evLeafCompetition'),
  
 	#Sept Exam System
 	path('sepExamGetMember/', se.GetMemberViewSet.as_view()),

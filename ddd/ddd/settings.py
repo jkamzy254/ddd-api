@@ -40,9 +40,27 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+CORS_ORIGIN_WHITELIST = (
+    'http://localhost:4200',
+    'http://127.0.0.1:4200',
+    'http://127.0.0.1:8000',
+    'https://delorse-nondepreciative-janae.ngrok-free.dev',
+    "https://*.ngrok-free.app",
+    "https://*.ngrok.io",
+    "https://script.google.com",
+    'https://dddmelb84.atlassian.net', #Jira URL
+    'https://ang-dj.herokuapp.com', #Django backend
+    'https://ddd-ticket-trial-6cb8f882f1d8.herokuapp.com', #Ticket Module Testing Site
+    'https://ddd-edu-trial-8ac6a6509c36.herokuapp.com', #Edu Module Testing Site
+    'https://cadillac-dpi-vr-bd6205ea960b.herokuapp.com', #Main (production) Site
+    'https://api.notion.com' #Notion Site
+)
+CORS_ALLOW_CREDENTIALS = True
+
 CSRF_TRUSTED_ORIGINS = [
     "https://script.google.com",
     "https://*.ngrok-free.app",
+    "https://*.ngrok-free.dev"
 ]
 
 INTERNAL_IPS = [
@@ -104,23 +122,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
-CORS_ORIGIN_WHITELIST = (
-    'http://localhost:4200',
-    'http://127.0.0.1:4200',
-    'http://127.0.0.1:8000',
-    'https://delorse-nondepreciative-janae.ngrok-free.dev',
-    "https://*.ngrok-free.app",
-    "https://*.ngrok.io",
-    "https://script.google.com",
-    'https://dddmelb84.atlassian.net', #Jira URL
-    'https://ang-dj.herokuapp.com', #Django backend
-    'https://ddd-ticket-trial-6cb8f882f1d8.herokuapp.com', #Ticket Module Testing Site
-    'https://ddd-edu-trial-8ac6a6509c36.herokuapp.com', #Edu Module Testing Site
-    'https://cadillac-dpi-vr-bd6205ea960b.herokuapp.com', #Main (production) Site
-    'https://api.notion.com' #Notion Site
-)
-CORS_ALLOW_CREDENTIALS = True
 
 
 ROOT_URLCONF = 'ddd.urls'

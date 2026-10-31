@@ -2,7 +2,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from pytz import timezone
 
-from .job import ct_add_classes, ct_transfer_run_due, ct_close_finished, ev_season_history_add
+from .job import ct_add_classes, ct_transfer_run_due, ct_close_finished, ev_season_history_add, hsp_loyalty_refresh
 
 
 def start():
@@ -53,6 +53,19 @@ def start():
         coalesce=True,
         misfire_grace_time=3600,
     )
+    
+    # After the 01:30–02:15 jobs, so the log stays in order. Points only change
+    # when attendance or an exam score is recorded, which nobody does overnight.
+    scheduler.add_job(
+        hsp_loyalty_refresh,
+        CronTrigger(hour=2, minute=30, timezone=local_tz),
+        id='hsp_loyalty_refresh',
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+        misfire_grace_time=3600,
+    )
+
 
     scheduler.start()
 

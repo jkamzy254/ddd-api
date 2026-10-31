@@ -4,7 +4,7 @@ from django.urls import path, include, re_path
 from .views import closure_after_fortnight as caf
 from .views import bb_registration as br
 from .views import ct_attendance as ca
-from .views import edu_player as ep
+from .views import hsp as ep
 from .views import edu_dept_bbt as eb
 from .views import tribe_exam as ex
 from .views import sept_exam as se
@@ -91,6 +91,8 @@ urlpatterns = [
 	path('hspGetMWScores/', ep.HSPGetMWScoresViewSet.as_view()),    
 	path('hspGetLoyaltyCard/', ep.HSPGetMemberLoyaltyCard.as_view()),    
 	path('hspGetTraineeSchedule/', ep.HSPGetTraineeScheduleViewSet.as_view()),    
+   path('hspLoyaltyAdminList/',  ep.HSPLoyaltyAdminListViewSet.as_view()),
+   path('hspLoyaltySetClaimed/', ep.HSPLoyaltySetClaimedViewSet.as_view()),
      
 	#Edu Dept BBT System
 	path('eduBBTGetMember/', eb.GetMemberViewSet.as_view()),

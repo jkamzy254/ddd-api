@@ -8,6 +8,9 @@ from rest_framework import status
 from rest_framework.views import APIView
 from django.db import connection
 
+from django.conf import settings
+import hmac
+
 import json
 import pandas as pd
 
@@ -436,4 +439,67 @@ class HSPGetTraineeScheduleViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
-     
+
+
+# THROW numbers raised by spHSPGetLoyaltyPoints / spHSPSetLoyaltyClaimed.
+# The SQL Server message reads "...[SQL Server]Not authorised ... (50403) (SQLExecDirectW)".
+LOYALTY_SQL_ERRORS = {
+    '50403': status.HTTP_403_FORBIDDEN,
+    '50404': status.HTTP_404_NOT_FOUND,
+    '50400': status.HTTP_400_BAD_REQUEST,
+}
+
+
+def loyalty_error(e):
+    msg = str(e)
+    for num, code in LOYALTY_SQL_ERRORS.items():
+        if '(' + num + ')' in msg:
+            return Response({'error': msg.split(']')[-1].split('(')[0].strip()}, status=code)
+    return Response({'error': msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class HSPLoyaltyAdminListViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('ActorUID')
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('EXEC dbo.spHSPGetLoyaltyPoints @ActorUID = %s', (uid,))
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return loyalty_error(e)
+
+
+class HSPLoyaltySetClaimedViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        try:
+            claimed = int(rec.get('Claimed'))
+        except (TypeError, ValueError):
+            return Response({'error': 'Claimed must be a whole number'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('EXEC dbo.spHSPSetLoyaltyClaimed @ActorUID = %s, @UID = %s, @Claimed = %s',
+                               (rec.get('ActorUID'), rec.get('UID'), claimed))
+                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return loyalty_error(e)
+
+
+class HSPLoyaltyRefreshViewSet(APIView):
+    def post(self, request):
+        key = str(request.data.get('Key') or '')
+        if not hmac.compare_digest(key, settings.LOYALTY_JOB_KEY):
+            return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute('EXEC dbo.spHSPBulkUpdateLoyaltyPoints')
+
+            return Response({'ok': True}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -19,6 +19,7 @@ urlpatterns = [
     path('getFinReceiptPopUp/', h.FinReceiptPopUp.as_view()),
     path('getFinHgnSummaryMonth/', h.FinHgnSummaryMonth.as_view()),
     path('getFinBalanceSummary/', h.FinBalanceSummary.as_view()),
+    path('getFinBalanceSSList/', h.FinBalanceSSList.as_view()),
 
     path('postFinInsertIncome/', h.FinInsertIncome.as_view()),
     path('postFinInsertClaim/', h.FinInsertClaim.as_view()),

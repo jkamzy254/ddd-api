@@ -432,3 +432,19 @@ class FinDeleteReceipt(APIView):
             print(e)
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+
+
+
+class FinBalanceSSList(APIView):
+    def get(self, request):
+        try:
+            token = decode_jwt(request)
+            uid = token['UID']
+            year = int(request.GET.get('year', 0)) or None
+            with connection.cursor() as cursor:
+                cursor.execute(f"EXEC spFinBalanceSSList '{uid}', {year}")
+                res = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
+            return Response(res, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(e)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

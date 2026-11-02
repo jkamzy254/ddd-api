@@ -35,19 +35,12 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     """Send a message when the command /help is issued."""
     await update.message.reply_text("Help!")
 
-async def get_excel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    file_path, exam_title, file_name, score_txt, chart_path = await g.get_scores('Yes')
+NO_EXAM_MSG = "No eligible exam record found."
 
-    # Send the exam title and progress message last
-    await update.message.reply_text(
-        f"<b>{exam_title}</b>\nPreparing your report...",
-        parse_mode='HTML'
-    )
 
-    # Send confirmation message
-    score_parts = score_txt.split('\n\n')
-
-    for part in score_parts:
+async def send_long_text(update: Update, text: str) -> None:
+    # Telegram messages max out at 4096 chars, so send per department block
+    for part in text.split('\n\n'):
         part = part.strip()
         if not part:
             continue
@@ -58,101 +51,57 @@ async def get_excel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             part = part[4000:]
 
         await update.message.reply_text(part, parse_mode='HTML')
-    # Send confirmation message
-    await update.message.reply_text(
-        f"<b>{exam_title}</b>\nPreparing your report...",
-        parse_mode='HTML'
-    )
-    
-    
-    await update.message.reply_photo(
-        photo=open(chart_path, "rb"),
-        caption=f"<b>{exam_title}</b>\n📊 Exam Summary by Department",
-        parse_mode='HTML'
-    )
 
-    # Send the Excel file with custom download name
-    with open(file_path, "rb") as f:
-        await update.message.reply_document(
-            document=f,
-            filename=file_name,  # 👈 this sets the visible filename
-            caption=f"<b>{exam_title}</b>",
-            parse_mode='HTML'
-        )
 
-async def get_hsp_excel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    file_path, exam_title, file_name, score_txt, chart_path = await h.get_scores('Yes')
+def score_command(exam):
+    async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        exam_title, score_txt = await exam.get_scores()
+        if not exam_title:
+            await update.message.reply_text(score_txt)
+            return
 
-    # Send the exam title and progress message last
-    await update.message.reply_text(
-        f"<b>{exam_title}</b>\nPreparing your report...",
-        parse_mode='HTML'
-    )
+        await update.message.reply_text(f"<b>{exam_title}</b>\nFetching scores...", parse_mode='HTML')
+        await send_long_text(update, score_txt)
+    return handler
 
-    # Send confirmation message
-    score_parts = score_txt.split('\n\n')
 
-    for part in score_parts:
-        part = part.strip()
-        if not part:
-            continue
+def excel_command(exam):
+    async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_text("Preparing your Excel report...")
+        report = await exam.get_excel_report()
+        if not report:
+            await update.message.reply_text(NO_EXAM_MSG)
+            return
 
-        # If a chunk is too long, split further by character length
-        while len(part) > 4000:
-            await update.message.reply_text(part[:4000], parse_mode='HTML')
-            part = part[4000:]
+        file_path, exam_title, file_name = report
+        # Send the Excel file with custom download name
+        with open(file_path, "rb") as f:
+            await update.message.reply_document(
+                document=f,
+                filename=file_name,  # 👈 this sets the visible filename
+                caption=f"<b>{exam_title}</b>",
+                parse_mode='HTML'
+            )
+        os.remove(file_path)
+    return handler
 
-        await update.message.reply_text(part, parse_mode='HTML')
-    # Send confirmation message
-    await update.message.reply_text(
-        f"<b>{exam_title}</b>\nPreparing your report...",
-        parse_mode='HTML'
-    )
-    
-    
-    await update.message.reply_photo(
-        photo=open(chart_path, "rb"),
-        caption=f"<b>{exam_title}</b>\n📊 Exam Summary by Department",
-        parse_mode='HTML'
-    )
-    
-async def get_sep_excel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    file_path, exam_title, file_name, score_txt = await sp.get_scores('Yes')
 
-    # Send the exam title and progress message last
-    await update.message.reply_text(
-        f"<b>{exam_title}</b>\nPreparing your report...",
-        parse_mode='HTML'
-    )
+def chart_command(exam):
+    async def handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        await update.message.reply_text("Preparing your chart...")
+        report = await exam.get_chart_report()
+        if not report:
+            await update.message.reply_text(NO_EXAM_MSG)
+            return
 
-    # Send confirmation message
-    score_parts = score_txt.split('\n\n')
-
-    for part in score_parts:
-        part = part.strip()
-        if not part:
-            continue
-
-        # If a chunk is too long, split further by character length
-        while len(part) > 4000:
-            await update.message.reply_text(part[:4000], parse_mode='HTML')
-            part = part[4000:]
-
-        await update.message.reply_text(part, parse_mode='HTML')
-    # Send confirmation message
-    await update.message.reply_text(
-        f"<b>{exam_title}</b>\nPreparing your report...",
-        parse_mode='HTML'
-    )
-
-    # Send the Excel file with custom download name
-    with open(file_path, "rb") as f:
-        await update.message.reply_document(
-            document=f,
-            filename=file_name,  # 👈 this sets the visible filename
-            caption=f"<b>{exam_title}</b>",
-            parse_mode='HTML'
-        )
+        chart_path, exam_title = report
+        with open(chart_path, "rb") as f:
+            await update.message.reply_photo(
+                photo=f,
+                caption=f"<b>{exam_title}</b>\n📊 Exam Summary by Department",
+                parse_mode='HTML'
+            )
+    return handler
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -173,9 +122,13 @@ def main():
 
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("getexcel", get_excel))
-    application.add_handler(CommandHandler("gethspexcel", get_hsp_excel))
-    application.add_handler(CommandHandler("getsepexcel", get_sep_excel))
+
+    # /getscore, /getexcel, /getchart plus /gethsp... and /getsep... variants
+    for prefix, exam in (("", g), ("hsp", h), ("sep", sp)):
+        application.add_handler(CommandHandler(f"get{prefix}score", score_command(exam)))
+        application.add_handler(CommandHandler(f"get{prefix}excel", excel_command(exam)))
+        application.add_handler(CommandHandler(f"get{prefix}chart", chart_command(exam)))
+
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     # application.add_handler(CommandHandler("help", help_command))
 

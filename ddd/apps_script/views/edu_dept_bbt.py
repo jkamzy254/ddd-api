@@ -753,8 +753,35 @@ class EduEndBBTLicenseViewSet(APIView):
                 return Response({'error': message}, status=status.HTTP_400_BAD_REQUEST)
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+# --- Fallen report ------------------------------------------------------------------
+
+class EduGetFallenBBsViewSet(APIView):
+    """
+    spBBGetFallenBBs: every fallen record in one Melbourne season (rows), and the seasons
+    the report can switch between (seasons, newest first, Selected = the one in rows).
+    Ssn is optional; left out it is the current season.
+    """
+
+    def get(self, request):
+        ssn = request.GET.get('Ssn', '')
+        if ssn and not ssn.isdigit():
+            return Response({'error': 'Ssn must be a season ID.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spBBGetFallenBBs @Ssn = %s", [int(ssn) if ssn else None])
+                rows = fetch_rows(cursor)
+                seasons = next_rows(cursor)
+
+            return Response({'rows': rows, 'seasons': seasons}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 # --- urls.py ------------------------------------------------------------------------
 #
+#   path('eduBBTEndLicense/',      EduEndBBTLicenseViewSet.as_view()),
 #   path('eduBBTGetBTMList/',      EduGetBTMListViewSet.as_view()),
 #   path('eduBBTCreateBTM/',       EduCreateBTMViewSet.as_view()),
 #   path('eduBBTUpdateBTM/',       EduUpdateBTMViewSet.as_view()),
@@ -766,7 +793,7 @@ class EduEndBBTLicenseViewSet(APIView):
 #   path('eduBBTGetWeeklyBB/',     EduGetWeeklyBBViewSet.as_view()),
 #   path('eduBBTGetBBTSeasonPerformance/', EduGetBBTSeasonPerformanceViewSet.as_view()),
 #   path('eduBBTGetCTExpectedAttendance/', EduGetCTExpectedAttendanceViewSet.as_view()),
-#   path('eduBBTEndLicense/',      EduEndBBTLicenseViewSet.as_view()),
+#   path('eduBBTGetFallenBBs/',    EduGetFallenBBsViewSet.as_view()),
 #
 # eduBBTUpdateStatus/ and eduBBTGetCurrentCCT/ keep their existing routes.
 # If eduBBTGetCurrentCCT/ points at a different view, add the BLTDone / InterviewDT /

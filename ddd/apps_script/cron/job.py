@@ -114,3 +114,32 @@ def ev_season_history_add():
 
     if not summary.get("Ok"):
         print("ev_season_history_add: SNAPSHOT FAILED — nothing was added, the next run retries")
+
+
+        
+def hsp_loyalty_refresh():
+    """
+    Recomputes every current member's lesson points and blind boxes into
+    HSPLoyaltyPointTable, so the admin list and the member card read a table
+    instead of running HSPMemberLoyaltyFunction ~1085 times on demand.
+
+    Never touches Claimed — an admin's edit survives the refresh.
+
+    Safe under several workers: the procedure takes an app lock, so one worker
+    does the work and the others report 'Skipped'. Idempotent, so a missed
+    night is simply caught up by the next run. Do not wrap in
+    transaction.atomic(); the procedure owns its transaction.
+    """
+    close_old_connections()
+
+    with connection.cursor() as cursor:
+        cursor.execute("EXEC spHSPBulkUpdateLoyaltyPoints")
+        row = cursor.fetchone() if cursor.description else None
+        if row is None:
+            print("hsp_loyalty_refresh: no summary returned")
+            return
+        summary = dict(zip([c[0] for c in cursor.description], row))
+
+    # Inserted / Updated / Res / Ok
+    print("hsp_loyalty_refresh: %s" % summary.get("Res"))
+

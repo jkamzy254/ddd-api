@@ -91,8 +91,13 @@ urlpatterns = [
 	path('hspGetMWScores/', ep.HSPGetMWScoresViewSet.as_view()),    
 	path('hspGetLoyaltyCard/', ep.HSPGetMemberLoyaltyCard.as_view()),    
 	path('hspGetTraineeSchedule/', ep.HSPGetTraineeScheduleViewSet.as_view()),    
-   path('hspLoyaltyAdminList/',  ep.HSPLoyaltyAdminListViewSet.as_view()),
-   path('hspLoyaltySetClaimed/', ep.HSPLoyaltySetClaimedViewSet.as_view()),
+	path('hspLoyaltyAdminList/',  ep.HSPLoyaltyAdminListViewSet.as_view()),
+	path('hspLoyaltySetClaimed/', ep.HSPLoyaltySetClaimedViewSet.as_view()),
+	path('hspLoyaltySetRewards/',    ep.HSPLoyaltySetRewardsViewSet.as_view()),
+	path('hspMemberLessonDetail/',   ep.HSPMemberLessonDetailViewSet.as_view()),
+	path('hspAdminSetAttendance/',   ep.HSPAdminSetAttendanceViewSet.as_view()),
+	path('hspExemptList/',           ep.HSPExemptListViewSet.as_view()),
+	path('hspSetExempt/',            ep.HSPSetExemptViewSet.as_view()),
      
 	#Edu Dept BBT System
 	path('eduBBTGetMember/', eb.GetMemberViewSet.as_view()),

@@ -253,20 +253,23 @@ class ChurchRegrpSaveRequestViewSet(APIView):
             with connection.cursor() as cursor:
                 cursor.execute(
                     "EXEC spChurchRegrpSaveRequest @ActorUID = %s, @UID = %s, @ToGID = %s, "
-                    "@ToTaskCode = %s, @Notes = %s, @KeepPrevious = %s, @ToTID = %s, @ToPID = %s",
+                    "@ToTaskCode = %s, @Notes = %s, @KeepPrevious = %s, @ToTID = %s, @ToPID = %s, "
+                    "@EffectiveDate = %s",
                     [actor, uid,
                      blank_to_none(data.get('ToGID')),
                      blank_to_none(data.get('ToTaskCode')),
                      blank_to_none(data.get('Notes')),
                      None if keep is None else (1 if keep in (True, 1, '1', 'true') else 0),
                      blank_to_none(data.get('ToTID')),
-                     blank_to_none(data.get('ToPID'))]
+                     blank_to_none(data.get('ToPID')),
+                     blank_to_none(data.get('EffectiveDate'))]
                 )
                 result = fetch_rows(cursor)
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return error_response(e)
+
 
 
 class ChurchRegrpResolveViewSet(APIView):

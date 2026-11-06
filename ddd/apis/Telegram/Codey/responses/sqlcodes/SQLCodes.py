@@ -5875,3 +5875,18 @@ def deptbbt(timerange,d,sid,ss,ct,access,bbtdept): # BBT FUNCTIONS
     fmp = re.sub(r'(\D)0([^.])',r'\1-\2',fmp) # Replaces lone '0' with '-'
     print(">>>Return")
     return fmp
+
+
+
+
+def error_test(): # ERROR TESTING FUNCTION
+
+    print("\n>>>error_test")
+
+    faulty_sql = "SELECT Column FROM NonExistentTable"
+
+    with odbc.connect(conn_str) as conn:
+        faulty_dataframe = pd.read_sql(faulty_sql, conn)
+    faulty_message = faulty_dataframe.loc[0,'Column']
+
+    return f"Error Test: {faulty_message}"

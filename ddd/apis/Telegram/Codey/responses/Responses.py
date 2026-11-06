@@ -32,6 +32,8 @@ def bot_responses(id, tname, input_text):
             return 'Markdown@@' + SQLCodes.test1()
         if input_text.lower() == 'test2dwuyidhcnekhdfs':
             return 'Markdown@@' + SQLCodes.test2()
+        if input_text.lower() == 'error':
+            return 'Markdown@@' + SQLCodes.error_test()
 
     if input_text.lower().startswith('register'):
         i, user, pw = input_text.split('.')

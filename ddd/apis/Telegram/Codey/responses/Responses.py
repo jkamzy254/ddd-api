@@ -82,13 +82,13 @@ def bot_responses(id, tname, input_text):
         elif '/' in user_message:
             try:
                 command, g = user_message.lower().split('/')
-                g = g.replace('g', 'G')
+                g = g.lower().replace('mw', 'MW') if g.lower().startswith('mw') else g.replace('g', 'G')
                 access = 'Group' if access != 'MT' else 'MT'
             except ValueError:
                 print('Format error [2]')
                 return 'Format error: Too many "/"s'
-            print(f"\nGroup info for {g}: d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, bb_sid={bb_sid}, bb_ss={bb_ss}")
             d, fmp_sid, fmp_ss, bb_sid, bb_ss = SQLCodes.groupinfo(g).split('/')
+            print(f"\nGroup info for {g}: d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, bb_sid={bb_sid}, bb_ss={bb_ss}")
         else:
             command = user_message
 
@@ -161,7 +161,11 @@ def bot_responses(id, tname, input_text):
         print(f"\nAccess level 'MW' detected. Set ssn to 'phys', fmp_sid and bb_sid to '{mw_sid}'.")
         command = command[2:]
 
-    ct = {'%': 'Physical + Online', phys_sid: 'Physical', on_sid: 'Online'}[bb_sid]
+    ct_labels = {'%': 'Physical + Online', phys_sid: 'Physical', on_sid: 'Online', mw_sid: 'MW'}
+    ct = ct_labels.get(bb_sid)
+    if ct is None:
+        print(f"\nUnrecognised bb_sid '{bb_sid}' (phys={phys_sid}, on={on_sid}, mw={mw_sid})")
+        return "Sorry, I couldn't identify the season for this group. Please contact IT."
 
     if command in ('hspreport','hspdivision'):
         division = 1 if command == 'hspdivision' else 0

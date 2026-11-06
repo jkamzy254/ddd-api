@@ -8,6 +8,8 @@ from .responses import Responses as R
 import warnings
 import logging
 import re
+import html
+import traceback
 
 from telegram import ForceReply, Update, Bot, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
@@ -90,7 +92,38 @@ async def handle_message(update, context):
         await update.message.reply_text("Maximum character limit (49152) exceeded", parse_mode='HTML')
 
 
+def error(update, context):
+    err = context.error
+    tb = ''.join(traceback.format_exception(type(err), err, err.__traceback__))
 
+    # Note: Update can be None for polling/network errors
+    msg = getattr(update, 'effective_message', None)
+    user = getattr(update, 'effective_user', None)
+    who = f"{user.first_name}/{user.id}" if user else 'unknown'
+    text = msg.text if msg and msg.text else '(no message)'
+
+    # Sent message
+    print('\n' + '=' * 70)
+    print(f"ERROR handling [{who}] {text!r}")
+    print(tb)
+    print('=' * 70 + '\n')
+
+    # Notify IT if error occurs in a command, but not if it occurs in the error handler itself
+    if msg:
+        try:
+            msg.reply_text("Sorry, something went wrong with that command.")
+        except Exception:
+            pass
+
+    # Send IT end of traceback
+    try:
+        context.bot.send_message(
+            chat_id=659275499, # Scott
+            text=(f"<b>⚠️ Codey error</b>\n[{html.escape(who)}] {html.escape(text)}\n\n"
+                  f"<pre>{html.escape(tb[-3500:])}</pre>"),
+            parse_mode='HTML')
+    except Exception as e:
+        print(f"Couldn't send error alert: {e!r}")
 
 
 

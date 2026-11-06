@@ -37,19 +37,19 @@ conn_str = """
 def global_dept_list(d):
     filt = {
     "24": "(SELECT Dept FROM GroupInfo WHERE Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL'))",
-    "MW[0-9]%" :"(SELECT Dept FROM GroupInfo WHERE Grp LIKE 'MW[0-9]%')",
-    "NF": "(SELECT Dept FROM GroupInfo WHERE DeptCategory = 'NF')",
-    "Senior": "(SELECT Dept FROM GroupInfo WHERE DeptCategory = 'Senior')"
-    }.get(d,f"(SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')")
+    "mw[0-9]%" :"(SELECT Dept FROM GroupInfo WHERE Grp LIKE 'MW[0-9]%')",
+    "nf": "(SELECT Dept FROM GroupInfo WHERE DeptCategory = 'NF')",
+    "senior": "(SELECT Dept FROM GroupInfo WHERE DeptCategory = 'Senior')"
+    }.get(d.lower(),f"(SELECT Dept FROM GroupInfo WHERE Dept LIKE '{d}')")
     return filt
     
 def global_group_list(g):
     filt = {
     "24": "(SELECT Grp FROM GroupInfo WHERE Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL'))",
-    "MW[0-9]%" :"(SELECT Grp FROM GroupInfo WHERE Grp LIKE 'MW[0-9]%')",
-    "NF": "(SELECT Grp FROM GroupInfo WHERE DeptCategory = 'NF')",
-    "Senior": "(SELECT Grp FROM GroupInfo WHERE DeptCategory = 'Senior')"
-    }.get(g,f"(SELECT Grp FROM GroupInfo WHERE Grp LIKE '{g}')")
+    "mw[0-9]%" :"(SELECT Grp FROM GroupInfo WHERE Grp LIKE 'MW[0-9]%')",
+    "nf": "(SELECT Grp FROM GroupInfo WHERE DeptCategory = 'NF')",
+    "senior": "(SELECT Grp FROM GroupInfo WHERE DeptCategory = 'Senior')"
+    }.get(g.lower(),f"(SELECT Grp FROM GroupInfo WHERE Grp LIKE '{g}')")
     return filt
 
 
@@ -764,7 +764,7 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
         dept = f'{dept}{dpt}[{f}|{m}|{pp}|{p}|{fe}]\n'
     dept = dept + '\n'
     
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
         pp = ' '*(spc[3]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
@@ -873,7 +873,7 @@ def taskfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
     dept = dept + '\n'
     
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         f  = ' '*(spc[1]-len(str(dt.loc[0,'F'])))  + str(dt.loc[0,'F'])
         m  = ' '*(spc[2]-len(str(dt.loc[0,'M'])))  + str(dt.loc[0,'M'])
         pp = ' '*(spc[3]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
@@ -1245,7 +1245,7 @@ def bbstatus(g, d, sid, access, v2=False): # BB FUNCTIONS
         dept = dept + '\n'
     
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(4-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -1395,7 +1395,7 @@ def bbtstatus(q, g, d, sid, access, bbtdept, v2=False): # BBT FUNCTIONS
         dept = dept + '\n'
         
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         pn  = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(3-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -1541,7 +1541,7 @@ def newbbstatus(g, d, sid, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         pf  = ' '*(4-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
@@ -1692,7 +1692,7 @@ def newbbtstatus(q, g, d, sid, access): # BBT FUNCTIONS
     #     region = region + '\n'
         
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         pn  = ' '*(3-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(3-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         pf  = ' '*(3-len(str(dy.loc[0,'pFA'])))  + str(dy.loc[0,'pFA'])
@@ -3467,7 +3467,7 @@ def bbactive(g, d, sid, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba  = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -3577,7 +3577,7 @@ def bbactive2(g, d, sid, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         fe  = ' '*(5-len(str(dy.loc[0,'FE']))) + str(dy.loc[0,'FE'])
@@ -3645,7 +3645,7 @@ def deptbbactive(d, sid, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         sp  = ' '*(5-len(str(dy.loc[0,'SP'])))   + str(dy.loc[0,'SP'])
         pn  = ' '*(5-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         ba  = ' '*(5-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -3751,7 +3751,7 @@ def bbinactive(g, d, sid, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         bm  = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         ci  = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -3819,7 +3819,7 @@ def deptbbinactive(d, sid, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         bm  = ' '*(4-len(str(dy.loc[0,'bbME']))) + str(dy.loc[0,'bbME'])
         ci  = ' '*(4-len(str(dy.loc[0,'cctI']))) + str(dy.loc[0,'cctI'])
@@ -4367,7 +4367,7 @@ def edu(day, g, d, access): # EDU FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         at  = ' '*(2-len(str(dy.loc[0,'Att']))) + str(dy.loc[0,'Att'])
         on  = ' '*(2-len(str(dy.loc[0,'Onl']))) + str(dy.loc[0,'Onl'])
         rp  = ' '*(2-len(str(dy.loc[0,'Rep']))) + str(dy.loc[0,'Rep'])
@@ -4447,7 +4447,7 @@ def edurev(g, d, access): # EDU FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         rs  = ' '*(2-len(str(dy.loc[0,'RevS']))) + str(dy.loc[0,'RevS'])
         rn  = ' '*(2-len(str(dy.loc[0,'RevNS']))) + str(dy.loc[0,'RevNS'])
         total = f'Total[{rs}|{rn}]'
@@ -4583,7 +4583,7 @@ def bbstatusdate(g, d, ct, dt, access): # BB FUNCTIONS
     #     region = region + '\n'
     
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         pn  = ' '*(4-len(str(dy.loc[0,'pNew']))) + str(dy.loc[0,'pNew'])
         po  = ' '*(4-len(str(dy.loc[0,'pOld']))) + str(dy.loc[0,'pOld'])
         ba  = ' '*(4-len(str(dy.loc[0,'bbA'])))  + str(dy.loc[0,'bbA'])
@@ -4724,7 +4724,7 @@ def pickfe(g, d, access): # FMP FUNCTIONS
         dept = dept + '\n'
     
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         pp  = ' '*(4-len(str(dy.loc[0,'PhysP'])))  + str(dy.loc[0,'PhysP'])
         pf  = ' '*(4-len(str(dy.loc[0,'PhysFE']))) + str(dy.loc[0,'PhysFE'])
         op  = ' '*(4-len(str(dy.loc[0,'OnP'])))    + str(dy.loc[0,'OnP'])
@@ -5088,7 +5088,7 @@ def bbmission(g, d, standard, ct, access): # BB FUNCTIONS, BBT FUNCTIONS
         dept = dept + '\n'
         
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         x = ' '*(3-len(str(dy.loc[0,'X']))) + str(dy.loc[0,'X'])
         p  = ' '*(3-len(str(dy.loc[0,'P']))) + str(dy.loc[0,'P'])
         f  = ' '*(3-len(str(dy.loc[0,'FE']))) + str(dy.loc[0,'FE'])
@@ -5338,8 +5338,8 @@ def hspreport(g, d, access, division): # EDU FUNCTIONS
     ORDER BY Pos, MemberCode
     """
 
-    # print("Member Query:")
-    # print(hsp_mem)
+    print("Member Query:")
+    print(hsp_mem)
     
     # --- Kamau Adjustment #2/3 End
     
@@ -5351,7 +5351,7 @@ def hspreport(g, d, access, division): # EDU FUNCTIONS
     ORDER BY GID
     """
     # print("Group Query:")
-    print(hsp_group)
+    # print(hsp_group)
     
     hsp_dept = f"""
     SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
@@ -5633,7 +5633,7 @@ def deptpp(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
         dept = f'{dept}{dpt}[{pp}]\n'
     dept = dept + '\n'
 
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         pp = ' '*(spc[3]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
         total = f'{spc[7]}[{pp}]\n'
     else:
@@ -5719,7 +5719,7 @@ def taskpp(task,timerange,d,sid,ss,access): # BBT FUNCTIONS
     dept = dept + '\n'
 
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         pp = ' '*(spc[3]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
         total = f'{spc[7]}[{pp}]\n'
         
@@ -5860,7 +5860,7 @@ def deptbbt(timerange,d,sid,ss,ct,access,bbtdept): # BBT FUNCTIONS
         dept = dept + '\n'
 
     total = str()
-    if d in ('Senior','NF','D[0-9]%','%'):
+    if d.lower() in ('senior','nf','d[0-9]%','%'):
         pp = ' '*(spc[1]-len(str(dt.loc[0,'PP']))) + str(dt.loc[0,'PP'])
         p  = ' '*(spc[2]-len(str(dt.loc[0,'P'])))  + str(dt.loc[0,'P'])
         fe = ' '*(spc[3]-len(str(dt.loc[0,'FE']))) + str(dt.loc[0,'FE'])

@@ -458,19 +458,6 @@ def loyalty_error(e):
     return Response({'error': msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class HSPLoyaltyAdminListViewSet(APIView):
-    def get(self, request):
-        uid = request.GET.get('ActorUID')
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute('EXEC dbo.spHSPGetLoyaltyPoints @ActorUID = %s', (uid,))
-                result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()]
-
-            return Response(result, status=status.HTTP_200_OK)
-        except Exception as e:
-            return loyalty_error(e)
-
-
 class HSPLoyaltySetClaimedViewSet(APIView):
     def post(self, request):
         rec = request.data
@@ -503,3 +490,96 @@ class HSPLoyaltyRefreshViewSet(APIView):
             return Response({'ok': True}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# THROW numbers raised by the admin procedures in sql/HSPLoyalty.sql.
+# The SQL Server message reads "...[SQL Server]Not authorised ... (50403) (SQLExecDirectW)".
+HSP_ADMIN_SQL_ERRORS = {
+    '50403': status.HTTP_403_FORBIDDEN,
+    '50404': status.HTTP_404_NOT_FOUND,
+    '50400': status.HTTP_400_BAD_REQUEST,
+}
+
+
+def hsp_admin_proc(sql, params):
+    """Runs one admin procedure and returns its rows, or its THROW as a 4xx."""
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            result = [dict(zip([column[0] for column in cursor.description], record)) for record in cursor.fetchall()] if cursor.description else []
+
+        return Response(result, status=status.HTTP_200_OK)
+    except Exception as e:
+        msg = str(e)
+        for num, code in HSP_ADMIN_SQL_ERRORS.items():
+            if '(' + num + ')' in msg:
+                return Response({'error': msg.split(']')[-1].split('(')[0].strip()}, status=code)
+        return Response({'error': msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def as_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+class HSPLoyaltyAdminListViewSet(APIView):
+    def get(self, request):
+        return hsp_admin_proc('EXEC dbo.spHSPGetLoyaltyPoints @ActorUID = %s',
+                              (request.GET.get('ActorUID'),))
+
+
+class HSPLoyaltySetRewardsViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        return hsp_admin_proc('EXEC dbo.spHSPSetLoyaltyRewards @ActorUID = %s, @UID = %s, @RewardIDs = %s',
+                              (rec.get('ActorUID'), rec.get('UID'), str(rec.get('RewardIDs') or '')))
+
+
+class HSPMemberLessonDetailViewSet(APIView):
+    def get(self, request):
+        grpid = as_int(request.GET.get('GrpID'))
+        if grpid is None:
+            return Response({'error': 'GrpID must be a number'}, status=status.HTTP_400_BAD_REQUEST)
+        return hsp_admin_proc('EXEC dbo.spHSPGetMemberLessonDetail @ActorUID = %s, @UID = %s, @GrpID = %s',
+                              (request.GET.get('ActorUID'), request.GET.get('UID'), grpid))
+
+
+class HSPAdminSetAttendanceViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        grpid, eduid, actid = as_int(rec.get('GrpID')), as_int(rec.get('ID')), as_int(rec.get('ActID'))
+        if None in (grpid, eduid, actid) or rec.get('Cat') not in ('SVC', 'EDU'):
+            return Response({'error': 'GrpID, ID, ActID and Cat are required'}, status=status.HTTP_400_BAD_REQUEST)
+        return hsp_admin_proc('EXEC dbo.spHSPAdminSetAttendance @ActorUID = %s, @UID = %s, @GrpID = %s, @Cat = %s, @ID = %s, @ActID = %s',
+                              (rec.get('ActorUID'), rec.get('UID'), grpid, rec.get('Cat'), eduid, actid))
+
+
+class HSPExemptListViewSet(APIView):
+    def get(self, request):
+        return hsp_admin_proc('EXEC dbo.spHSPGetExemptMembers @ActorUID = %s',
+                              (request.GET.get('ActorUID'),))
+
+
+class HSPSetExemptViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        return hsp_admin_proc('EXEC dbo.spHSPSetExempt @ActorUID = %s, @UID = %s, @Exempt = %s, @Reason = %s',
+                              (rec.get('ActorUID'), rec.get('UID'), 1 if rec.get('Exempt') else 0, rec.get('Reason') or ''))
+
+
+# Exam scores reuse the existing hspExamUpdateScore/ (HSPExamUpdateScoreViewSet
+# → spHSPExamReportScore), so there's no new view for them.
+
+
+# -----------------------------------------------------------------------------
+# 2. urls.py — replace hspLoyaltySetClaimed/ if you already added it
+#
+#    path('hspLoyaltyAdminList/',     views.HSPLoyaltyAdminListViewSet.as_view()),
+#    path('hspLoyaltySetRewards/',    views.HSPLoyaltySetRewardsViewSet.as_view()),
+#    path('hspMemberLessonDetail/',   views.HSPMemberLessonDetailViewSet.as_view()),
+#    path('hspAdminSetAttendance/',   views.HSPAdminSetAttendanceViewSet.as_view()),
+#    path('hspExemptList/',           views.HSPExemptListViewSet.as_view()),
+#    path('hspSetExempt/',            views.HSPSetExemptViewSet.as_view()),
+# -----------------------------------------------------------------------------

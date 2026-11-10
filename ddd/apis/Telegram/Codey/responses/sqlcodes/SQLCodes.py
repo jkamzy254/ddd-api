@@ -600,7 +600,7 @@ def weekmpfe(g): # FMP FUNCTIONS
 
 # UNIVERSAL MEMBER FMP FUNCTION
 
-def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
+def memberfmp(timerange,g,sid,ss,ct,access,wn): # FMP FUNCTIONS
     print(f"\n>>>memberfmp: timerange={timerange}, group={g}, sid={sid}, seasonstart={ss}, ct={ct}, access={access}")
     
     name = 'Member' if access == 'IT' else 'MemberCode'
@@ -610,7 +610,8 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
                   'week':       ['(SELECT dbo.weekstart())', '(SELECT dbo.nextweekstart())', 'This Week'],
                   'lastweek':   ['(SELECT dbo.lastweekstart())', '(SELECT dbo.weekstart())', 'Last Week'],
                   'season':     [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season'],
-                  'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season']}
+                  'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season'],
+                  f'week{wn}':  [f"(SELECT DATEADD(WEEK, {wn}, '{ss}'))", f"(SELECT DATEADD(WEEK, ({wn}+1), '{ss}'))", f'Week {wn}']}
    
     s,e,timetitle = timevalues[timerange]
 
@@ -682,7 +683,7 @@ def memberfmp(timerange,g,sid,ss,ct,access): # FMP FUNCTIONS
 
 # UNIVERSAL DEPT FMP FUNCTION:
 
-def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
+def deptfmp(task,timerange,d,sid,ss,ct,access,wn): # FMP FUNCTIONS
     print(f"\n>>>deptfmp: task={task}, timerange={timerange}, dept={d}, sid={sid}, seasonstart={ss}, ct={ct},    access={access}")
 
     displayGroups = False if task == 'dept' and access in ('All','IT','EDU') else True
@@ -701,6 +702,8 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
         spc = [6,5,4,4,4,4,f'{topleft}  [  F  | M  |PP  | P  |FE  ]',   'Total ']
     if timerange in {'week','lastweek'}:
         spc = [5,5,5,4,4,4,f'{topleft} [  F  |  M  |PP  | P  |FE  ]',   'Total']
+    elif timerange.startswith('week'):
+        spc = [5,5,5,4,4,4,f'{topleft} [  F  |  M  |PP  | P  |FE  ]',   'Total']
     if timerange in ('season','lastseason'):
         spc = [4,6,6,5,5,5,f'{topleft}[   F  |   M  | PP  |  P  | FE  ]','Tot ']
 
@@ -709,7 +712,8 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
                   'week':       ['(SELECT dbo.weekstart())', '(SELECT dbo.nextweekstart())', 'This Week'],
                   'lastweek':   ['(SELECT dbo.lastweekstart())', '(SELECT dbo.weekstart())', 'Last Week'],
                   'season':     [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season'],
-                  'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season']}
+                  'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season'],
+                  f'week{wn}':  [f"(SELECT DATEADD(WEEK, {wn}, '{ss}'))", f"(SELECT DATEADD(WEEK, ({wn}+1), '{ss}'))", f'Week {wn}']}
     
     s,e,timetitle = timevalues[timerange]
 
@@ -784,7 +788,7 @@ def deptfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
 
 
 
-def taskfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
+def taskfmp(task,timerange,d,sid,ss,ct,access,wn): # FMP FUNCTIONS
     print(f"\n>>>taskfmp: task={task}, timerange={timerange}, dept={d}, sid={sid}, seasonstart={ss}, access={access}")
     
     name = 'MemberFull' if access == 'IT' else 'MemberInitial'
@@ -802,12 +806,16 @@ def taskfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
             spc = [10,4,4,4,4,4,'TGW       [ F  | M  |PP  | P  |FE  ]','Total     ']
         elif timerange in {'week','lastweek'}:
             spc = [9,5,4,4,4,4,'TGW      [  F  | M  |PP  | P  |FE  ]','Total    ']
+        elif timerange.startswith('week'):
+            spc = [9,5,4,4,4,4,'TGW      [  F  | M  |PP  | P  |FE  ]','Total    ']
         elif timerange in ('season','lastseason'):
             spc = [8,5,5,4,4,4,'TGW     [  F  |  M  |PP  | P  |FE  ]','Total   ']
     else:
         if timerange in {'today','yesterday'}:
             spc = [7,4,4,4,4,4,'TGW    [ F  | M  |PP  | P  |FE  ]',  'Total  ']
         elif timerange in {'week','lastweek'}:
+            spc = [7,5,4,4,4,4,'TGW    [  F  | M  |PP  | P  |FE  ]', 'Total  ']
+        elif timerange.startswith('week'):
             spc = [7,5,4,4,4,4,'TGW    [  F  | M  |PP  | P  |FE  ]', 'Total  ']
         elif timerange in ('season','lastseason'):
             spc = [7,5,5,4,4,4,'TGW    [  F  |  M  |PP  | P  |FE  ]','Total  ']
@@ -817,7 +825,8 @@ def taskfmp(task,timerange,d,sid,ss,ct,access): # FMP FUNCTIONS
                   'week':       ['(SELECT dbo.weekstart())', '(SELECT dbo.nextweekstart())', 'This Week'],
                   'lastweek':   ['(SELECT dbo.lastweekstart())', '(SELECT dbo.weekstart())', 'Last Week'],
                   'season':     [f"'{ss}'", '(SELECT dbo.tomorrow())', 'EV Season'],
-                  'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season']}
+                  'lastseason': ['(SELECT dbo.lastssnstart())', f"'{ss}'", 'Last Season'],
+                  f'week{wn}':  [f"(SELECT DATEADD(WEEK, {wn}, '{ss}'))", f"(SELECT DATEADD(WEEK, ({wn}+1), '{ss}'))", f'Week {wn}']}
     
     s,e,timetitle = timevalues[timerange]
 
@@ -5875,6 +5884,7 @@ def deptbbt(timerange,d,sid,ss,ct,access,bbtdept): # BBT FUNCTIONS
     fmp = re.sub(r'(\D)0([^.])',r'\1-\2',fmp) # Replaces lone '0' with '-'
     print(">>>Return")
     return fmp
+
 
 
 

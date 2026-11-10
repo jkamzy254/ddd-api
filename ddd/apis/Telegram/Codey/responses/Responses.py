@@ -32,6 +32,8 @@ def bot_responses(id, tname, input_text):
             return 'Markdown@@' + SQLCodes.test1()
         if input_text.lower() == 'test2dwuyidhcnekhdfs':
             return 'Markdown@@' + SQLCodes.test2()
+        if input_text.lower() == 'error':
+            return 'Markdown@@' + SQLCodes.error_test()
 
     if input_text.lower().startswith('register'):
         i, user, pw = input_text.split('.')
@@ -82,21 +84,21 @@ def bot_responses(id, tname, input_text):
         elif '/' in user_message:
             try:
                 command, g = user_message.lower().split('/')
-                g = g.replace('g', 'G')
+                g = g.lower().replace('mw', 'MW') if g.lower().startswith('mw') else g.replace('g', 'G')
                 access = 'Group' if access != 'MT' else 'MT'
             except ValueError:
                 print('Format error [2]')
                 return 'Format error: Too many "/"s'
-            print(f"\nGroup info for {g}: d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, bb_sid={bb_sid}, bb_ss={bb_ss}")
             d, fmp_sid, fmp_ss, bb_sid, bb_ss = SQLCodes.groupinfo(g).split('/')
+            print(f"\nGroup info for {g}: d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, bb_sid={bb_sid}, bb_ss={bb_ss}")
         else:
             command = user_message
 
-    elif access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','Senior','NF']:
+    elif access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','Senior','Nf']:
         d = access if access not in ('Dept') else d
         print(f"\nAccess level {access} set d to {d}")
-        if access in frozenset(('Senior','NF')) and '//' in user_message: # These are the "divisions" where some depts can be specified but not all
-            print(f"\nAccess in frozenset ('Senior','NF') detected. Checking department access for user_message: {user_message}")
+        if access in frozenset(('Senior','Nf')) and '//' in user_message: # These are the "divisions" where some depts can be specified but not all
+            print(f"\nAccess in frozenset ('Senior','Nf') detected. Checking department access for user_message: {user_message}")
             allowed_depts = SQLCodes.accessdept(access) # Therefore, accessdept function is needed to filter which depts they can access using '//'
             print('//')
             command, d = user_message.split('//')
@@ -161,7 +163,11 @@ def bot_responses(id, tname, input_text):
         print(f"\nAccess level 'MW' detected. Set ssn to 'phys', fmp_sid and bb_sid to '{mw_sid}'.")
         command = command[2:]
 
-    ct = {'%': 'Physical + Online', phys_sid: 'Physical', on_sid: 'Online'}[bb_sid]
+    ct_labels = {'%': 'Physical + Online', phys_sid: 'Physical', on_sid: 'Online', mw_sid: 'MW'}
+    ct = ct_labels.get(bb_sid)
+    if ct is None:
+        print(f"\nUnrecognised bb_sid '{bb_sid}' (phys={phys_sid}, on={on_sid}, mw={mw_sid})")
+        return "Sorry, I couldn't identify the season for this group. Please contact IT."
 
     if command in ('hspreport','hspdivision'):
         division = 1 if command == 'hspdivision' else 0
@@ -420,7 +426,7 @@ def bot_responses(id, tname, input_text):
             return SQLCodes.ctmissionnew(bb_sid, leafbbt[0], leafbbt[1], access, d, g, ct, plus, showgroups)
         
     # Dept and above functions
-    if original_access != 'GGN' and access in ['%','MW[0-9]%','MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','Senior','NF','¹','²','All','EDU','IT']:
+    if original_access != 'GGN' and access in ['%','MW[0-9]%','MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','Senior','Nf','¹','²','All','EDU','IT']:
 
         for task in ['church','youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(task):
@@ -537,7 +543,7 @@ def bot_responses(id, tname, input_text):
             if access == 'IT':
                 print(f"\nCalling ev with id={id}")
                 return SQLCodes.ev(id)
-            if access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','Senior','NF']:
+            if access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','Senior','Nf']:
                 idlist = SQLCodes.idlist('dept', d)
             if access in ('Group','CUL'):
                 idlist = SQLCodes.idlist('group', g)

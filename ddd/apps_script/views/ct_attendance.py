@@ -652,3 +652,59 @@ class CTScheduleDaySaveViewSet(APIView):
                             status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class CTPastStudentsViewSet(APIView):
+    """Students not currently enrolled. The procedure limits it to admin, GSN and Main JDSN."""
+
+    def get(self, request):
+        class_id = request.GET.get('ClassID')
+        try:
+            result = call_proc(
+                "EXEC spCTPastStudents @ActorUID = %s, @ClassID = %s",
+                [request.GET.get('ActorUID'), int(class_id) if class_id else None],
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTStudentProfileViewSet(APIView):
+    """One student's profile row. The JSON columns are passed through as strings."""
+
+    def get(self, request):
+        try:
+            result = call_proc(
+                "EXEC spCTStudentProfile @ActorUID = %s, @UID = %s",
+                [request.GET.get('ActorUID'), request.GET.get('UID')],
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTEnrolViewSet(APIView):
+    """(Re-)enrol a student in a session. spCTEnrol does every check, including who may."""
+
+    def post(self, request):
+        rec = request.data
+        try:
+            result = call_proc(
+                "EXEC spCTEnrol @ActorUID = %s, @UID = %s, @CTID = %s, @TGWID = %s, "
+                "@Eff = %s, @Registration = %s, @Note = %s, @Force = %s",
+                [
+                    rec.get('ActorUID'),
+                    rec.get('UID'),
+                    rec.get('CTID'),
+                    rec.get('TGWID') or None,
+                    rec.get('Eff') or None,
+                    rec.get('Registration') or None,
+                    rec.get('Note') or None,
+                    1 if rec.get('Force') in (1, '1', True) else 0,
+                ],
+            )
+            return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

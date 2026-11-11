@@ -189,14 +189,9 @@ def bot_responses(id, tname, input_text):
             print(f"\nCommand {command} requested with access {access}")
             return f"Sorry, <i>{command}</i> is not a valid command. Try replacing the 'T' with one of: 'today', 'yesterday', 'week', 'last week' or 'season'.\nfor example: <pre>" + command.replace('tfmp','todayfmp').replace('youtht','youthtoday').replace('deptt','depttoday').replace('gyjnt','gyjntoday').replace('tgwt','tgwtoday').replace('membert','membertoday').replace('oevt','oevtoday').replace('ievt','ievtoday').replace('edut','edutoday').replace('svt','svtoday') + "</pre> :)"
        
-        if command in ['todayfmp','yesterdayfmp','weekfmp','lastweekfmp','seasonfmp','lastseasonfmp']:
+        if command in ['todayfmp','yesterdayfmp','weekfmp','lastweekfmp','seasonfmp','lastseasonfmp'] or command.startswith('week') and command.endswith('fmp'):
             timerange = command[:-3]
-            print(f"\nCalling memberfmp with timerange={timerange}, g={g}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
-            return SQLCodes.memberfmp(timerange, g, fmp_sid, fmp_ss, ct, access, 'None')
-
-        if command.startswith('week') and command.endswith('fmp'):
-            wn = command[4:-3]
-            timerange = f'week{wn}'
+            wn = 'None' if timerange[4:] == '' else timerange[4:]
             print(f"\nCalling memberfmp with timerange={timerange}, g={g}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
             return SQLCodes.memberfmp(timerange, g, fmp_sid, fmp_ss, ct, access, wn)
         
@@ -438,10 +433,7 @@ def bot_responses(id, tname, input_text):
             if command.startswith(task):
                 timerange = command[len(task):]
                 if timerange in ['today','yesterday','week','lastweek','season','lastseason'] or timerange.startswith('week'):
-                    wn = 'None'
-                    if timerange not in ['today','yesterday','week','lastweek','season','lastseason']:
-                        wn = timerange[4:]
-                        timerange = f'week{wn}'
+                    wn = 'None' if timerange[4:] == '' else timerange[4:]
                     if task in ['youth','dept','tgw','member']:
                         print(f"\nCalling deptfmp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
                         return SQLCodes.deptfmp(task, timerange, d, fmp_sid, fmp_ss, ct, access, wn)
@@ -453,10 +445,7 @@ def bot_responses(id, tname, input_text):
             if command.startswith(f'pp{task}'):
                 timerange = command[len(f'pp{task}'):]
                 if timerange in ['today','yesterday','week','lastweek','season','lastseason'] or timerange.startswith('week'):
-                    wn = 'None'
-                    if timerange not in ['today','yesterday','week','lastweek','season','lastseason']:
-                        wn = timerange[4:]
-                        timerange = f'week{wn}'
+                    wn = 'None' if timerange[4:] == '' else timerange[4:]
                     if task in ['youth','dept','tgw','member']:
                         print(f"\nCalling deptpp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
                         return SQLCodes.deptpp(task, timerange, d, fmp_sid, fmp_ss, ct, access)

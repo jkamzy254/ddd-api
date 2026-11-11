@@ -439,7 +439,7 @@ def bot_responses(id, tname, input_text):
                 timerange = command[len(task):]
                 if timerange in ['today','yesterday','week','lastweek','season','lastseason'] or timerange.startswith('week'):
                     wn = 'None'
-                    if timerange.startswith('week'):
+                    if timerange not in ['today','yesterday','week','lastweek','season','lastseason']:
                         wn = timerange[4:]
                         timerange = f'week{wn}'
                     if task in ['youth','dept','tgw','member']:
@@ -454,7 +454,7 @@ def bot_responses(id, tname, input_text):
                 timerange = command[len(f'pp{task}'):]
                 if timerange in ['today','yesterday','week','lastweek','season','lastseason'] or timerange.startswith('week'):
                     wn = 'None'
-                    if timerange.startswith('week'):
+                    if timerange not in ['today','yesterday','week','lastweek','season','lastseason']:
                         wn = timerange[4:]
                         timerange = f'week{wn}'
                     if task in ['youth','dept','tgw','member']:

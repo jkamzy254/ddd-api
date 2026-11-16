@@ -656,18 +656,20 @@ class CTScheduleDaySaveViewSet(APIView):
 
 
 class CTPastStudentsViewSet(APIView):
-    """Students not currently enrolled. The procedure limits it to admin, GSN and Main JDSN."""
+    """Search every student record. Empty without a Search of 2+ characters; admin, GSN and Main JDSN only."""
 
     def get(self, request):
         class_id = request.GET.get('ClassID')
         try:
             result = call_proc(
-                "EXEC spCTPastStudents @ActorUID = %s, @ClassID = %s",
-                [request.GET.get('ActorUID'), int(class_id) if class_id else None],
+                "EXEC spCTPastStudents @ActorUID = %s, @Search = %s, @ClassID = %s",
+                [request.GET.get('ActorUID'), request.GET.get('Search') or None,
+                 int(class_id) if class_id else None],
             )
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class CTStudentProfileViewSet(APIView):

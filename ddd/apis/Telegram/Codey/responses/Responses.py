@@ -75,6 +75,7 @@ def bot_responses(id, tname, input_text):
                 d = d.capitalize().replace('Sft', 'SFT').replace('sft', 'SFT')
                 d = {'youth': 'D[0-9]%',
                      'mw': 'MW[0-9]%',
+                     'nf': 'NF',
                      'church': '%'}.get(d.lower(), d)
                 access = d if access not in ('MT') else access
                 print(f"\nParsed command: {command}, d: {d}, access: {access}")
@@ -94,11 +95,11 @@ def bot_responses(id, tname, input_text):
         else:
             command = user_message
 
-    elif access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','Senior','Nf']:
+    elif access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','Senior','NF']:
         d = access if access not in ('Dept') else d
         print(f"\nAccess level {access} set d to {d}")
-        if access in frozenset(('Senior','Nf')) and '//' in user_message: # These are the "divisions" where some depts can be specified but not all
-            print(f"\nAccess in frozenset ('Senior','Nf') detected. Checking department access for user_message: {user_message}")
+        if access in frozenset(('Senior','NF')) and '//' in user_message: # These are the "divisions" where some depts can be specified but not all
+            print(f"\nAccess in frozenset ('Senior','NF') detected. Checking department access for user_message: {user_message}")
             allowed_depts = SQLCodes.accessdept(access) # Therefore, accessdept function is needed to filter which depts they can access using '//'
             print('//')
             command, d = user_message.split('//')
@@ -187,12 +188,13 @@ def bot_responses(id, tname, input_text):
 
         if command in ('tfmp','youtht','deptt','gyjnt','oevt','tgwt','membert','oevt','ievt','edut','svt'):
             print(f"\nCommand {command} requested with access {access}")
-            return f"Sorry, <i>{command}</i> is not a valid command. Try replacing the 'T' with one of: 'today', 'yesterday', 'week', 'last week' or 'season'.\nFor example: <pre>" + command.replace('tfmp','todayfmp').replace('youtht','youthtoday').replace('deptt','depttoday').replace('gyjnt','gyjntoday').replace('tgwt','tgwtoday').replace('membert','membertoday').replace('oevt','oevtoday').replace('ievt','ievtoday').replace('edut','edutoday').replace('svt','svtoday') + "</pre> :)"
-
-        if command in ['todayfmp','yesterdayfmp','weekfmp','lastweekfmp','seasonfmp','lastseasonfmp']:
+            return f"Sorry, <i>{command}</i> is not a valid command. Try replacing the 'T' with one of: 'today', 'yesterday', 'week', 'last week' or 'season'.\nfor example: <pre>" + command.replace('tfmp','todayfmp').replace('youtht','youthtoday').replace('deptt','depttoday').replace('gyjnt','gyjntoday').replace('tgwt','tgwtoday').replace('membert','membertoday').replace('oevt','oevtoday').replace('ievt','ievtoday').replace('edut','edutoday').replace('svt','svtoday') + "</pre> :)"
+       
+        if command in ['todayfmp','yesterdayfmp','weekfmp','lastweekfmp','seasonfmp','lastseasonfmp'] or command.startswith('week') and command.endswith('fmp'):
             timerange = command[:-3]
+            wn = 'None' if timerange[4:] == '' else timerange[4:]
             print(f"\nCalling memberfmp with timerange={timerange}, g={g}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
-            return SQLCodes.memberfmp(timerange, g, fmp_sid, fmp_ss, ct, access)
+            return SQLCodes.memberfmp(timerange, g, fmp_sid, fmp_ss, ct, access, wn)
         
         if command in ['todaybbt','yesterdaybbt','weekbbt','lastweekbbt','seasonbbt','lastseasonbbt','todaybbtdept','yesterdaybbtdept','weekbbtdept','lastweekbbtdept','seasonbbtdept','lastseasonbbtdept']:
             bbtdept = False
@@ -426,29 +428,31 @@ def bot_responses(id, tname, input_text):
             return SQLCodes.ctmissionnew(bb_sid, leafbbt[0], leafbbt[1], access, d, g, ct, plus, showgroups)
         
     # Dept and above functions
-    if original_access != 'GGN' and access in ['%','MW[0-9]%','MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','Senior','Nf','¹','²','All','EDU','IT']:
+    if original_access != 'GGN' and access in ['%','MW[0-9]%','MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','Senior','NF','¹','²','All','EDU','IT']:
 
         for task in ['church','youth','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(task):
                 timerange = command[len(task):]
-                if timerange in ['today','yesterday','week','lastweek','season','lastseason']:
+                if timerange in ['today','yesterday','week','lastweek','season','lastseason'] or timerange.startswith('week'):
+                    wn = 'None' if timerange[4:] == '' else timerange[4:]
                     if task in ['youth','dept','tgw','member']:
                         print(f"\nCalling deptfmp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
-                        return SQLCodes.deptfmp(task, timerange, d, fmp_sid, fmp_ss, ct, access)
+                        return SQLCodes.deptfmp(task, timerange, d, fmp_sid, fmp_ss, ct, access, wn)
                     if task in ['gyjn','oev','iev','edu','sv']:
                         print(f"\nCalling taskfmp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
-                        return SQLCodes.taskfmp(task, timerange, d, fmp_sid, fmp_ss, ct, access)
+                        return SQLCodes.taskfmp(task, timerange, d, fmp_sid, fmp_ss, ct, access, wn)
 
         for task in ['church','youth','mw','dept','tgw','member','gyjn','oev','iev','edu','sv']:
             if command.startswith(f'pp{task}'):
                 timerange = command[len(f'pp{task}'):]
-                if timerange in ['today','yesterday','week','lastweek','season','lastseason']:
+                if timerange in ['today','yesterday','week','lastweek','season','lastseason'] or timerange.startswith('week'):
+                    wn = 'None' if timerange[4:] == '' else timerange[4:]
                     if task in ['youth','dept','tgw','member']:
                         print(f"\nCalling deptpp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
                         return SQLCodes.deptpp(task, timerange, d, fmp_sid, fmp_ss, ct, access)
                     if task in ['gyjn','oev','iev','edu','sv']:
                         print(f"\nCalling taskpp with task={task}, timerange={timerange}, d={d}, fmp_sid={fmp_sid}, fmp_ss={fmp_ss}, ct={ct}, access={access}")
-                        return SQLCodes.taskpp(task, timerange, d, fmp_sid, fmp_ss, ct, access)
+                        return SQLCodes.taskpp(task, timerange, d, fmp_sid, fmp_ss, ct, access, wn)
 
         if command in ('youthfm','deptfm'):
             print(f"\nCalling youthfm with d={d}")
@@ -543,7 +547,7 @@ def bot_responses(id, tname, input_text):
             if access == 'IT':
                 print(f"\nCalling ev with id={id}")
                 return SQLCodes.ev(id)
-            if access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','Senior','Nf']:
+            if access in ['MW[0-9]%','MW','24','D[0-9]%','D1','D2','D3','D4','D5','D6','D7','D8','D9','D10','D11','D12','D13','D14','D15','D16','D17','D18','D19','D20','¹D[0-9]%','²D[0-9]%','¹D1','¹D2','¹D3','¹D4','¹D5','¹D6','¹D7','¹D8','¹D9','²D1','²D2','²D3','²D4','²D5','²D6','²D7','²D8','²D9','SFT','Geelong','Dept','M&W Dept','InnerSFT','MelbSFT','Senior','NF']:
                 idlist = SQLCodes.idlist('dept', d)
             if access in ('Group','CUL'):
                 idlist = SQLCodes.idlist('group', g)

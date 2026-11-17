@@ -13,6 +13,7 @@ import hmac
 
 import json
 import pandas as pd
+from datetime import date
 
 # Create your views here.
 
@@ -567,6 +568,68 @@ class HSPSetExemptViewSet(APIView):
         rec = request.data
         return hsp_admin_proc('EXEC dbo.spHSPSetExempt @ActorUID = %s, @UID = %s, @Exempt = %s, @Reason = %s',
                               (rec.get('ActorUID'), rec.get('UID'), 1 if rec.get('Exempt') else 0, rec.get('Reason') or ''))
+
+
+
+def as_date(value):
+    """'YYYY-MM-DD' → date, anything else → None."""
+    try:
+        return date.fromisoformat(str(value)[:10])
+    except (TypeError, ValueError):
+        return None
+
+
+class HSPEduAdminMaterialsViewSet(APIView):
+    def get(self, request):
+        return hsp_admin_proc('EXEC dbo.spHSPEduAdminGetMaterials @ActorUID = %s',
+                              (request.GET.get('ActorUID'),))
+
+
+class HSPEduAdminGroupsViewSet(APIView):
+    def get(self, request):
+        return hsp_admin_proc('EXEC dbo.spHSPEduAdminGetGroups @ActorUID = %s',
+                              (request.GET.get('ActorUID'),))
+
+
+class HSPEduAdminSaveMaterialViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        mid = as_int(rec.get('ID'))
+        mode = rec.get('GrpMode')
+        grpid = as_int(rec.get('GrpID'))
+        if mid is None or mode not in ('auto', 'set', 'none') or (mode == 'set' and grpid is None):
+            return Response({'error': 'ID, GrpMode and (for set) GrpID are required'}, status=status.HTTP_400_BAD_REQUEST)
+        return hsp_admin_proc(
+            'EXEC dbo.spHSPEduAdminSaveMaterial @ActorUID = %s, @ID = %s, @Name = %s, @Type = %s, '
+            '@Category = %s, @Active = %s, @GrpMode = %s, @GrpID = %s',
+            (rec.get('ActorUID'), mid, rec.get('Name') or '', rec.get('Type') or '',
+             rec.get('Category') or '', 1 if rec.get('Active') else 0, mode,
+             grpid if mode == 'set' else None))
+
+
+class HSPEduAdminSaveGroupViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        gid = rec.get('ID')
+        gid = None if gid in (None, '') else as_int(gid)
+        start, end = as_date(rec.get('StartDate')), as_date(rec.get('EndDate'))
+        if (rec.get('ID') not in (None, '') and gid is None) or start is None or end is None:
+            return Response({'error': 'Valid StartDate and EndDate are required'}, status=status.HTTP_400_BAD_REQUEST)
+        return hsp_admin_proc(
+            'EXEC dbo.spHSPEduAdminSaveGroup @ActorUID = %s, @ID = %s, @StartDate = %s, @EndDate = %s, '
+            '@GroupName = %s, @Lesson = %s, @Stage = %s',
+            (rec.get('ActorUID'), gid, start, end,
+             rec.get('GroupName') or '', rec.get('Lesson') or '', rec.get('Stage') or ''))
+
+
+# -----------------------------------------------------------------------------
+# 2. urls.py
+#
+#    path('hspEduAdminMaterials/',    views.HSPEduAdminMaterialsViewSet.as_view()),
+#    path('hspEduAdminGroups/',       views.HSPEduAdminGroupsViewSet.as_view()),
+#    path('hspEduAdminSaveMaterial/', views.HSPEduAdminSaveMaterialViewSet.as_view()),
+#    path('hspEduAdminSaveGroup/',    views.HSPEduAdminSaveGroupViewSet.as_view()),
+# -----------------------------------------------------------------------------
 
 
 # Exam scores reuse the existing hspExamUpdateScore/ (HSPExamUpdateScoreViewSet

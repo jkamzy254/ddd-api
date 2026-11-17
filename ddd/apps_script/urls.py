@@ -101,6 +101,10 @@ urlpatterns = [
 	path('hspAdminSetAttendance/',   ep.HSPAdminSetAttendanceViewSet.as_view()),
 	path('hspExemptList/',           ep.HSPExemptListViewSet.as_view()),
 	path('hspSetExempt/',            ep.HSPSetExemptViewSet.as_view()),
+	path('hspEduAdminMaterials/',    ep.HSPEduAdminMaterialsViewSet.as_view()),
+	path('hspEduAdminGroups/',       ep.HSPEduAdminGroupsViewSet.as_view()),
+	path('hspEduAdminSaveMaterial/', ep.HSPEduAdminSaveMaterialViewSet.as_view()),
+	path('hspEduAdminSaveGroup/',    ep.HSPEduAdminSaveGroupViewSet.as_view()),
      
 	#Edu Dept BBT System
 	path('eduBBTGetMember/', eb.GetMemberViewSet.as_view()),

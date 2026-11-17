@@ -5262,21 +5262,24 @@ def hspreport(g, d, access, division): # EDU FUNCTIONS
     d = '%' if access in ('Group','GGN') else d.capitalize().replace('d','D')
     print(f"Dept Input: {d}")
 
-    deptfilter = f"Dept LIKE '{d}'"
+    groups = global_group_list(g)
+    depts = global_dept_list(d) if d != '24' else "('SFT','Serving','Culture','GD','HWPL')"
 
-    print(f"Dept Filter: {deptfilter}")
+    # deptfilter = f"Dept LIKE '{d}'"
 
-    if access.lower() in ['it','all','edu','d[0-9]%','mw','mw[0-9]%','24']:
-        deptfilter = {
-            "d[0-9]%": "Dept LIKE 'D[0-9]%' OR Dept = 'InnerSFT'",
-            "mw": "Dept IN ('Men','Women')",
-            "mw[0-9]%": "Dept IN ('Men','Women')",
-            "24": "Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')"
-        }.get(d.lower(), deptfilter)
+    print(f"Dept Filter: {depts}")
 
-    print(f"New Dept Filter: {deptfilter}")
+    # if access.lower() in ['it','all','edu','d[0-9]%','mw','mw[0-9]%','24']:
+    #     deptfilter = {
+    #         "d[0-9]%": "Dept LIKE 'D[0-9]%' OR Dept = 'InnerSFT'",
+    #         "mw": "Dept IN ('Men','Women')",
+    #         "mw[0-9]%": "Dept IN ('Men','Women')",
+    #         "24": "Dept = 'SFT' OR Grp IN ('Serving','Culture','GD','HWPL')"
+    #     }.get(d.lower(), deptfilter)
 
-    grpdept = g.capitalize() if access in ('Group','GGN') else d.replace('D[0-9]%','Youth').replace('Mw','MW').replace('24','24 Dept').replace('%','Church')
+    # print(f"New Dept Filter: {deptfilter}")
+
+    grpdept = g.capitalize().replace('Mw''MW') if access in ('Group','GGN') else d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('Mw','MW').replace('24','24 Dept').replace('%','Church').replace('Nf','NF')
     
     conn = odbc.connect(conn_str)
     
@@ -5342,32 +5345,32 @@ def hspreport(g, d, access, division): # EDU FUNCTIONS
             WHEN (SELECT TD FROM Days) < (SELECT F2 FROM Days) THEN 3
             ELSE 0 END PodcastPrs
     FROM HSPMemberCodey
-    WHERE {deptfilter}
-        AND Grp LIKE '{g}'
+    WHERE Dept IN {depts}
+        AND Grp IN {groups}
     ORDER BY Pos, MemberCode
     """
 
-    print("Member Query:")
-    print(hsp_mem)
+    # print("Member Query:")
+    # print(hsp_mem)
     
     # --- Kamau Adjustment #2/3 End
-    
+
     hsp_group = f"""
     SELECT Grp, WedPrs, Fri1Prs, DropInPrs, Fri2Prs, VideoSubmit, ExamAvg, PodcastPrs, Members
     FROM HSPCodey
-    WHERE {deptfilter.replace("Dept IN ('Men','Women')","Grp LIKE 'MW[0-9]%'")}
-        AND Grp LIKE '{g}'
+    WHERE Dept IN {depts}
+        AND Grp IN {groups}
     ORDER BY GID
     """
-    # print("Group Query:")
-    # print(hsp_group)
+    print("Group Query:")
+    print(hsp_group)
     
     hsp_dept = f"""
     SELECT Dept, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
         SUM(VideoSubmit)VideoSubmit, AVG(ExamAvg)ExamAvg, SUM(PodcastPrs)PodcastPrs, SUM(Members)Total
     FROM HSPCodey
-    WHERE {deptfilter}
-        AND Grp LIKE '{g}'
+    WHERE Dept IN {depts}
+        AND Grp IN {groups}
     GROUP BY Dept, DID
     ORDER BY DID
     """
@@ -5378,8 +5381,8 @@ def hspreport(g, d, access, division): # EDU FUNCTIONS
     SELECT Division, SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
         SUM(VideoSubmit)VideoSubmit, AVG(ExamAvg)ExamAvg, SUM(PodcastPrs)PodcastPrs, SUM(Members)Total
     FROM HSPCodey
-    WHERE {deptfilter}
-        AND Grp LIKE '{g}'
+    WHERE Dept IN {depts}
+        AND Grp IN {groups}
         AND Division IS NOT NULL
     GROUP BY Division
     ORDER BY Division
@@ -5391,8 +5394,8 @@ def hspreport(g, d, access, division): # EDU FUNCTIONS
     SELECT SUM(WedPrs)WedPrs, SUM(Fri1Prs)Fri1Prs, SUM(DropInPrs)DropInPrs, SUM(Fri2Prs)Fri2Prs,
         SUM(VideoSubmit)VideoSubmit, AVG(ExamAvg)ExamAvg, SUM(PodcastPrs)PodcastPrs, SUM(Members)Total
     FROM HSPCodey
-    WHERE {deptfilter}
-        AND Grp LIKE '{g}'
+    WHERE Dept IN {depts}
+        AND Grp IN {groups}
     """
     # print("Total Query:")
     # print(hsp_total)
@@ -5468,7 +5471,8 @@ def hspreport(g, d, access, division): # EDU FUNCTIONS
         dept = dept + '\n'
 
     dvsn = str()  
-    if access not in ('Group','GGN') and d in ('D[0-9]%','%','Mw','24') and division == 1:
+    print(f"Division: {division}")
+    if access not in ('Group','GGN') and d.lower() in ('d[0-9]%','%','24','senior','nf') and division == 1:
         for r in range(len(dv)):
             dvn =   str(dv.loc[r,'Division'])[:5] + ' '*(5-len(str(dv.loc[r,'Division'])[:5]))
             wp  = ' '*(3-len(str(dv.loc[r,'WD']))) + str(dv.loc[r,'WD'])
@@ -5483,7 +5487,7 @@ def hspreport(g, d, access, division): # EDU FUNCTIONS
         dvsn = dvsn + '\n'
 
     total = str()
-    if access not in ('Group','GGN') and d in ('D[0-9]%','%','Mw','24'):
+    if access not in ('Group','GGN') and d.lower() in ('d[0-9]%','%','24','senior','nf'):
         wp  = ' '*(3-len(str(dy.loc[0,'WD']))) + str(dy.loc[0,'WD'])
         f1  = ' '*(3-len(str(dy.loc[0,'F1']))) + str(dy.loc[0,'F1'])
         di  = ' '*(3-len(str(dy.loc[0,'DI']))) + str(dy.loc[0,'DI'])

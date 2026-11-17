@@ -13,7 +13,7 @@ import hmac
 
 import json
 import pandas as pd
-from datetime import date
+from datetime import date, datetime
 
 # Create your views here.
 
@@ -577,6 +577,13 @@ def as_date(value):
         return date.fromisoformat(str(value)[:10])
     except (TypeError, ValueError):
         return None
+    
+def as_datetime(value):
+    """'YYYY-MM-DDTHH:MM[:SS]' (local, no zone) → naive datetime, else None."""
+    try:
+        return datetime.fromisoformat(str(value)[:19])
+    except (TypeError, ValueError):
+        return None
 
 
 class HSPEduAdminMaterialsViewSet(APIView):
@@ -592,19 +599,27 @@ class HSPEduAdminGroupsViewSet(APIView):
 
 
 class HSPEduAdminSaveMaterialViewSet(APIView):
+    """ID empty → add a new material; otherwise edit that one."""
     def post(self, request):
         rec = request.data
-        mid = as_int(rec.get('ID'))
+        raw_id = rec.get('ID')
+        mid = None if raw_id in (None, '') else as_int(raw_id)
         mode = rec.get('GrpMode')
         grpid = as_int(rec.get('GrpID'))
-        if mid is None or mode not in ('auto', 'set', 'none') or (mode == 'set' and grpid is None):
-            return Response({'error': 'ID, GrpMode and (for set) GrpID are required'}, status=status.HTTP_400_BAD_REQUEST)
+        raw_lu = rec.get('LastUpdate')
+        last_update = None if raw_lu in (None, '') else as_datetime(raw_lu)
+        bad_id = raw_id not in (None, '') and mid is None
+        bad_lu = raw_lu not in (None, '') and last_update is None
+        if bad_id or bad_lu or mode not in ('auto', 'set', 'none') or (mode == 'set' and grpid is None):
+            return Response({'error': 'GrpMode, (for set) GrpID and a valid LastUpdate are required'},
+                            status=status.HTTP_400_BAD_REQUEST)
         return hsp_admin_proc(
-            'EXEC dbo.spHSPEduAdminSaveMaterial @ActorUID = %s, @ID = %s, @Name = %s, @Type = %s, '
-            '@Category = %s, @Active = %s, @GrpMode = %s, @GrpID = %s',
-            (rec.get('ActorUID'), mid, rec.get('Name') or '', rec.get('Type') or '',
+            'EXEC dbo.spHSPEduAdminSaveMaterial @ActorUID = %s, @ID = %s, @Name = %s, @LinkID = %s, @Type = %s, '
+            '@Category = %s, @Active = %s, @GrpMode = %s, @GrpID = %s, @LastUpdate = %s',
+            (rec.get('ActorUID'), mid, rec.get('Name') or '', rec.get('LinkID') or '', rec.get('Type') or '',
              rec.get('Category') or '', 1 if rec.get('Active') else 0, mode,
-             grpid if mode == 'set' else None))
+             grpid if mode == 'set' else None, last_update))
+
 
 
 class HSPEduAdminSaveGroupViewSet(APIView):

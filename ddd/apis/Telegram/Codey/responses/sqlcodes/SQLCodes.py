@@ -5279,7 +5279,7 @@ def hspreport(g, d, access, division): # EDU FUNCTIONS
 
     # print(f"New Dept Filter: {deptfilter}")
 
-    grpdept = g.capitalize().replace('Mw''MW') if access in ('Group','GGN') else d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('Mw','MW').replace('24','24 Dept').replace('%','Church').replace('Nf','NF')
+    grpdept = g.capitalize().replace('Mw','MW') if access in ('Group','GGN') else d.replace('D[0-9]%','Youth').replace('Mw[0-9]%','MW').replace('Mw','MW').replace('24','24 Dept').replace('%','Church').replace('Nf','NF')
     
     conn = odbc.connect(conn_str)
     

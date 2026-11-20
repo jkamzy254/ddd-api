@@ -540,7 +540,8 @@ class CTStaffAllocateViewSet(APIView):
             result = call_proc(
                 "EXEC spCTStaffAllocate "
                 "@ActorUID = %s, @StaffUID = %s, @Mode = %s, @ToCTID = %s, @FromCTID = %s, "
-                "@NumRole = %s, @EffectiveDate = %s, @ReassignTo = %s, @Note = %s",
+                "@NumRole = %s, @EffectiveDate = %s, @ReassignTo = %s, "
+                "@Reassignments = %s, @Note = %s, @CloseCTIDs = %s, @CloseDate = %s",
                 [
                     rec.get('ActorUID'),
                     rec.get('StaffUID'),
@@ -550,7 +551,10 @@ class CTStaffAllocateViewSet(APIView):
                     rec.get('NumRole'),
                     rec.get('EffectiveDate') or None,
                     rec.get('ReassignTo') or None,
+                    rec.get('Reassignments') or None,
                     rec.get('Note') or None,
+                    rec.get('CloseCTIDs') or None,
+                    rec.get('CloseDate') or None,
                 ],
             )
             return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},

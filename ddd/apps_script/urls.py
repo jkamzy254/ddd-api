@@ -106,6 +106,10 @@ urlpatterns = [
 	path('hspEduAdminGroups/',       ep.HSPEduAdminGroupsViewSet.as_view()),
 	path('hspEduAdminSaveMaterial/', ep.HSPEduAdminSaveMaterialViewSet.as_view()),
 	path('hspEduAdminSaveGroup/',    ep.HSPEduAdminSaveGroupViewSet.as_view()),
+	path('hspTraineeBlock/',            ep.HSPTraineeBlockViewSet.as_view()),
+	path('hspTraineeAdminBlocks/',      ep.HSPTraineeAdminBlocksViewSet.as_view()),
+	path('hspTraineeAdminSaveBlock/',   ep.HSPTraineeAdminSaveBlockViewSet.as_view()),
+	path('hspTraineeAdminDeleteBlock/', ep.HSPTraineeAdminDeleteBlockViewSet.as_view()),
      
 	#Edu Dept BBT System
 	path('eduBBTGetMember/', eb.GetMemberViewSet.as_view()),

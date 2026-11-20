@@ -636,6 +636,47 @@ class HSPEduAdminSaveGroupViewSet(APIView):
             (rec.get('ActorUID'), gid, start, end,
              rec.get('GroupName') or '', rec.get('Lesson') or '', rec.get('Stage') or ''))
 
+    
+
+class HSPTraineeBlockViewSet(APIView):
+    """The block every member sees on the Trainee page. A list of 0 or 1 rows."""
+    def get(self, request):
+        return hsp_admin_proc('EXEC dbo.spHSPGetTraineeBlock', ())
+
+
+class HSPTraineeAdminBlocksViewSet(APIView):
+    def get(self, request):
+        return hsp_admin_proc('EXEC dbo.spHSPTraineeAdminGetBlocks @ActorUID = %s',
+                              (request.GET.get('ActorUID'),))
+
+
+class HSPTraineeAdminSaveBlockViewSet(APIView):
+    """ID empty → add a block; otherwise edit that one."""
+    def post(self, request):
+        rec = request.data
+        raw_id = rec.get('ID')
+        bid = None if raw_id in (None, '') else as_int(raw_id)
+        gid = as_int(rec.get('GroupID'))
+        start, end = as_date(rec.get('StartDate')), as_date(rec.get('EndDate'))
+        if (raw_id not in (None, '') and bid is None) or gid is None or start is None or end is None:
+            return Response({'error': 'GroupID, StartDate and EndDate are required'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        return hsp_admin_proc(
+            'EXEC dbo.spHSPTraineeAdminSaveBlock @ActorUID = %s, @ID = %s, @GroupID = %s, @StartDate = %s, @EndDate = %s',
+            (rec.get('ActorUID'), bid, gid, start, end))
+
+
+class HSPTraineeAdminDeleteBlockViewSet(APIView):
+    def post(self, request):
+        rec = request.data
+        bid = as_int(rec.get('ID'))
+        if bid is None:
+            return Response({'error': 'ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+        return hsp_admin_proc('EXEC dbo.spHSPTraineeAdminDeleteBlock @ActorUID = %s, @ID = %s',
+                              (rec.get('ActorUID'), bid))
+
+
+
 
 # -----------------------------------------------------------------------------
 # 2. urls.py

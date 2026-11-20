@@ -660,15 +660,18 @@ class CTScheduleDaySaveViewSet(APIView):
 
 
 class CTPastStudentsViewSet(APIView):
-    """Search every student record. Empty without a Search of 2+ characters; admin, GSN and Main JDSN only."""
+    """Search every past student. Empty without a Search of 2+ characters; admin, GSN and Main JDSN only. Each search is logged."""
 
     def get(self, request):
         class_id = request.GET.get('ClassID')
+        ctid = request.GET.get('CTID')
         try:
+            # Logs the search (sql/28): who, what, for which session (CTID).
             result = call_proc(
-                "EXEC spCTPastStudents @ActorUID = %s, @Search = %s, @ClassID = %s",
+                "EXEC spCTPastStudents @ActorUID = %s, @Search = %s, @ClassID = %s, @CTID = %s",
                 [request.GET.get('ActorUID'), request.GET.get('Search') or None,
-                 int(class_id) if class_id else None],
+                 int(class_id) if class_id else None,
+                 int(ctid) if ctid else None],
             )
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
@@ -688,6 +691,7 @@ class CTStudentProfileViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class CTEnrolViewSet(APIView):
@@ -716,6 +720,9 @@ class CTEnrolViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+
+
+
 class CTClassDetailsViewSet(APIView):
     """The Class Details page: the caller's running sessions, their staff and seasons, as JSON columns."""
 
@@ -728,3 +735,4 @@ class CTClassDetailsViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

@@ -714,3 +714,17 @@ class CTEnrolViewSet(APIView):
                             status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTClassDetailsViewSet(APIView):
+    """The Class Details page: the caller's running sessions, their staff and seasons, as JSON columns."""
+
+    def get(self, request):
+        try:
+            result = call_proc(
+                "EXEC spCTClassDetails @UID = %s",
+                [request.GET.get('UID')],
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

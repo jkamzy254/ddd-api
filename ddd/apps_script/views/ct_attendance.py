@@ -620,16 +620,18 @@ class CTWeekSummaryViewSet(APIView):
     """The week grid: CT days by week, the roster, and a tally per student per week.
 
     Returns the procedure's single row as JSON columns (Days / Students /
-    Cells), the same shape the catalogue endpoint uses. The client parses
+    Cells, and Marks when Marks=1 asks for the Excel download's per-class
+    marks), the same shape the catalogue endpoint uses. The client parses
     them; nothing here needs to understand the contents.
     """
 
     def get(self, request):
         weeks = request.GET.get('Weeks')
+        marks = 1 if request.GET.get('Marks') in ('1', 'true', 'True') else 0
         try:
             result = call_proc(
-                "EXEC spCTWeekSummary @UID = %s, @Weeks = %s",
-                [request.GET.get('UID'), int(weeks) if weeks else None],
+                "EXEC spCTWeekSummary @UID = %s, @Weeks = %s, @Marks = %s",
+                [request.GET.get('UID'), int(weeks) if weeks else None, marks],
             )
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:

@@ -592,7 +592,7 @@ class CTSessionSaveViewSet(APIView):
             result = call_proc(
                 "EXEC spCTSessionSave @ActorUID = %s, @ID = %s, @ClassID = %s, @Name = %s, "
                 "@Season = %s, @CTSched = %s, @Is_Active = %s, @StartDate = %s, "
-                "@EndDate = %s, @SunClass = %s",
+                "@EndDate = %s, @SunClass = %s, @SchedEffective = %s",
                 [
                     rec.get('ActorUID'),
                     rec.get('ID'),
@@ -604,6 +604,9 @@ class CTSessionSaveViewSet(APIView):
                     rec.get('StartDate') or None,
                     rec.get('EndDate') or None,
                     None if rec.get('SunClass') in (None, '') else (1 if rec.get('SunClass') in (1, '1', True) else 0),
+                    # The date a schedule change takes effect (sql/29). Without it a
+                    # new CTSched only relabels the session, as before.
+                    rec.get('SchedEffective') or None,
                 ],
             )
             return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
@@ -736,3 +739,35 @@ class CTClassDetailsViewSet(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+class CTSessionSchedCancelViewSet(APIView):
+    """Cancel a session's schedule change that is still waiting for its date (sql/29)."""
+
+    def post(self, request):
+        rec = request.data
+        try:
+            result = call_proc(
+                "EXEC spCTSessionSchedCancel @ActorUID = %s, @CTID = %s",
+                [rec.get('ActorUID'), rec.get('CTID')],
+            )
+            return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTSchedChangeRunDueViewSet(APIView):
+    """
+    Changes the CTSched code of sessions whose schedule change has come due
+    (sql/29). The class roll already follows the change on its date; this is
+    for the labels. Nightly from the APScheduler (sql/06); this endpoint is
+    for a manual kick. Idempotent. One summary row: Applied, RunAt, Res, Ok.
+    """
+
+    def post(self, request):
+        try:
+            result = call_proc("EXEC spCTSchedChangeRunDue", [])
+            return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

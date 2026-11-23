@@ -65,6 +65,8 @@ urlpatterns = [
     path('ctStudentProfile/',      ca.CTStudentProfileViewSet.as_view()),
     path('ctEnrol/',               ca.CTEnrolViewSet.as_view()),
     path('ctClassDetails/',        ca.CTClassDetailsViewSet.as_view()),
+    path('ctSessionSchedCancel/',  ca.CTSessionSchedCancelViewSet.as_view()),
+    path('ctSchedChangeRunDue/',   ca.CTSchedChangeRunDueViewSet.as_view()),
  
 	#HSP
 	path('eduGetMember/', ep.GetMemberViewSet.as_view()),

@@ -563,6 +563,33 @@ class CTStaffAllocateViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class CTStaffUpcomingViewSet(APIView):
+    """Edit or remove an allocation that has not started yet. See spCTStaffUpcoming (sql/35)."""
+
+    def post(self, request):
+        rec = request.data
+        try:
+            result = call_proc(
+                "EXEC spCTStaffUpcoming "
+                "@ActorUID = %s, @StaffUID = %s, @CTID = %s, @Mode = %s, "
+                "@ToCTID = %s, @NumRole = %s, @StartDate = %s, @KeepPaired = %s",
+                [
+                    rec.get('ActorUID'),
+                    rec.get('StaffUID'),
+                    rec.get('CTID'),
+                    rec.get('Mode'),
+                    rec.get('ToCTID') or None,
+                    rec.get('NumRole') or None,
+                    rec.get('StartDate') or None,
+                    0 if rec.get('KeepPaired') in (0, '0', False, 'false') else 1,
+                ],
+            )
+            return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class CTCourseSaveViewSet(APIView):
     def post(self, request):
         rec = request.data
@@ -615,6 +642,7 @@ class CTSessionSaveViewSet(APIView):
                             status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class CTWeekSummaryViewSet(APIView):

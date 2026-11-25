@@ -657,10 +657,39 @@ class CTWeekSummaryViewSet(APIView):
     def get(self, request):
         weeks = request.GET.get('Weeks')
         marks = 1 if request.GET.get('Marks') in ('1', 'true', 'True') else 0
+        ctid = request.GET.get('CTID')
         try:
             result = call_proc(
-                "EXEC spCTWeekSummary @UID = %s, @Weeks = %s, @Marks = %s",
-                [request.GET.get('UID'), int(weeks) if weeks else None, marks],
+                "EXEC spCTWeekSummary @UID = %s, @Weeks = %s, @Marks = %s, @ForCTID = %s",
+                [request.GET.get('UID'), int(weeks) if weeks else None, marks,
+                 # Student Summary's session switch (sql/36); absent = as before.
+                 int(ctid) if ctid else None],
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTMySessionsViewSet(APIView):
+    """The running sessions the reader is on, now or from a later date (sql/36)."""
+
+    def get(self, request):
+        try:
+            result = call_proc("EXEC spCTMySessions @UID = %s", [request.GET.get('UID')])
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTSessionStudentSummaryViewSet(APIView):
+    """Student Summary's By student rows for one session (sql/36)."""
+
+    def get(self, request):
+        ctid = request.GET.get('CTID')
+        try:
+            result = call_proc(
+                "EXEC spCTSessionStudentSummary @UID = %s, @CTID = %s",
+                [request.GET.get('UID'), int(ctid) if ctid else None],
             )
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:

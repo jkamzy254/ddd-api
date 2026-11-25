@@ -592,7 +592,7 @@ class CTSessionSaveViewSet(APIView):
             result = call_proc(
                 "EXEC spCTSessionSave @ActorUID = %s, @ID = %s, @ClassID = %s, @Name = %s, "
                 "@Season = %s, @CTSched = %s, @Is_Active = %s, @StartDate = %s, "
-                "@EndDate = %s, @SunClass = %s, @SchedEffective = %s",
+                "@EndDate = %s, @SunClass = %s, @SchedEffective = %s, @SchedCorrect = %s",
                 [
                     rec.get('ActorUID'),
                     rec.get('ID'),
@@ -607,13 +607,14 @@ class CTSessionSaveViewSet(APIView):
                     # The date a schedule change takes effect (sql/29). Without it a
                     # new CTSched only relabels the session, as before.
                     rec.get('SchedEffective') or None,
+                    # 1 = correct a wrongly entered schedule for the whole session (sql/29).
+                    1 if rec.get('SchedCorrect') in (1, '1', True, 'true') else 0,
                 ],
             )
             return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
                             status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 class CTWeekSummaryViewSet(APIView):

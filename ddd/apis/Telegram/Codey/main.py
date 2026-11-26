@@ -12,7 +12,9 @@ import html
 import traceback
 
 from telegram import ForceReply, Update, Bot, ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, filters
+
+from .responses.regrouping_handler import ptb_church_regrp_button
 
 bot = Bot(token=os.environ.get('CODEY_BOT_TOKEN'))
 
@@ -138,6 +140,9 @@ def main():
 
     # on non command i.e message - echo the message on Telegram
     # application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    # Church Regrouping Accept/Decline buttons (crg:a:<id> / crg:d:<id>). Keep this ahead of
+    # any CallbackQueryHandler added later without a pattern, or it would take these presses.
+    application.add_handler(CallbackQueryHandler(ptb_church_regrp_button, pattern=r'^crg:'))
     application.add_handler(MessageHandler(filters.TEXT, handle_message))
     application.add_error_handler(error)
 

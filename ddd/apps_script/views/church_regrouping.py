@@ -592,6 +592,75 @@ class ChurchRegrpCTSaveGroupViewSet(APIView):
             return error_response(e)
 
 
+# Departments' feedback category (DeptCategoryLog, and the groups' copy). DIDs: '8,9,10';
+# Category blank ends it; EffectiveDate today or earlier.
+class ChurchRegrpSetDeptCategoryViewSet(APIView):
+    def post(self, request):
+        data = request.data
+        actor = data.get('ActorUID')
+        dids = data.get('DIDs')
+
+        if isinstance(dids, (list, tuple)):
+            dids = ','.join(str(d) for d in dids)
+        if not actor or not dids:
+            return Response({'error': 'ActorUID and DIDs are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "EXEC spChurchRegrpSetDeptCategory @ActorUID = %s, @DIDs = %s, @Category = %s, @EffectiveDate = %s",
+                    [actor, str(dids), blank_to_none(data.get('Category')), blank_to_none(data.get('EffectiveDate'))]
+                )
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return error_response(e)
+
+
+# Corrects the start / end dates of one dated row. LogName: DeptLeader | GroupDept | SubdivRole | DeptCategory.
+class ChurchRegrpEditDatesViewSet(APIView):
+    def post(self, request):
+        data = request.data
+        actor = data.get('ActorUID')
+        log = data.get('LogName')
+        row_id = data.get('ID')
+
+        if not actor or log not in ('DeptLeader', 'GroupDept', 'SubdivRole', 'DeptCategory') or row_id in (None, ''):
+            return Response({'error': 'ActorUID, LogName and ID are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "EXEC spChurchRegrpEditDates @ActorUID = %s, @LogName = %s, @ID = %s, @StartDate = %s, @EndDate = %s",
+                    [actor, log, int(row_id), blank_to_none(data.get('StartDate')), blank_to_none(data.get('EndDate'))]
+                )
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return error_response(e)
+
+
+# The dated rows of a department, group or subdivision. Kind: Dept | Group | Subdiv.
+class ChurchRegrpGetHistoryViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('UID')
+        kind = request.GET.get('Kind')
+        ref = request.GET.get('RefID') or ''
+
+        if not uid or kind not in ('Dept', 'Group', 'Subdiv') or not ref.isdigit():
+            return Response({'error': 'UID, Kind and RefID are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spChurchRegrpGetHistory @UID = %s, @Kind = %s, @RefID = %s", [uid, kind, int(ref)])
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return error_response(e)
+
 # --- subdivisions (admin) -----------------------------------------------------------------
 
 class ChurchRegrpGetSubdivisionsViewSet(APIView):

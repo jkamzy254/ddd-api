@@ -13,6 +13,7 @@ running one as is. Routes, for urls.py:
     path('churchRegrpGetRequests/',    ChurchRegrpGetRequestsViewSet.as_view()),
     path('churchRegrpSearchMembers/',  ChurchRegrpSearchMembersViewSet.as_view()),
     path('churchRegrpSaveRequest/',    ChurchRegrpSaveRequestViewSet.as_view()),
+    path('churchRegrpNotifyMoves/',    ChurchRegrpNotifyMovesViewSet.as_view()),   # after a save of many
     path('churchRegrpResolve/',        ChurchRegrpResolveViewSet.as_view()),
     path('churchRegrpSetDeptLeader/',  ChurchRegrpSetDeptLeaderViewSet.as_view()),
     path('churchRegrpMoveGroup/',      ChurchRegrpMoveGroupViewSet.as_view()),
@@ -42,6 +43,7 @@ Settings (settings.py or the environment):
     CHURCH_REGRP_SYNC_KEY   shared secret: Apps Script's sheet sync and the bot worker send it as X-Sync-Key
     CHURCH_REGRP_BOT_TOKEN  the Telegram bot's token (falls back to CODEY_BOT_TOKEN); without one nothing is sent
     CHURCH_REGRP_APP_URL    the web app's /exec link, for the digest's button
+                            (messages from a save use the link Apps Script sends)
 
 If the login view you already have is routed somewhere else, either route
 this one as above or change ENDPOINTS.member in Code.js.
@@ -105,12 +107,11 @@ def error_response(e):
 # token (CHURCH_REGRP_BOT_TOKEN). Sending needs nothing from the bot worker on
 # Heroku: any number of processes can send with one token.
 #
-# Accept / Decline buttons are callback buttons. Telegram delivers the press to
-# whoever receives the bot's updates (the worker). Its handler
-# (backend/telegram_bot_handler.py) posts the press to churchRegrpTelegramAnswer/
-# below, which acts as the member linked to that Telegram account.
-#
-# callback_data: 'crg:a:<RequestID>' (accept) | 'crg:d:<RequestID>' (decline).
+# The buttons are callback buttons. Telegram delivers the press to whoever
+# receives the bot's updates (the worker). Its handler (regrouping_handler.py)
+# posts the press to churchRegrpTelegramAnswer/ below, which acts as the member
+# linked to that Telegram account and answers with the message to show next.
+# The callback_data used are listed under "Telegram notices" below.
 
 def link_row(url, text='🔗 See more details'):
     """A keyboard row with one link button; [] without a link."""
@@ -144,7 +145,8 @@ def _bot_token():
 
 
 def send_telegram(body):
-    """Sends one sendMessage body. True when Telegram accepted it; never raises."""
+    """Sends one sendMessage body. The sent message (a dict: truthy) when Telegram
+       accepted it, else False; never raises."""
     token = _bot_token()
     if not token or not body:
         return False
@@ -154,7 +156,8 @@ def send_telegram(body):
             data=json.dumps(body).encode('utf-8'),
             headers={'Content-Type': 'application/json'})
         with urllib.request.urlopen(req, timeout=10) as res:
-            return bool(json.loads(res.read().decode('utf-8')).get('ok'))
+            out = json.loads(res.read().decode('utf-8'))
+        return (out.get('result') or True) if out.get('ok') else False
     except Exception as e:
         print('Church Regrouping - Telegram send failed:', e)
         return False
@@ -188,6 +191,402 @@ def with_param(url, name, value):
     if not url or value in (None, ''):
         return url
     return url + ('&' if '?' in url else '?') + name + '=' + str(value)
+
+
+# --- Telegram notices: many moves, one message ---------------------------------------------
+#
+# Regroup -> "Apply changes" saves every member side by side (one churchRegrpSaveRequest
+# each, sent with NotifyLater), then Code.js calls churchRegrpNotifyMoves/ ONCE with the
+# departments the moves went to. Each receiving department then gets one message (a
+# notice) listing every move waiting for it. A single save is told about at once, the
+# same way (a notice of one move).
+#
+#     Hello <Leader>
+#
+#     10 transfers into your department (D1):
+#
+#     ⏳ 1. <Member> — D5 G4 → G7
+#     ⏳ 2. ...
+#
+#     10 of 10 waiting for you. Tap a number to see one in full, or answer them all.
+#
+#     [1] [2] [3] [4] [5]
+#     [6] [7] [8] [9] [10]
+#     [✅ Accept all (10)] [❌ Decline all (10)]
+#     [🔗 See more details]
+#
+# A number opens that move in full, with Accept / Decline and [◀ 2] [📋 List] [4 ▶];
+# answering one goes on to the next still waiting (the list once none are). "Accept all" /
+# "Decline all" ask once to confirm, then answer every move still waiting in one go. A
+# notice of one move is just that move with Accept / Decline. Over 10 moves, the list pages.
+#
+# callback_data (Telegram allows 64 bytes; N = NoticeID, R = RequestID, P = page):
+#     crg:l:N:P        the list, page P           crg:v:N:R        one move in full
+#     crg:one:a:N:R    accept one                 crg:one:d:N:R    decline one
+#     crg:ask:a:N      "Accept all?"              crg:ask:d:N      "Decline all?"
+#     crg:all:a:N      accept all (confirmed)     crg:all:d:N      decline all (confirmed)
+#     crg:a:R, crg:d:R messages from before notices, and the digest's GET — still answered
+#
+# Every press re-reads the notice (spChurchRegrpNoticeGet), so the message shows each move
+# as it stands now: answered on the site, cancelled or sent elsewhere included.
+
+NOTICE_PAGE = 10
+_ICONS = {'wait': '⏳', 'accepted': '☑️', 'applied': '✅', 'declined': '❌', 'cancelled': '↩️', 'moved': '↪️'}
+
+
+def _btn(text, *parts):
+    return {'text': text, 'callback_data': 'crg:' + ':'.join(str(p) for p in parts)}
+
+
+def _date(d):
+    if not d:
+        return None
+    try:
+        return d.strftime('%d %b %Y')
+    except AttributeError:
+        return str(d)[:10]
+
+
+def notice_rows(notice_id, uid):
+    """The notice's moves as they stand now (one row each, the notice's details on every row)."""
+    with connection.cursor() as cursor:
+        cursor.execute("EXEC spChurchRegrpNoticeGet @NoticeID = %s, @UID = %s", [int(notice_id), uid])
+        return fetch_rows(cursor)
+
+
+def _state(it):
+    """wait | accepted (not applied yet) | applied | declined | cancelled | moved (pointed elsewhere)"""
+    st = it.get('Status')
+    if st == 'Pending':
+        if it.get('AwaitingAccept') and it.get('ToDID') == it.get('DID'):
+            return 'wait'
+        return 'accepted' if it.get('AcceptedBy') else 'moved'
+    return {'Applied': 'applied', 'Rejected': 'declined', 'Cancelled': 'cancelled'}.get(st, 'moved')
+
+
+def _state_line(it):
+    s = _state(it)
+
+    def by(name):
+        return ' by %s' % name if name else ''
+
+    if s == 'wait':
+        return '⏳ Waiting for your answer'
+    if s == 'accepted':
+        return '☑️ Accepted%s, not applied yet%s' % (by(it.get('AcceptedByName')),
+                                                     ': ' + it['Result'] if it.get('Result') else '')
+    if s == 'applied':
+        return '✅ Applied' + (' (accepted%s)' % by(it.get('AcceptedByName')) if it.get('AcceptedBy') else '')
+    if s == 'declined':
+        return '❌ ' + (it.get('Result') or 'Declined')
+    if s == 'cancelled':
+        return '↩️ Cancelled' + by(it.get('ResolvedByName'))
+    if it.get('ToGrp') and it.get('ToDID') != it.get('DID'):
+        return '↪️ Changed: now going to %s (%s)' % (it['ToGrp'], it.get('ToDept') or '?')
+    return '↪️ Changed: no longer waiting for %s' % (it.get('Dept') or 'this department')
+
+
+def _where(nt):
+    dept = nt.get('Dept') or 'the department'
+    if nt.get('InChargeAs') in (None, 'Department leader'):
+        return 'your department (%s)' % dept
+    return '%s (it has no department leader, so this comes to you)' % dept
+
+
+def _from(it):
+    return ' '.join(x for x in (it.get('FromDept'), it.get('FromGrp')) if x) or 'no group'
+
+
+def _line(it, icon=True):
+    return '%s%d. %s — %s → %s' % (_ICONS[_state(it)] + ' ' if icon else '', it['n'],
+                                   it.get('Name') or it['RequestID'], _from(it), it.get('ToGrp') or '?')
+
+
+def _details(it):
+    task = it.get('ToTask') if it.get('ToTaskCode') else '%s (no change)' % (it.get('FromTask') or 'Member')
+    lines = ['Group: %s (from %s)' % (it.get('ToGrp') or '?', _from(it)),
+             'Task: %s' % task,
+             'Effective Date: %s' % (_date(it.get('EffectiveDate')) or 'When accepted')]
+    if it.get('RequestedByName'):
+        lines.append('Requested by: %s' % it['RequestedByName'])
+    if it.get('Notes'):
+        lines.append('Notes: %s' % it['Notes'])
+    return '\n'.join(lines)
+
+
+def _waiting(items):
+    return [it for it in items if _state(it) == 'wait']
+
+
+def _view(text, keyboard, note=None):
+    if note:
+        text = note + '\n\n' + text
+    return text[:4096], [r for r in keyboard if r]
+
+
+def notice_list(items, page=0, note=None):
+    """(text, keyboard) for the list."""
+    nt, nid = items[0], items[0]['NoticeID']
+    pages = max(1, -(-len(items) // NOTICE_PAGE))
+    page = min(max(0, page), pages - 1)
+    shown = items[page * NOTICE_PAGE:(page + 1) * NOTICE_PAGE]
+    waiting = _waiting(items)
+
+    text = ['Hello %s' % (nt.get('ToName') or 'there'), '',
+            '%d transfers into %s:' % (len(items), _where(nt)), '']
+    text += [_line(it) for it in shown]
+    text.append('')
+    if pages > 1:
+        text.append('Page %d of %d' % (page + 1, pages))
+    if waiting:
+        text.append('%d of %d waiting for you. Tap a number to see one in full, or answer them all.'
+                    % (len(waiting), len(items)))
+    else:
+        text.append('All answered. Thank you!')
+
+    nums = [_btn(str(it['n']) if _state(it) == 'wait' else '%d %s' % (it['n'], _ICONS[_state(it)]),
+                 'v', nid, it['RequestID']) for it in shown]
+    kb = [nums[i:i + 5] for i in range(0, len(nums), 5)]
+    if pages > 1:
+        kb.append([_btn('◀', 'l', nid, (page - 1) % pages),
+                   _btn('%d / %d' % (page + 1, pages), 'l', nid, page),
+                   _btn('▶', 'l', nid, (page + 1) % pages)])
+    if waiting:
+        kb.append([_btn('✅ Accept all (%d)' % len(waiting), 'ask', 'a', nid),
+                   _btn('❌ Decline all (%d)' % len(waiting), 'ask', 'd', nid)])
+    kb.append(link_row(nt.get('Url') or _app_url('Requests')))
+    return _view('\n'.join(text), kb, note)
+
+
+def notice_item(items, request_id, note=None):
+    """(text, keyboard) for one move; a notice of one move is only this."""
+    nt, nid = items[0], items[0]['NoticeID']
+    idx = next((i for i, it in enumerate(items) if str(it['RequestID']) == str(request_id)), None)
+    if idx is None:
+        return notice_list(items, 0, note)
+    it = items[idx]
+    waiting = _state(it) == 'wait'
+
+    if len(items) == 1:
+        text = ['Hi %s,' % (nt.get('ToName') or 'there'), '',
+                'A change has been requested for %s to %s' % (it.get('Name'), _where(nt)), '',
+                _details(it), '', _state_line(it)]
+        if waiting:
+            text += ['', 'Accept or decline with the buttons below. To see more details, please click on the link.']
+    else:
+        text = ['Transfer %d of %d into %s' % (it['n'], len(items), _where(nt)), '',
+                it.get('Name') or '', _details(it), '', _state_line(it)]
+
+    kb = []
+    if waiting:
+        kb.append([_btn('✅ Accept', 'one', 'a', nid, it['RequestID']),
+                   _btn('❌ Decline', 'one', 'd', nid, it['RequestID'])])
+    if len(items) > 1:
+        prev, nxt = items[idx - 1], items[(idx + 1) % len(items)]
+        kb.append([_btn('◀ %d' % prev['n'], 'v', nid, prev['RequestID']),
+                   _btn('📋 List', 'l', nid, idx // NOTICE_PAGE),
+                   _btn('%d ▶' % nxt['n'], 'v', nid, nxt['RequestID'])])
+    kb.append(link_row(nt.get('Url') or _app_url('Requests')))
+    return _view('\n'.join(text), kb, note)
+
+
+def notice_ask(items, action):
+    """(text, keyboard) asking to confirm Accept all / Decline all."""
+    nt, nid = items[0], items[0]['NoticeID']
+    waiting = _waiting(items)
+    if not waiting:
+        return notice_list(items, 0, 'Nothing is waiting any more.')
+    accept = action == 'a'
+    text = ['%s all %d waiting transfers into %s?' % ('Accept' if accept else 'Decline', len(waiting), _where(nt)), '']
+    text += [_line(it, icon=False) for it in waiting[:40]]
+    if len(waiting) > 40:
+        text.append('… and %d more' % (len(waiting) - 40))
+    text += ['', 'Each one is applied from the date asked for (or today, if none).' if accept
+             else 'Each one is closed as declined by %s.' % (nt.get('Dept') or 'your department')]
+    kb = [[_btn(('✅ Yes, accept all %d' if accept else '❌ Yes, decline all %d') % len(waiting), 'all', action, nid)],
+          [_btn('⬅ Back', 'l', nid, 0)]]
+    return _view('\n'.join(text), kb)
+
+
+def _resolve(uid, ids, action):
+    """spChurchRegrpResolve as the presser. {RequestID (str): row}"""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "EXEC spChurchRegrpResolve @ActorUID = %s, @IDs = %s, @Action = %s, @EffectiveDate = %s, @Note = %s",
+            [uid, ','.join(str(i) for i in ids), action, None, 'Answered on Telegram'])
+        rows = fetch_rows(cursor)
+    out = {str(r.get('ID')): r for r in rows if r.get('ID') is not None}
+    for i in ids:   # a refusal of the whole batch may come back without IDs
+        out.setdefault(str(i), rows[0] if rows else {})
+    return out
+
+
+def _res_text(row):
+    msg = row.get('Res') or ('Done' if row.get('Ok') else 'That could not be done.')
+    return msg + (' ⚠️ ' + row['Warning'] if row.get('Warning') else '')
+
+
+def _without_buttons(rows, request_id):
+    """A keyboard (rows of button dicts) minus one request's crg:a / crg:d buttons."""
+    mine = {'crg:a:%s' % request_id, 'crg:d:%s' % request_id}
+    kept = [[b for b in row if b.get('callback_data') not in mine] for row in (rows or [])]
+    return [row for row in kept if row]
+
+
+def _label(rows, data):
+    """'2' when the pressed button was 'Accept 2' in an old digest, else ''."""
+    for row in rows or []:
+        for b in row:
+            if b.get('callback_data') == data:
+                parts = (b.get('text') or '').split()
+                return parts[-1] if parts and parts[-1].isdigit() else ''
+    return ''
+
+
+def telegram_press(uid, name, data, text='', keyboard=None):
+    """One button press by member uid. Returns {Ok, Toast, Alert, Text, Keyboard}:
+       Toast the pop-up; Text / Keyboard the message to show now (Text None: leave it)."""
+    def out(ok, toast, view=None, alert=None):
+        return {'Ok': bool(ok), 'Toast': (toast or '')[:190], 'Alert': (not ok) if alert is None else alert,
+                'Text': view[0] if view else None, 'Keyboard': view[1] if view else None}
+
+    p = data.split(':')
+
+    # Messages from before notices: crg:a:<RequestID> / crg:d:<RequestID>.
+    if len(p) == 3 and p[1] in ('a', 'd') and p[2].isdigit():
+        accept = p[1] == 'a'
+        row = _resolve(uid, [p[2]], 'Accept' if accept else 'Decline')[p[2]]
+        msg = _res_text(row)
+        if not row.get('Ok'):
+            return out(False, msg)
+        label = _label(keyboard, data)
+        extra = '\n\n' + ('#%s ' % label if label else '') + '%s %s (%s)' % ('✅' if accept else '❌', msg, name)
+        new_text = (text or '')[:max(0, 4096 - len(extra))] + extra
+        return out(True, msg, (new_text, _without_buttons(keyboard, p[2])))
+
+    kind = p[1] if len(p) > 1 else ''
+    action, arg = None, ''
+    try:
+        if kind in ('l', 'v'):
+            nid, arg = int(p[2]), (p[3] if len(p) > 3 else '0')
+        elif kind in ('one', 'ask', 'all') and p[2] in ('a', 'd'):
+            action, nid, arg = p[2], int(p[3]), (p[4] if len(p) > 4 else '')
+        else:
+            raise ValueError(data)
+    except (IndexError, ValueError):
+        return out(False, 'Unknown button.')
+
+    items = notice_rows(nid, uid)
+    if not items:
+        return out(False, 'This list is no longer available. Please use the link.')
+    if not items[0].get('Allowed'):
+        return out(False, 'This list was sent to someone else.')
+
+    if kind == 'l':
+        return out(True, '', notice_list(items, int(arg) if arg.isdigit() else 0))
+    if kind == 'v':
+        return out(True, '', notice_item(items, arg))
+    if kind == 'ask':
+        return out(True, '', notice_ask(items, action))
+
+    verb = 'Accept' if action == 'a' else 'Decline'
+    icon = '✅' if action == 'a' else '❌'
+
+    if kind == 'one':
+        it = next((x for x in items if str(x['RequestID']) == arg), None)
+        if it is None:
+            return out(False, 'Unknown button.')
+        if _state(it) != 'wait':
+            return out(False, 'Already answered: ' + _state_line(it), notice_item(items, arg))
+        row = _resolve(uid, [arg], verb)[arg]
+        ok, msg = bool(row.get('Ok')), _res_text(row)
+        items = notice_rows(nid, uid)
+        if len(items) == 1:
+            return out(ok, msg, notice_item(items, arg))
+        note = '%s %s: %s' % (icon if ok else '⚠️', it.get('Name'), msg)
+        if not ok:
+            return out(False, msg, notice_item(items, arg, note))
+        # On to the next one still waiting (after this one, then from the top); none left: the list.
+        idx = next((i for i, x in enumerate(items) if str(x['RequestID']) == arg), 0)
+        nxt = next((x for x in items[idx + 1:] + items[:idx] if _state(x) == 'wait'), None)
+        return out(True, msg, notice_item(items, nxt['RequestID'], note) if nxt else notice_list(items, 0, note))
+
+    # kind == 'all': every move still waiting, in one go.
+    ids = [str(it['RequestID']) for it in _waiting(items)]
+    if not ids:
+        return out(False, 'Nothing is waiting any more.', notice_list(items, 0))
+    res = _resolve(uid, ids, verb)
+    done = [i for i in ids if res[i].get('Ok')]
+    failed = [i for i in ids if i not in done]
+    items = notice_rows(nid, uid)
+    names = {str(it['RequestID']): it.get('Name') for it in items}
+    lines = ['%s %s %d of %d.' % (icon, 'Accepted' if action == 'a' else 'Declined', len(done), len(ids))]
+    lines += ['⚠️ %s: %s' % (names.get(i), _res_text(res[i])) for i in failed[:10]]
+    lines += ['⚠️ %s: %s' % (names.get(i), res[i]['Warning']) for i in done if res[i].get('Warning')][:10]
+    toast = lines[0] + (' %d could not be done.' % len(failed) if failed else '')
+    return out(not failed, toast, notice_list(items, 0, '\n'.join(lines)), alert=bool(failed))
+
+
+def _notice_sent(notice_id, message_id):
+    with connection.cursor() as cursor:
+        cursor.execute("EXEC spChurchRegrpNoticeSent @NoticeID = %s, @MessageID = %s", [notice_id, message_id])
+
+
+def send_notices(did=None, everyone=False, all_waiting=False, url=None):
+    """Claims the untold moves waiting for a department (did; None: every department), sends
+       one notice per person to tell, and marks them. A department none of whose notices got
+       through is left untold, for the digest. Returns {'Sent': n, 'Failed': n}.
+       everyone: all in charge with a chat (the digest), else the first (a save).
+       all_waiting: every waiting move, told or not (a reminder)."""
+    with connection.cursor() as cursor:
+        cursor.execute("EXEC spChurchRegrpNoticeClaim @DID = %s, @Everyone = %s, @All = %s, @Url = %s",
+                       [did, 1 if everyone else 0, 1 if all_waiting else 0, url or _app_url('Requests')])
+        claimed = fetch_rows(cursor)
+
+    out = {'Sent': 0, 'Failed': 0}
+    reached, tried = set(), {}
+    for n in claimed:
+        tried.setdefault(n['DID'], []).append(n['NoticeID'])
+        sent = False
+        try:
+            items = notice_rows(n['NoticeID'], n['UID'])
+            if items:
+                text, kb = notice_item(items, items[0]['RequestID']) if len(items) == 1 else notice_list(items)
+                sent = send_telegram(telegram_body(n['TelID'], text, kb))
+        except Exception as e:
+            print('Church Regrouping - notice failed:', e)
+        if sent:
+            out['Sent'] += 1
+            reached.add(n['DID'])
+            _notice_sent(n['NoticeID'], (sent.get('message_id') if isinstance(sent, dict) else None) or 0)
+        else:
+            out['Failed'] += 1
+    for d, nids in tried.items():
+        if d not in reached:
+            for nid in nids:
+                _notice_sent(nid, None)   # untold again
+    return out
+
+
+def notify_later(dids, url=None):
+    """Sends the notices for these receiving departments on a background thread, so a slow
+       Telegram never holds up (or fails) the save."""
+    dids = sorted({int(d) for d in (dids or []) if str(d).strip().isdigit()})
+    if not dids or not _bot_token():
+        return
+
+    def run():
+        try:
+            for did in dids:
+                try:
+                    send_notices(did=did, url=url)
+                except Exception as e:
+                    print('Church Regrouping - notices failed:', e)
+        finally:
+            close_old_connections()
+            connection.close()
+
+    threading.Thread(target=run, daemon=True).start()
 
 
 # --- login ----------------------------------------------------------------------------
@@ -376,24 +775,33 @@ class ChurchRegrpSaveRequestViewSet(APIView):
 
             # A move into another department now waiting for it: the procedure fills
             # NotifyTelID / NotifyName / NotifyUID / NotifyMessage for the receiving
-            # department's leader. NotifyUrl is the app link (sent by Apps Script) for
-            # the message's inline button. NotifyTelID is NULL when the leader has no
-            # active TelegramID row.
-            # Sent from here with a details link and Accept / Decline buttons; once it
-            # is delivered the request is marked notified (the digest skips it).
+            # department's leader. NotifyUrl is the app link (sent by Apps Script).
+            # The receiving department is told with a notice (see "Telegram notices"):
+            # now, for a single save; for a save of many (NotifyLater), once all are
+            # saved, when Code.js calls churchRegrpNotifyMoves/ — one message for them all.
             app_url = blank_to_none(data.get('AppUrl'))
-            jobs = []
             for row in result:
                 if row.get('NotifyMessage'):
                     row['NotifyUrl'] = app_url
-                    row['NotifyTelegram'] = telegram_body(row.get('NotifyTelID'), row['NotifyMessage'],
-                                                          [link_row(app_url), answer_row(row.get('ID'))])
-                    jobs.append((row['NotifyTelegram'], str(row['ID']) if row.get('ID') else None))
-            send_later(jobs)
+            if data.get('NotifyLater') not in (True, 1, '1', 'true'):
+                notify_later([r.get('ToDID') for r in result if r.get('NotifyMessage')], app_url)
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return error_response(e)
+
+
+# After a save of many (Regroup -> Apply changes, each sent with NotifyLater): one
+# notice per receiving department for every move it left waiting.
+#     POST { "DIDs": [3, 7], "AppUrl": "<the app's link>" }
+# Only moves nobody has been told about are sent, so a repeat sends nothing twice.
+class ChurchRegrpNotifyMovesViewSet(APIView):
+    def post(self, request):
+        dids = request.data.get('DIDs') or []
+        if isinstance(dids, (str, int)):
+            dids = str(dids).split(',')
+        notify_later(dids, blank_to_none(request.data.get('AppUrl')))
+        return Response({'Ok': 1}, status=status.HTTP_200_OK)
 
 
 class ChurchRegrpResolveViewSet(APIView):
@@ -1026,19 +1434,11 @@ def transfer_digests(all_waiting=False):
 
 
 def send_transfer_digests(all_waiting=False):
-    """Sends every digest that has a Telegram chat and marks its transfers notified once
-       delivered (not for a reminder of all). Returns {'Sent': n, 'Failed': n, 'NoChat': n}."""
-    out = {'Sent': 0, 'Failed': 0, 'NoChat': 0}
-    for msg in transfer_digests(all_waiting):
-        if not msg['telegram']:
-            out['NoChat'] += 1
-        elif send_telegram(msg['telegram']):
-            out['Sent'] += 1
-            if not all_waiting:
-                mark_transfers_sent(msg['request_ids'])
-        else:
-            out['Failed'] += 1
-    return out
+    """Sends the digest as notices (one per person in charge of each receiving department,
+       with the list and its buttons) and marks what was delivered. all_waiting: a reminder
+       of every waiting move, told or not. Returns {'Sent': n, 'Failed': n}.
+       Departments where nobody in charge has a Telegram chat are skipped (and stay untold)."""
+    return send_notices(everyone=True, all_waiting=all_waiting)
 
 
 def mark_transfers_sent(request_ids):
@@ -1075,12 +1475,17 @@ class ChurchRegrpTransferDigestViewSet(APIView):
 
 # --- Telegram button presses (from the bot worker) ------------------------------------------
 #
-# The worker posts each Accept / Decline press here (X-Sync-Key):
-#     { "TelegramUserID": <callback_query.from.id>, "RequestID": 123, "Action": "Accept" | "Decline" }
+# The worker posts each press here (X-Sync-Key):
+#     { "TelegramUserID": <callback_query.from.id>, "Data": "<callback_data>",
+#       "Text": "<the message's text>", "Keyboard": [[{button}, ...], ...] }
+# and gets back { Ok, Toast, Alert, Text, Keyboard }: the pop-up, and the message to show
+# now (Text null: leave it as it is). See "Telegram notices" for the callback_data.
 # The member is whoever that Telegram account belongs to (TelegramID, active), and
 # spChurchRegrpResolve decides as it does for the site: only someone in charge of the
 # receiving department can answer. Accept applies the move from the date asked for.
-# Returns { Ok, Applied, Message, By }; Message is the line to show in the chat.
+#
+# The first worker version's body { TelegramUserID, RequestID, Action } is still answered
+# with { Ok, Applied, Message, By }.
 
 class ChurchRegrpTelegramAnswerViewSet(APIView):
     def post(self, request):
@@ -1089,37 +1494,39 @@ class ChurchRegrpTelegramAnswerViewSet(APIView):
 
         data = request.data
         tel = str(data.get('TelegramUserID') or '').strip()
+        press = str(data.get('Data') or '').strip()
         rid = str(data.get('RequestID') or '').strip()
         action = data.get('Action')
-        if not tel or not rid.isdigit() or action not in ('Accept', 'Decline'):
-            return Response({'error': 'TelegramUserID, RequestID and Action (Accept / Decline) are required.'},
+        if not tel or not (press.startswith('crg:') or (rid.isdigit() and action in ('Accept', 'Decline'))):
+            return Response({'error': 'TelegramUserID and Data (or RequestID and Action) are required.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        def reply(ok, message, applied=False, by=None):
-            return Response({'Ok': ok, 'Applied': applied, 'Message': message, 'By': by}, status=status.HTTP_200_OK)
+        def refuse(message):
+            if press:
+                return Response({'Ok': False, 'Toast': message, 'Alert': True, 'Text': None, 'Keyboard': None},
+                                status=status.HTTP_200_OK)
+            return Response({'Ok': False, 'Applied': False, 'Message': message, 'By': None}, status=status.HTTP_200_OK)
 
         try:
             with connection.cursor() as cursor:
                 cursor.execute("EXEC spChurchRegrpTelegramUser @TelID = %s", [tel])
                 users = fetch_rows(cursor)
 
-                if not users:
-                    return reply(False, "This Telegram account isn't linked to anyone with access to Church Regrouping.")
-                if len({u['UID'] for u in users}) > 1:
-                    return reply(False, 'This Telegram account is linked to more than one member. Please answer on the site.')
+            if not users:
+                return refuse("This Telegram account isn't linked to anyone with access to Church Regrouping.")
+            if len({u['UID'] for u in users}) > 1:
+                return refuse('This Telegram account is linked to more than one member. Please answer on the site.')
+            uid, name = users[0]['UID'], users[0].get('Name')
 
-                uid, name = users[0]['UID'], users[0].get('Name')
-                cursor.execute(
-                    "EXEC spChurchRegrpResolve @ActorUID = %s, @IDs = %s, @Action = %s, @EffectiveDate = %s, @Note = %s",
-                    [uid, rid, action, None, 'Answered on Telegram']
-                )
-                rows = fetch_rows(cursor)
+            if press:
+                keyboard = data.get('Keyboard')
+                return Response(telegram_press(uid, name, press, data.get('Text') or '',
+                                               keyboard if isinstance(keyboard, list) else []),
+                                status=status.HTTP_200_OK)
 
-            row = rows[0] if rows else {}
+            row = _resolve(uid, [rid], action)[rid]
             ok = bool(row.get('Ok'))
-            msg = row.get('Res') or ('Done' if ok else 'That could not be done.')
-            if row.get('Warning'):
-                msg += ' ⚠️ ' + row['Warning']
-            return reply(ok, msg, bool(row.get('Applied')), name)
+            return Response({'Ok': ok, 'Applied': bool(row.get('Applied')), 'Message': _res_text(row), 'By': name},
+                            status=status.HTTP_200_OK)
         except Exception as e:
             return error_response(e)

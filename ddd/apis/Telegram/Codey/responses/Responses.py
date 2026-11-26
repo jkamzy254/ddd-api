@@ -8,6 +8,10 @@ def more_than_60_days_ago(date_str): # For functions where user can specify date
 
 def bot_responses(id, tname, input_text):
 
+    if len(input_text) > 50:
+        print(f"Input text is too long ({len(input_text)} characters).")
+        return "."
+
     pm = 'HTML@@'
 
     if input_text.lower().startswith('markdownv2'):

@@ -610,6 +610,8 @@ class ChurchRegrpGetSubdivisionsViewSet(APIView):
             return error_response(e)
 
 
+
+
 class ChurchRegrpSetSubdivLeaderViewSet(APIView):
     def post(self, request):
         data = request.data
@@ -624,6 +626,81 @@ class ChurchRegrpSetSubdivLeaderViewSet(APIView):
                 cursor.execute(
                     "EXEC spChurchRegrpSetSubdivLeader @ActorUID = %s, @SID = %s, @LeaderUID = %s, @EffectiveDate = %s",
                     [actor, int(sid), blank_to_none(data.get('LeaderUID')), blank_to_none(data.get('EffectiveDate'))]
+                )
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return error_response(e)
+
+
+# A subdivision's Leader or an Assistant: add (End = 0) or end (End = 1).
+class ChurchRegrpSetSubdivRoleViewSet(APIView):
+    def post(self, request):
+        data = request.data
+        actor = data.get('ActorUID')
+        sid = data.get('SID')
+        role = data.get('Role')
+
+        if not actor or sid in (None, '') or role not in ('Leader', 'Assistant'):
+            return Response({'error': 'ActorUID, SID and Role (Leader / Assistant) are required.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "EXEC spChurchRegrpSetSubdivRole @ActorUID = %s, @SID = %s, @Role = %s, @UID = %s, "
+                    "@End = %s, @EffectiveDate = %s",
+                    [actor, int(sid), role, blank_to_none(data.get('UID')),
+                     1 if data.get('End') in (True, 1, '1', 'true') else 0,
+                     blank_to_none(data.get('EffectiveDate'))]
+                )
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return error_response(e)
+
+
+# The feedback leader of a category (FeedbackInfo).
+class ChurchRegrpSetFeedbackLeaderViewSet(APIView):
+    def post(self, request):
+        data = request.data
+        actor = data.get('ActorUID')
+
+        if not actor or not data.get('Category') or not data.get('UID'):
+            return Response({'error': 'ActorUID, Category and UID are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "EXEC spChurchRegrpSetFeedbackLeader @ActorUID = %s, @Category = %s, @UID = %s",
+                    [actor, str(data.get('Category')), str(data.get('UID'))]
+                )
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return error_response(e)
+
+
+# Groups' feedback category (GroupInfo.DeptCategory). GIDs: '29,30,31'; Category blank clears it.
+class ChurchRegrpSetGroupCategoryViewSet(APIView):
+    def post(self, request):
+        data = request.data
+        actor = data.get('ActorUID')
+        gids = data.get('GIDs')
+
+        if isinstance(gids, (list, tuple)):
+            gids = ','.join(str(g) for g in gids)
+        if not actor or not gids:
+            return Response({'error': 'ActorUID and GIDs are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "EXEC spChurchRegrpSetGroupCategory @ActorUID = %s, @GIDs = %s, @Category = %s",
+                    [actor, str(gids), blank_to_none(data.get('Category'))]
                 )
                 result = fetch_rows(cursor)
 
@@ -665,5 +742,100 @@ class ChurchRegrpMemberSheetViewSet(APIView):
                 result = fetch_rows(cursor)
 
             return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return error_response(e)
+
+
+# --- transfer digest (Telegram) -------------------------------------------------------
+#
+# One message per receiving department leader listing the moves into their
+# department that wait for them to accept and that they have not been told
+# about yet. The bot on this server can call the two functions directly:
+#
+#     for msg in transfer_digests():
+#         ok = bot.send_message(**msg['telegram'])          # your bot's send call
+#         if ok:
+#             mark_transfers_sent(msg['request_ids'])        # so they are not sent again
+#
+# msg['telegram'] is the Telegram Bot API sendMessage body, ready to pass:
+#     { 'chat_id': ..., 'text': ..., 'reply_markup': {'inline_keyboard': [[{'text', 'url'}]]} }
+# (with python-telegram-bot: bot.send_message(chat_id=..., text=..., reply_markup=
+#  InlineKeyboardMarkup.de_json(msg['telegram']['reply_markup'], bot)), or POST it as JSON to
+#  https://api.telegram.org/bot<token>/sendMessage).
+#
+# The button opens the app's Changes page:
+#     settings.py (or the environment):  CHURCH_REGRP_APP_URL = 'https://script.google.com/macros/s/<id>/exec'
+#
+# A leader with no active TelegramID row comes back with 'telegram': None —
+# nothing to send; their transfers stay unmarked and are listed again next time.
+#
+# Or over HTTP, with the X-Sync-Key header (as the member sheet):
+#     GET  churchRegrpTransferDigest/            the messages   (?all=1: every waiting transfer, a reminder)
+#     POST churchRegrpTransferDigest/            body { "RequestIDs": "12,15,19" } -> marks them sent
+
+
+def _app_url(page='Requests'):
+    base = getattr(settings, 'CHURCH_REGRP_APP_URL', None) or os.environ.get('CHURCH_REGRP_APP_URL') or ''
+    if not base.startswith('https://'):
+        return None
+    return base + ('&' if '?' in base else '?') + 'page=' + page
+
+
+def transfer_digests(all_waiting=False):
+    """One dict per person in charge of a receiving department (its leader; with none, the
+       subdivision's leader and assistants; with none, the administrator) — a department can
+       give more than one. Marking any one's request_ids marks the department's transfers:
+       { dept, leader_uid, leader_name, tel_id, moves, request_ids, message, url, telegram }"""
+    with connection.cursor() as cursor:
+        cursor.execute("EXEC spChurchRegrpTransferDigest @All = %s", [1 if all_waiting else 0])
+        rows = fetch_rows(cursor)
+
+    url = _app_url('Requests')
+    out = []
+    for r in rows:
+        telegram = None
+        if r.get('TelID'):
+            telegram = {'chat_id': str(r['TelID']), 'text': r['Message'], 'disable_web_page_preview': True}
+            if url:
+                telegram['reply_markup'] = {'inline_keyboard': [[{'text': 'Open Church Regrouping', 'url': url}]]}
+        out.append({
+            'dept':        r.get('Dept'),
+            'leader_uid':  r.get('LeaderUID'),
+            'leader_name': r.get('LeaderName'),
+            'in_charge_as': r.get('InChargeAs'),   # 'Department leader' | 'Subdivision' | 'Administrator'
+            'tel_id':      r.get('TelID'),
+            'moves':       r.get('Moves'),
+            'request_ids': r.get('RequestIDs'),
+            'message':     r.get('Message'),
+            'url':         url,
+            'telegram':    telegram,
+        })
+    return out
+
+
+def mark_transfers_sent(request_ids):
+    """request_ids: '12,15,19' (a digest's request_ids). Returns how many were marked."""
+    if isinstance(request_ids, (list, tuple)):
+        request_ids = ','.join(str(i) for i in request_ids)
+    with connection.cursor() as cursor:
+        cursor.execute("EXEC spChurchRegrpTransferMarkSent @IDs = %s", [str(request_ids or '')])
+        rows = fetch_rows(cursor)
+    return (rows[0].get('Marked') if rows else 0) or 0
+
+
+class ChurchRegrpTransferDigestViewSet(APIView):
+    def get(self, request):
+        if not sync_key_ok(request):
+            return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            return Response(transfer_digests(request.GET.get('all') == '1'), status=status.HTTP_200_OK)
+        except Exception as e:
+            return error_response(e)
+
+    def post(self, request):
+        if not sync_key_ok(request):
+            return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            return Response({'Marked': mark_transfers_sent(request.data.get('RequestIDs'))}, status=status.HTTP_200_OK)
         except Exception as e:
             return error_response(e)

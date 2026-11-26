@@ -205,7 +205,11 @@ urlpatterns = [
     path('churchRegrpCTSaveGroup/',    cr.ChurchRegrpCTSaveGroupViewSet.as_view()),
     path('churchRegrpGetSubdivisions/', cr.ChurchRegrpGetSubdivisionsViewSet.as_view()),
     path('churchRegrpSetSubdivLeader/', cr.ChurchRegrpSetSubdivLeaderViewSet.as_view()),
+    path('churchRegrpSetSubdivRole/',  cr.ChurchRegrpSetSubdivRoleViewSet.as_view()),
+    path('churchRegrpSetFeedbackLeader/', cr.ChurchRegrpSetFeedbackLeaderViewSet.as_view()),
+    path('churchRegrpSetGroupCategory/', cr.ChurchRegrpSetGroupCategoryViewSet.as_view()),
     path('churchRegrpMemberSheet/',    cr.ChurchRegrpMemberSheetViewSet.as_view()),   # needs X-Sync-Key
+    path('churchRegrpTransferDigest/', cr.ChurchRegrpTransferDigestViewSet.as_view()), # needs X-Sync-Key
 
  
 ]

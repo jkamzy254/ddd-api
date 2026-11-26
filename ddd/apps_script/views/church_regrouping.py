@@ -1,8 +1,8 @@
 """
 Church Regrouping — Django views for the Apps Script app.
 
-Paste into the app's views.py (fetch_rows is the same helper the BBT views
-already use; keep one copy) and route them in urls.py:
+This file is the server's church_regrouping.py, kept ready to copy over the
+running one as is. Routes, for urls.py:
 
     path('churchRegrpGetMember/',      ChurchRegrpGetMemberViewSet.as_view()),
     path('churchRegrpGetContext/',     ChurchRegrpGetContextViewSet.as_view()),
@@ -29,7 +29,13 @@ already use; keep one copy) and route them in urls.py:
     path('churchRegrpCTSaveGroup/',    ChurchRegrpCTSaveGroupViewSet.as_view()),
     path('churchRegrpGetSubdivisions/', ChurchRegrpGetSubdivisionsViewSet.as_view()),
     path('churchRegrpSetSubdivLeader/', ChurchRegrpSetSubdivLeaderViewSet.as_view()),
+    path('churchRegrpSetSubdivRole/',  ChurchRegrpSetSubdivRoleViewSet.as_view()),
+    path('churchRegrpSetFeedbackLeader/', ChurchRegrpSetFeedbackLeaderViewSet.as_view()),
+    path('churchRegrpSetDeptCategory/', ChurchRegrpSetDeptCategoryViewSet.as_view()),
+    path('churchRegrpEditDates/',      ChurchRegrpEditDatesViewSet.as_view()),
+    path('churchRegrpGetHistory/',     ChurchRegrpGetHistoryViewSet.as_view()),
     path('churchRegrpMemberSheet/',    ChurchRegrpMemberSheetViewSet.as_view()),   # needs X-Sync-Key
+    path('churchRegrpTransferDigest/', ChurchRegrpTransferDigestViewSet.as_view()), # needs X-Sync-Key
 
 If the login view you already have is routed somewhere else, either route
 this one as above or change ENDPOINTS.member in Code.js.
@@ -80,6 +86,24 @@ def sql_error(e):
 
 def error_response(e):
     return Response({'error': sql_error(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def telegram_body(tel_id, text, url=None, button='Open Church Regrouping'):
+    """The Telegram Bot API sendMessage body, ready to pass to the bot — or None when
+       there is no chat to send to (no active TelegramID row) or nothing to say."""
+    if not tel_id or not text:
+        return None
+    body = {'chat_id': str(tel_id), 'text': text, 'disable_web_page_preview': True}
+    if url:
+        body['reply_markup'] = {'inline_keyboard': [[{'text': button, 'url': url}]]}
+    return body
+
+
+def with_param(url, name, value):
+    """url + '&name=value' (or '?'); None stays None."""
+    if not url or value in (None, ''):
+        return url
+    return url + ('&' if '?' in url else '?') + name + '=' + str(value)
 
 
 # --- login ----------------------------------------------------------------------------
@@ -266,10 +290,21 @@ class ChurchRegrpSaveRequestViewSet(APIView):
                 )
                 result = fetch_rows(cursor)
 
+            # A move into another department now waiting for it: the procedure fills
+            # NotifyTelID / NotifyName / NotifyUID / NotifyMessage for the receiving
+            # department's leader. NotifyUrl is the app link (sent by Apps Script) for
+            # the message's inline button. NotifyTelID is NULL when the leader has no
+            # active TelegramID row.
+            app_url = blank_to_none(data.get('AppUrl'))
+            for row in result:
+                if row.get('NotifyMessage'):
+                    row['NotifyUrl'] = app_url
+                    # Ready for the bot: bot.send_message(**row['NotifyTelegram']) — None without a chat.
+                    row['NotifyTelegram'] = telegram_body(row.get('NotifyTelID'), row['NotifyMessage'], app_url)
+
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return error_response(e)
-
 
 
 class ChurchRegrpResolveViewSet(APIView):
@@ -344,6 +379,21 @@ class ChurchRegrpMoveGroupViewSet(APIView):
                     [actor, int(gid), int(did), blank_to_none(data.get('EffectiveDate'))]
                 )
                 result = fetch_rows(cursor)
+
+            # One row per person in charge of the department the group left or joined
+            # (its leader; with none, the subdivision's leader and assistants; with none,
+            # the administrator), except whoever moved it: NotifyUID / NotifyName /
+            # NotifyTelID / NotifyDID / NotifyMessage. NotifyUrl opens the Groups page on
+            # NotifyDID (AppUrl is sent by Apps Script). NotifyTelegram is the sendMessage
+            # body — None when they have no active TelegramID row. Send them here, e.g.:
+            #     for row in result:
+            #         if row.get('NotifyTelegram'):
+            #             bot.send_message(**row['NotifyTelegram'])
+            app_url = blank_to_none(data.get('AppUrl'))
+            for row in result:
+                if row.get('NotifyMessage'):
+                    row['NotifyUrl'] = with_param(app_url, 'dept', row.get('NotifyDID'))
+                    row['NotifyTelegram'] = telegram_body(row.get('NotifyTelID'), row['NotifyMessage'], row['NotifyUrl'])
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
@@ -592,75 +642,6 @@ class ChurchRegrpCTSaveGroupViewSet(APIView):
             return error_response(e)
 
 
-# Departments' feedback category (DeptCategoryLog, and the groups' copy). DIDs: '8,9,10';
-# Category blank ends it; EffectiveDate today or earlier.
-class ChurchRegrpSetDeptCategoryViewSet(APIView):
-    def post(self, request):
-        data = request.data
-        actor = data.get('ActorUID')
-        dids = data.get('DIDs')
-
-        if isinstance(dids, (list, tuple)):
-            dids = ','.join(str(d) for d in dids)
-        if not actor or not dids:
-            return Response({'error': 'ActorUID and DIDs are required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "EXEC spChurchRegrpSetDeptCategory @ActorUID = %s, @DIDs = %s, @Category = %s, @EffectiveDate = %s",
-                    [actor, str(dids), blank_to_none(data.get('Category')), blank_to_none(data.get('EffectiveDate'))]
-                )
-                result = fetch_rows(cursor)
-
-            return Response(result, status=status.HTTP_200_OK)
-        except Exception as e:
-            return error_response(e)
-
-
-# Corrects the start / end dates of one dated row. LogName: DeptLeader | GroupDept | SubdivRole | DeptCategory.
-class ChurchRegrpEditDatesViewSet(APIView):
-    def post(self, request):
-        data = request.data
-        actor = data.get('ActorUID')
-        log = data.get('LogName')
-        row_id = data.get('ID')
-
-        if not actor or log not in ('DeptLeader', 'GroupDept', 'SubdivRole', 'DeptCategory') or row_id in (None, ''):
-            return Response({'error': 'ActorUID, LogName and ID are required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "EXEC spChurchRegrpEditDates @ActorUID = %s, @LogName = %s, @ID = %s, @StartDate = %s, @EndDate = %s",
-                    [actor, log, int(row_id), blank_to_none(data.get('StartDate')), blank_to_none(data.get('EndDate'))]
-                )
-                result = fetch_rows(cursor)
-
-            return Response(result, status=status.HTTP_200_OK)
-        except Exception as e:
-            return error_response(e)
-
-
-# The dated rows of a department, group or subdivision. Kind: Dept | Group | Subdiv.
-class ChurchRegrpGetHistoryViewSet(APIView):
-    def get(self, request):
-        uid = request.GET.get('UID')
-        kind = request.GET.get('Kind')
-        ref = request.GET.get('RefID') or ''
-
-        if not uid or kind not in ('Dept', 'Group', 'Subdiv') or not ref.isdigit():
-            return Response({'error': 'UID, Kind and RefID are required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute("EXEC spChurchRegrpGetHistory @UID = %s, @Kind = %s, @RefID = %s", [uid, kind, int(ref)])
-                result = fetch_rows(cursor)
-
-            return Response(result, status=status.HTTP_200_OK)
-        except Exception as e:
-            return error_response(e)
-
 # --- subdivisions (admin) -----------------------------------------------------------------
 
 class ChurchRegrpGetSubdivisionsViewSet(APIView):
@@ -677,8 +658,6 @@ class ChurchRegrpGetSubdivisionsViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return error_response(e)
-
-
 
 
 class ChurchRegrpSetSubdivLeaderViewSet(APIView):
@@ -753,7 +732,79 @@ class ChurchRegrpSetFeedbackLeaderViewSet(APIView):
             return error_response(e)
 
 
-# Groups' feedback category (GroupInfo.DeptCategory). GIDs: '29,30,31'; Category blank clears it.
+# Departments' feedback category (DeptCategoryLog, and the groups' copy). DIDs: '8,9,10';
+# Category blank ends it; EffectiveDate today or earlier.
+class ChurchRegrpSetDeptCategoryViewSet(APIView):
+    def post(self, request):
+        data = request.data
+        actor = data.get('ActorUID')
+        dids = data.get('DIDs')
+
+        if isinstance(dids, (list, tuple)):
+            dids = ','.join(str(d) for d in dids)
+        if not actor or not dids:
+            return Response({'error': 'ActorUID and DIDs are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "EXEC spChurchRegrpSetDeptCategory @ActorUID = %s, @DIDs = %s, @Category = %s, @EffectiveDate = %s",
+                    [actor, str(dids), blank_to_none(data.get('Category')), blank_to_none(data.get('EffectiveDate'))]
+                )
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return error_response(e)
+
+
+# Corrects the start / end dates of one dated row. LogName: DeptLeader | GroupDept | SubdivRole | DeptCategory.
+class ChurchRegrpEditDatesViewSet(APIView):
+    def post(self, request):
+        data = request.data
+        actor = data.get('ActorUID')
+        log = data.get('LogName')
+        row_id = data.get('ID')
+
+        if not actor or log not in ('DeptLeader', 'GroupDept', 'SubdivRole', 'DeptCategory') or row_id in (None, ''):
+            return Response({'error': 'ActorUID, LogName and ID are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "EXEC spChurchRegrpEditDates @ActorUID = %s, @LogName = %s, @ID = %s, @StartDate = %s, @EndDate = %s",
+                    [actor, log, int(row_id), blank_to_none(data.get('StartDate')), blank_to_none(data.get('EndDate'))]
+                )
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return error_response(e)
+
+
+# The dated rows of a department, group or subdivision. Kind: Dept | Group | Subdiv.
+class ChurchRegrpGetHistoryViewSet(APIView):
+    def get(self, request):
+        uid = request.GET.get('UID')
+        kind = request.GET.get('Kind')
+        ref = request.GET.get('RefID') or ''
+
+        if not uid or kind not in ('Dept', 'Group', 'Subdiv') or not ref.isdigit():
+            return Response({'error': 'UID, Kind and RefID are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spChurchRegrpGetHistory @UID = %s, @Kind = %s, @RefID = %s", [uid, kind, int(ref)])
+                result = fetch_rows(cursor)
+
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return error_response(e)
+
+
+# NO LONGER USED — the app sets categories per department (churchRegrpSetDeptCategory/).
+# Kept only so an existing urls.py entry for churchRegrpSetGroupCategory/ still imports;
+# remove the route and this class together when convenient. Its procedure is no longer created.
 class ChurchRegrpSetGroupCategoryViewSet(APIView):
     def post(self, request):
         data = request.data
@@ -862,11 +913,7 @@ def transfer_digests(all_waiting=False):
     url = _app_url('Requests')
     out = []
     for r in rows:
-        telegram = None
-        if r.get('TelID'):
-            telegram = {'chat_id': str(r['TelID']), 'text': r['Message'], 'disable_web_page_preview': True}
-            if url:
-                telegram['reply_markup'] = {'inline_keyboard': [[{'text': 'Open Church Regrouping', 'url': url}]]}
+        telegram = telegram_body(r.get('TelID'), r.get('Message'), url)
         out.append({
             'dept':        r.get('Dept'),
             'leader_uid':  r.get('LeaderUID'),

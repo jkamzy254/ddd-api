@@ -1,11 +1,13 @@
 """
-Church Regrouping — Accept / Decline buttons, for the Telegram bot worker (Heroku).
+Church Regrouping — Telegram button presses, for the bot worker (Heroku).
 
-The Django server sends the messages. Their Accept / Decline buttons are
-callback buttons, so Telegram delivers each press to this worker (whoever
-receives the bot's updates). This file answers them: it posts the press to the
-Django server, which acts as the member linked to that Telegram account, then
-updates the message in the chat.
+The Django server sends the messages. Their buttons are callback buttons, so
+Telegram delivers each press to this worker (whoever receives the bot's
+updates). This file passes the press on to the Django server
+(churchRegrpTelegramAnswer/), which acts as the member linked to that Telegram
+account and answers with what to show: a pop-up, and the message's new text and
+buttons (the list of moves, one move in full, "Accept all?", ...). All the
+logic is on the server; this only relays, so new buttons need no change here.
 
 Worker config vars (heroku config:set ...):
     CHURCH_REGRP_API_URL   the Django base the routes hang off, e.g. https://<server>/api/
@@ -18,9 +20,8 @@ Copy this file next to the bot and register the handler (python-telegram-bot v20
     from .responses.regrouping_handler import ptb_church_regrp_button
     application.add_handler(CallbackQueryHandler(ptb_church_regrp_button, pattern=r'^crg:'))
 
-Only button data starting 'crg:' is ours ('crg:a:<RequestID>' accept,
-'crg:d:<RequestID>' decline); leave every other callback to the bot's own
-handlers. No extra packages: only the standard library is used here.
+Only button data starting 'crg:' is ours; leave every other callback to the
+bot's own handlers. No extra packages: only the standard library is used here.
 """
 
 import asyncio
@@ -40,7 +41,7 @@ def _api(path, body):
         headers={'Content-Type': 'application/json',
                  'X-Sync-Key': os.environ.get('CHURCH_REGRP_SYNC_KEY', '')})
     try:
-        with urllib.request.urlopen(req, timeout=20) as res:
+        with urllib.request.urlopen(req, timeout=30) as res:
             return json.loads(res.read().decode('utf-8'))
     except urllib.error.HTTPError as e:
         # Django answers refusals and failures with a 403/500 status and {"error": ...};
@@ -51,55 +52,22 @@ def _api(path, body):
             res = json.loads(e.read().decode('utf-8'))
         except ValueError:
             res = None
-        if isinstance(res, dict) and (res.get('error') or res.get('Message')):
+        if isinstance(res, dict) and res.get('error'):
             return res
         return {'error': 'Church Regrouping could not handle this (HTTP %s). Please use the link.' % e.code}
 
 
-def answer_press(telegram_user_id, data):
-    """Sends one press to the server. Returns (ok, toast, line):
-         toast  the short pop-up the presser sees
-         line   what to add to the message ('' when nothing changed)"""
+def press(body):
+    """Posts one press. Returns {Ok, Toast, Alert, Text, Keyboard} (Text None: leave the message)."""
     try:
-        _, code, request_id = data.split(':', 2)
-        action = {'a': 'Accept', 'd': 'Decline'}[code]
-    except (ValueError, KeyError):
-        return False, 'Unknown button.', ''
-
-    try:
-        res = _api('churchRegrpTelegramAnswer/',
-                   {'TelegramUserID': telegram_user_id, 'RequestID': request_id, 'Action': action})
+        res = _api('churchRegrpTelegramAnswer/', body)
     except Exception as e:
-        print('Church Regrouping - answer failed:', e)
-        return False, 'Could not reach Church Regrouping. Please try again, or use the link.', ''
-
-    if res.get('error'):
-        return False, str(res['error'])[:190], ''
-
-    ok, msg = bool(res.get('Ok')), res.get('Message') or ''
-    if not ok:
-        # e.g. "Not waiting for you to accept it." -- someone already answered it.
-        return False, msg[:190], ''
-    icon = '✅' if action == 'Accept' else '❌'
-    by = res.get('By')
-    return True, msg[:190], '%s %s%s' % (icon, msg, ' (%s)' % by if by else '')
-
-
-def _without_buttons(rows, request_id):
-    """The keyboard (list of rows of button dicts) minus this request's buttons."""
-    mine = {'%sa:%s' % (PREFIX, request_id), '%sd:%s' % (PREFIX, request_id)}
-    kept = [[b for b in row if b.get('callback_data') not in mine] for row in rows]
-    return [row for row in kept if row]
-
-
-def _label(rows, data):
-    """' 2' when the pressed button was 'Accept 2' in a digest, else ''."""
-    for row in rows:
-        for b in row:
-            if b.get('callback_data') == data:
-                parts = b.get('text', '').split()
-                return ' ' + parts[-1] if parts and parts[-1].isdigit() else ''
-    return ''
+        print('Church Regrouping - press failed:', e)
+        res = {'error': 'Could not reach Church Regrouping. Please try again, or use the link.'}
+    if not isinstance(res, dict) or res.get('error'):
+        return {'Ok': False, 'Toast': str((res or {}).get('error') or 'Something went wrong.')[:190],
+                'Alert': True, 'Text': None, 'Keyboard': None}
+    return res
 
 
 # --- python-telegram-bot (v20+) -------------------------------------------------------
@@ -112,21 +80,31 @@ async def ptb_church_regrp_button(update, context):
     if not data.startswith(PREFIX):
         return
 
-    ok, toast, line = await asyncio.to_thread(answer_press, query.from_user.id, data)
-    await query.answer(toast, show_alert=not ok)
     # A deleted or too-old message arrives as InaccessibleMessage (no text/buttons to edit).
-    if not ok or not query.message or not getattr(query.message, 'is_accessible', True):
-        return
+    msg = query.message
+    usable = msg is not None and getattr(msg, 'is_accessible', True)
+    markup = msg.reply_markup if usable else None
 
-    request_id = data.split(':', 2)[2]
-    markup = query.message.reply_markup
-    rows = [[b.to_dict() for b in row] for row in markup.inline_keyboard] if markup else []
-    label = _label(rows, data)
-    extra = '\n\n' + (('#' + label.strip() + ' ') if label else '') + line
-    text = (query.message.text or '')[:max(0, 4096 - len(extra))] + extra   # trim the old text, never the new line
-    kept = _without_buttons(rows, request_id)
+    res = await asyncio.to_thread(press, {
+        'TelegramUserID': query.from_user.id,
+        'Data': data,
+        'Text': (msg.text or '') if usable else '',
+        'Keyboard': [[b.to_dict() for b in row] for row in markup.inline_keyboard] if markup else [],
+    })
+
     try:
-        await query.edit_message_text(text[:4096], disable_web_page_preview=True,
-                                      reply_markup=InlineKeyboardMarkup.de_json({'inline_keyboard': kept}, context.bot) if kept else None)
+        await query.answer(res.get('Toast') or None, show_alert=bool(res.get('Alert')))
     except Exception as e:
-        print('Church Regrouping - edit failed:', e)
+        print('Church Regrouping - answer failed:', e)
+
+    if not usable or res.get('Text') is None:
+        return
+    kb = res.get('Keyboard') or []
+    try:
+        await query.edit_message_text(
+            res['Text'][:4096],
+            reply_markup=InlineKeyboardMarkup.de_json({'inline_keyboard': kb}, context.bot) if kb else None)
+    except Exception as e:
+        # "Message is not modified" (e.g. the page button pressed on the same page) is harmless.
+        if 'not modified' not in str(e).lower():
+            print('Church Regrouping - edit failed:', e)

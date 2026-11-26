@@ -212,6 +212,7 @@ urlpatterns = [
     path('churchRegrpGetHistory/',     cr.ChurchRegrpGetHistoryViewSet.as_view()),
     path('churchRegrpMemberSheet/',    cr.ChurchRegrpMemberSheetViewSet.as_view()),   # needs X-Sync-Key
     path('churchRegrpTransferDigest/', cr.ChurchRegrpTransferDigestViewSet.as_view()), # needs X-Sync-Key
+    path('churchRegrpTelegramAnswer/', cr.ChurchRegrpTelegramAnswerViewSet.as_view()), # needs X-Sync-Key (Codey worker)
 
  
 ]

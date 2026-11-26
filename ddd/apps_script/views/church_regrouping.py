@@ -36,6 +36,12 @@ running one as is. Routes, for urls.py:
     path('churchRegrpGetHistory/',     ChurchRegrpGetHistoryViewSet.as_view()),
     path('churchRegrpMemberSheet/',    ChurchRegrpMemberSheetViewSet.as_view()),   # needs X-Sync-Key
     path('churchRegrpTransferDigest/', ChurchRegrpTransferDigestViewSet.as_view()), # needs X-Sync-Key
+    path('churchRegrpTelegramAnswer/', ChurchRegrpTelegramAnswerViewSet.as_view()), # needs X-Sync-Key (the bot worker)
+
+Settings (settings.py or the environment):
+    CHURCH_REGRP_SYNC_KEY   shared secret: Apps Script's sheet sync and the bot worker send it as X-Sync-Key
+    CHURCH_REGRP_BOT_TOKEN  the Telegram bot's token (falls back to CODEY_BOT_TOKEN); without one nothing is sent
+    CHURCH_REGRP_APP_URL    the web app's /exec link, for the digest's button
 
 If the login view you already have is routed somewhere else, either route
 this one as above or change ENDPOINTS.member in Code.js.
@@ -43,9 +49,14 @@ this one as above or change ENDPOINTS.member in Code.js.
 Every value is bound with %s. Nothing from the request is formatted into SQL.
 """
 
+import json
+import os
 import re
+import threading
+import urllib.request
 
-from django.db import connection
+from django.conf import settings
+from django.db import close_old_connections, connection
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -88,15 +99,88 @@ def error_response(e):
     return Response({'error': sql_error(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-def telegram_body(tel_id, text, url=None, button='Open Church Regrouping'):
-    """The Telegram Bot API sendMessage body, ready to pass to the bot — or None when
-       there is no chat to send to (no active TelegramID row) or nothing to say."""
+# --- Telegram ----------------------------------------------------------------------
+#
+# Messages are sent from here, straight to the Telegram Bot API, with the bot's
+# token (CHURCH_REGRP_BOT_TOKEN). Sending needs nothing from the bot worker on
+# Heroku: any number of processes can send with one token.
+#
+# Accept / Decline buttons are callback buttons. Telegram delivers the press to
+# whoever receives the bot's updates (the worker). Its handler
+# (backend/telegram_bot_handler.py) posts the press to churchRegrpTelegramAnswer/
+# below, which acts as the member linked to that Telegram account.
+#
+# callback_data: 'crg:a:<RequestID>' (accept) | 'crg:d:<RequestID>' (decline).
+
+def link_row(url, text='🔗 See more details'):
+    """A keyboard row with one link button; [] without a link."""
+    return [{'text': text, 'url': url}] if url else []
+
+
+def answer_row(request_id, label=''):
+    """Accept / Decline buttons for one request ('label' tells rows apart in a digest)."""
+    if request_id in (None, ''):
+        return []
+    return [{'text': '✅ Accept' + label, 'callback_data': 'crg:a:%s' % request_id},
+            {'text': '❌ Decline' + label, 'callback_data': 'crg:d:%s' % request_id}]
+
+
+def telegram_body(tel_id, text, rows=None):
+    """The Telegram Bot API sendMessage body, or None when there is no chat to send to
+       (no active TelegramID row) or nothing to say. rows: keyboard rows (empty ones dropped)."""
     if not tel_id or not text:
         return None
     body = {'chat_id': str(tel_id), 'text': text, 'disable_web_page_preview': True}
-    if url:
-        body['reply_markup'] = {'inline_keyboard': [[{'text': button, 'url': url}]]}
+    keyboard = [r for r in (rows or []) if r]
+    if keyboard:
+        body['reply_markup'] = {'inline_keyboard': keyboard}
     return body
+
+
+def _bot_token():
+    # Codey sends these (its worker receives the button presses); CHURCH_REGRP_BOT_TOKEN overrides.
+    return (getattr(settings, 'CHURCH_REGRP_BOT_TOKEN', None) or os.environ.get('CHURCH_REGRP_BOT_TOKEN')
+            or os.environ.get('CODEY_BOT_TOKEN'))
+
+
+def send_telegram(body):
+    """Sends one sendMessage body. True when Telegram accepted it; never raises."""
+    token = _bot_token()
+    if not token or not body:
+        return False
+    try:
+        req = urllib.request.Request(
+            'https://api.telegram.org/bot%s/sendMessage' % token,
+            data=json.dumps(body).encode('utf-8'),
+            headers={'Content-Type': 'application/json'})
+        with urllib.request.urlopen(req, timeout=10) as res:
+            return bool(json.loads(res.read().decode('utf-8')).get('ok'))
+    except Exception as e:
+        print('Church Regrouping - Telegram send failed:', e)
+        return False
+
+
+def send_later(jobs):
+    """jobs: [(body, request_ids or None)]. Sent on a background thread so a slow or
+       unreachable Telegram never holds up (or fails) the save. Once a body with
+       request_ids is delivered, those requests are marked notified, so the transfer
+       digest does not send them again."""
+    jobs = [j for j in jobs if j and j[0]]
+    if not jobs or not _bot_token():
+        return
+
+    def run():
+        try:
+            for body, ids in jobs:
+                if send_telegram(body) and ids:
+                    mark_transfers_sent(ids)
+        except Exception as e:
+            print('Church Regrouping - Telegram job failed:', e)
+        finally:
+            close_old_connections()
+            connection.close()
+
+    threading.Thread(target=run, daemon=True).start()
 
 
 def with_param(url, name, value):
@@ -295,12 +379,17 @@ class ChurchRegrpSaveRequestViewSet(APIView):
             # department's leader. NotifyUrl is the app link (sent by Apps Script) for
             # the message's inline button. NotifyTelID is NULL when the leader has no
             # active TelegramID row.
+            # Sent from here with a details link and Accept / Decline buttons; once it
+            # is delivered the request is marked notified (the digest skips it).
             app_url = blank_to_none(data.get('AppUrl'))
+            jobs = []
             for row in result:
                 if row.get('NotifyMessage'):
                     row['NotifyUrl'] = app_url
-                    # Ready for the bot: bot.send_message(**row['NotifyTelegram']) — None without a chat.
-                    row['NotifyTelegram'] = telegram_body(row.get('NotifyTelID'), row['NotifyMessage'], app_url)
+                    row['NotifyTelegram'] = telegram_body(row.get('NotifyTelID'), row['NotifyMessage'],
+                                                          [link_row(app_url), answer_row(row.get('ID'))])
+                    jobs.append((row['NotifyTelegram'], str(row['ID']) if row.get('ID') else None))
+            send_later(jobs)
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
@@ -385,15 +474,16 @@ class ChurchRegrpMoveGroupViewSet(APIView):
             # the administrator), except whoever moved it: NotifyUID / NotifyName /
             # NotifyTelID / NotifyDID / NotifyMessage. NotifyUrl opens the Groups page on
             # NotifyDID (AppUrl is sent by Apps Script). NotifyTelegram is the sendMessage
-            # body — None when they have no active TelegramID row. Send them here, e.g.:
-            #     for row in result:
-            #         if row.get('NotifyTelegram'):
-            #             bot.send_message(**row['NotifyTelegram'])
+            # body (None when they have no active TelegramID row). Sent from here.
             app_url = blank_to_none(data.get('AppUrl'))
+            jobs = []
             for row in result:
                 if row.get('NotifyMessage'):
                     row['NotifyUrl'] = with_param(app_url, 'dept', row.get('NotifyDID'))
-                    row['NotifyTelegram'] = telegram_body(row.get('NotifyTelID'), row['NotifyMessage'], row['NotifyUrl'])
+                    row['NotifyTelegram'] = telegram_body(row.get('NotifyTelID'), row['NotifyMessage'],
+                                                          [link_row(row['NotifyUrl'], '🔗 See the group')])
+                    jobs.append((row['NotifyTelegram'], None))
+            send_later(jobs)
 
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
@@ -840,9 +930,6 @@ class ChurchRegrpSetGroupCategoryViewSet(APIView):
 # With no key configured it refuses everything rather than serving openly.
 
 import hmac
-import os
-
-from django.conf import settings
 
 
 def sync_key_ok(request):
@@ -870,11 +957,17 @@ class ChurchRegrpMemberSheetViewSet(APIView):
 #
 # One message per receiving department leader listing the moves into their
 # department that wait for them to accept and that they have not been told
-# about yet. The bot on this server can call the two functions directly:
+# about yet, each with its own Accept / Decline buttons. Saving a move already
+# sends its own message (and marks it), so the digest picks up what that missed
+# (a leader with no Telegram then, a failed send) and, with All, reminders.
+#
+# send_transfer_digests() sends them all and marks what was delivered. Run it on
+# a schedule (Heroku Scheduler, cron, or the worker's job queue), e.g.
+#     POST churchRegrpTransferDigest/  {"Send": true}        (X-Sync-Key)
+# Or by hand:
 #
 #     for msg in transfer_digests():
-#         ok = bot.send_message(**msg['telegram'])          # your bot's send call
-#         if ok:
+#         if send_telegram(msg['telegram']):
 #             mark_transfers_sent(msg['request_ids'])        # so they are not sent again
 #
 # msg['telegram'] is the Telegram Bot API sendMessage body, ready to pass:
@@ -913,7 +1006,10 @@ def transfer_digests(all_waiting=False):
     url = _app_url('Requests')
     out = []
     for r in rows:
-        telegram = telegram_body(r.get('TelID'), r.get('Message'), url)
+        # A row of Accept / Decline per move, numbered as in the message.
+        ids = [i for i in str(r.get('RequestIDs') or '').split(',') if i]
+        keyboard = [link_row(url)] + [answer_row(rid, ' %d' % n) for n, rid in enumerate(ids, 1)]
+        telegram = telegram_body(r.get('TelID'), r.get('Message'), keyboard)
         out.append({
             'dept':        r.get('Dept'),
             'leader_uid':  r.get('LeaderUID'),
@@ -926,6 +1022,22 @@ def transfer_digests(all_waiting=False):
             'url':         url,
             'telegram':    telegram,
         })
+    return out
+
+
+def send_transfer_digests(all_waiting=False):
+    """Sends every digest that has a Telegram chat and marks its transfers notified once
+       delivered (not for a reminder of all). Returns {'Sent': n, 'Failed': n, 'NoChat': n}."""
+    out = {'Sent': 0, 'Failed': 0, 'NoChat': 0}
+    for msg in transfer_digests(all_waiting):
+        if not msg['telegram']:
+            out['NoChat'] += 1
+        elif send_telegram(msg['telegram']):
+            out['Sent'] += 1
+            if not all_waiting:
+                mark_transfers_sent(msg['request_ids'])
+        else:
+            out['Failed'] += 1
     return out
 
 
@@ -952,6 +1064,62 @@ class ChurchRegrpTransferDigestViewSet(APIView):
         if not sync_key_ok(request):
             return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         try:
+            # {"Send": true} sends every digest (and marks them); add "All": true for a reminder of all.
+            if request.data.get('Send') in (True, 1, '1', 'true'):
+                return Response(send_transfer_digests(request.data.get('All') in (True, 1, '1', 'true')),
+                                status=status.HTTP_200_OK)
             return Response({'Marked': mark_transfers_sent(request.data.get('RequestIDs'))}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return error_response(e)
+
+
+# --- Telegram button presses (from the bot worker) ------------------------------------------
+#
+# The worker posts each Accept / Decline press here (X-Sync-Key):
+#     { "TelegramUserID": <callback_query.from.id>, "RequestID": 123, "Action": "Accept" | "Decline" }
+# The member is whoever that Telegram account belongs to (TelegramID, active), and
+# spChurchRegrpResolve decides as it does for the site: only someone in charge of the
+# receiving department can answer. Accept applies the move from the date asked for.
+# Returns { Ok, Applied, Message, By }; Message is the line to show in the chat.
+
+class ChurchRegrpTelegramAnswerViewSet(APIView):
+    def post(self, request):
+        if not sync_key_ok(request):
+            return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+        tel = str(data.get('TelegramUserID') or '').strip()
+        rid = str(data.get('RequestID') or '').strip()
+        action = data.get('Action')
+        if not tel or not rid.isdigit() or action not in ('Accept', 'Decline'):
+            return Response({'error': 'TelegramUserID, RequestID and Action (Accept / Decline) are required.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        def reply(ok, message, applied=False, by=None):
+            return Response({'Ok': ok, 'Applied': applied, 'Message': message, 'By': by}, status=status.HTTP_200_OK)
+
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("EXEC spChurchRegrpTelegramUser @TelID = %s", [tel])
+                users = fetch_rows(cursor)
+
+                if not users:
+                    return reply(False, "This Telegram account isn't linked to anyone with access to Church Regrouping.")
+                if len({u['UID'] for u in users}) > 1:
+                    return reply(False, 'This Telegram account is linked to more than one member. Please answer on the site.')
+
+                uid, name = users[0]['UID'], users[0].get('Name')
+                cursor.execute(
+                    "EXEC spChurchRegrpResolve @ActorUID = %s, @IDs = %s, @Action = %s, @EffectiveDate = %s, @Note = %s",
+                    [uid, rid, action, None, 'Answered on Telegram']
+                )
+                rows = fetch_rows(cursor)
+
+            row = rows[0] if rows else {}
+            ok = bool(row.get('Ok'))
+            msg = row.get('Res') or ('Done' if ok else 'That could not be done.')
+            if row.get('Warning'):
+                msg += ' ⚠️ ' + row['Warning']
+            return reply(ok, msg, bool(row.get('Applied')), name)
         except Exception as e:
             return error_response(e)

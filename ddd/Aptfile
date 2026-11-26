@@ -1,2 +1,4 @@
+:repo:deb [arch=amd64 trusted=yes] https://packages.microsoft.com/ubuntu/24.04/prod noble main
+msodbcsql18
 unixodbc unixodbc-dev freetds-dev
 libsqliteodbc

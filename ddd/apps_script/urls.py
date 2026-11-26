@@ -64,6 +64,12 @@ urlpatterns = [
     path('ctPastStudents/',        ca.CTPastStudentsViewSet.as_view()),
     path('ctStudentProfile/',      ca.CTStudentProfileViewSet.as_view()),
     path('ctEnrol/',               ca.CTEnrolViewSet.as_view()),
+    path('ctClassDetails/',        ca.CTClassDetailsViewSet.as_view()),
+    path('ctSessionSchedCancel/',  ca.CTSessionSchedCancelViewSet.as_view()),
+    path('ctSchedChangeRunDue/',   ca.CTSchedChangeRunDueViewSet.as_view()),
+    path('ctStaffUpcoming/',  	   ca.CTStaffUpcomingViewSet.as_view()),
+    path('ctMySessions/',  		   ca.CTMySessionsViewSet.as_view()),
+    path('ctSessionStudentSummary/',ca.CTSessionStudentSummaryViewSet.as_view()),
  
 	#HSP
 	path('eduGetMember/', ep.GetMemberViewSet.as_view()),
@@ -105,6 +111,10 @@ urlpatterns = [
 	path('hspEduAdminGroups/',       ep.HSPEduAdminGroupsViewSet.as_view()),
 	path('hspEduAdminSaveMaterial/', ep.HSPEduAdminSaveMaterialViewSet.as_view()),
 	path('hspEduAdminSaveGroup/',    ep.HSPEduAdminSaveGroupViewSet.as_view()),
+	path('hspTraineeBlock/',            ep.HSPTraineeBlockViewSet.as_view()),
+	path('hspTraineeAdminBlocks/',      ep.HSPTraineeAdminBlocksViewSet.as_view()),
+	path('hspTraineeAdminSaveBlock/',   ep.HSPTraineeAdminSaveBlockViewSet.as_view()),
+	path('hspTraineeAdminDeleteBlock/', ep.HSPTraineeAdminDeleteBlockViewSet.as_view()),
      
 	#Edu Dept BBT System
 	path('eduBBTGetMember/', eb.GetMemberViewSet.as_view()),
@@ -195,7 +205,13 @@ urlpatterns = [
     path('churchRegrpCTSaveGroup/',    cr.ChurchRegrpCTSaveGroupViewSet.as_view()),
     path('churchRegrpGetSubdivisions/', cr.ChurchRegrpGetSubdivisionsViewSet.as_view()),
     path('churchRegrpSetSubdivLeader/', cr.ChurchRegrpSetSubdivLeaderViewSet.as_view()),
+    path('churchRegrpSetSubdivRole/',  cr.ChurchRegrpSetSubdivRoleViewSet.as_view()),
+    path('churchRegrpSetFeedbackLeader/', cr.ChurchRegrpSetFeedbackLeaderViewSet.as_view()),
+    path('churchRegrpSetDeptCategory/', cr.ChurchRegrpSetDeptCategoryViewSet.as_view()),
+    path('churchRegrpEditDates/',      cr.ChurchRegrpEditDatesViewSet.as_view()),
+    path('churchRegrpGetHistory/',     cr.ChurchRegrpGetHistoryViewSet.as_view()),
     path('churchRegrpMemberSheet/',    cr.ChurchRegrpMemberSheetViewSet.as_view()),   # needs X-Sync-Key
+    path('churchRegrpTransferDigest/', cr.ChurchRegrpTransferDigestViewSet.as_view()), # needs X-Sync-Key
 
  
 ]

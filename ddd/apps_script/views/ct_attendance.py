@@ -540,7 +540,8 @@ class CTStaffAllocateViewSet(APIView):
             result = call_proc(
                 "EXEC spCTStaffAllocate "
                 "@ActorUID = %s, @StaffUID = %s, @Mode = %s, @ToCTID = %s, @FromCTID = %s, "
-                "@NumRole = %s, @EffectiveDate = %s, @ReassignTo = %s, @Note = %s",
+                "@NumRole = %s, @EffectiveDate = %s, @ReassignTo = %s, "
+                "@Reassignments = %s, @Note = %s, @CloseCTIDs = %s, @CloseDate = %s",
                 [
                     rec.get('ActorUID'),
                     rec.get('StaffUID'),
@@ -550,7 +551,37 @@ class CTStaffAllocateViewSet(APIView):
                     rec.get('NumRole'),
                     rec.get('EffectiveDate') or None,
                     rec.get('ReassignTo') or None,
+                    rec.get('Reassignments') or None,
                     rec.get('Note') or None,
+                    rec.get('CloseCTIDs') or None,
+                    rec.get('CloseDate') or None,
+                ],
+            )
+            return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTStaffUpcomingViewSet(APIView):
+    """Edit or remove an allocation that has not started yet. See spCTStaffUpcoming (sql/35)."""
+
+    def post(self, request):
+        rec = request.data
+        try:
+            result = call_proc(
+                "EXEC spCTStaffUpcoming "
+                "@ActorUID = %s, @StaffUID = %s, @CTID = %s, @Mode = %s, "
+                "@ToCTID = %s, @NumRole = %s, @StartDate = %s, @KeepPaired = %s",
+                [
+                    rec.get('ActorUID'),
+                    rec.get('StaffUID'),
+                    rec.get('CTID'),
+                    rec.get('Mode'),
+                    rec.get('ToCTID') or None,
+                    rec.get('NumRole') or None,
+                    rec.get('StartDate') or None,
+                    0 if rec.get('KeepPaired') in (0, '0', False, 'false') else 1,
                 ],
             )
             return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
@@ -588,7 +619,7 @@ class CTSessionSaveViewSet(APIView):
             result = call_proc(
                 "EXEC spCTSessionSave @ActorUID = %s, @ID = %s, @ClassID = %s, @Name = %s, "
                 "@Season = %s, @CTSched = %s, @Is_Active = %s, @StartDate = %s, "
-                "@EndDate = %s, @SunClass = %s",
+                "@EndDate = %s, @SunClass = %s, @SchedEffective = %s, @SchedCorrect = %s",
                 [
                     rec.get('ActorUID'),
                     rec.get('ID'),
@@ -600,6 +631,11 @@ class CTSessionSaveViewSet(APIView):
                     rec.get('StartDate') or None,
                     rec.get('EndDate') or None,
                     None if rec.get('SunClass') in (None, '') else (1 if rec.get('SunClass') in (1, '1', True) else 0),
+                    # The date a schedule change takes effect (sql/29). Without it a
+                    # new CTSched only relabels the session, as before.
+                    rec.get('SchedEffective') or None,
+                    # 1 = correct a wrongly entered schedule for the whole session (sql/29).
+                    1 if rec.get('SchedCorrect') in (1, '1', True, 'true') else 0,
                 ],
             )
             return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
@@ -613,16 +649,47 @@ class CTWeekSummaryViewSet(APIView):
     """The week grid: CT days by week, the roster, and a tally per student per week.
 
     Returns the procedure's single row as JSON columns (Days / Students /
-    Cells), the same shape the catalogue endpoint uses. The client parses
+    Cells, and Marks when Marks=1 asks for the Excel download's per-class
+    marks), the same shape the catalogue endpoint uses. The client parses
     them; nothing here needs to understand the contents.
     """
 
     def get(self, request):
         weeks = request.GET.get('Weeks')
+        marks = 1 if request.GET.get('Marks') in ('1', 'true', 'True') else 0
+        ctid = request.GET.get('CTID')
         try:
             result = call_proc(
-                "EXEC spCTWeekSummary @UID = %s, @Weeks = %s",
-                [request.GET.get('UID'), int(weeks) if weeks else None],
+                "EXEC spCTWeekSummary @UID = %s, @Weeks = %s, @Marks = %s, @ForCTID = %s",
+                [request.GET.get('UID'), int(weeks) if weeks else None, marks,
+                 # Student Summary's session switch (sql/36); absent = as before.
+                 int(ctid) if ctid else None],
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTMySessionsViewSet(APIView):
+    """The running sessions the reader is on, now or from a later date (sql/36)."""
+
+    def get(self, request):
+        try:
+            result = call_proc("EXEC spCTMySessions @UID = %s", [request.GET.get('UID')])
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTSessionStudentSummaryViewSet(APIView):
+    """Student Summary's By student rows for one session (sql/36)."""
+
+    def get(self, request):
+        ctid = request.GET.get('CTID')
+        try:
+            result = call_proc(
+                "EXEC spCTSessionStudentSummary @UID = %s, @CTID = %s",
+                [request.GET.get('UID'), int(ctid) if ctid else None],
             )
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
@@ -656,15 +723,18 @@ class CTScheduleDaySaveViewSet(APIView):
 
 
 class CTPastStudentsViewSet(APIView):
-    """Search every student record. Empty without a Search of 2+ characters; admin, GSN and Main JDSN only."""
+    """Search every past student. Empty without a Search of 2+ characters; admin, GSN and Main JDSN only. Each search is logged."""
 
     def get(self, request):
         class_id = request.GET.get('ClassID')
+        ctid = request.GET.get('CTID')
         try:
+            # Logs the search (sql/28): who, what, for which session (CTID).
             result = call_proc(
-                "EXEC spCTPastStudents @ActorUID = %s, @Search = %s, @ClassID = %s",
+                "EXEC spCTPastStudents @ActorUID = %s, @Search = %s, @ClassID = %s, @CTID = %s",
                 [request.GET.get('ActorUID'), request.GET.get('Search') or None,
-                 int(class_id) if class_id else None],
+                 int(class_id) if class_id else None,
+                 int(ctid) if ctid else None],
             )
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
@@ -684,6 +754,7 @@ class CTStudentProfileViewSet(APIView):
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class CTEnrolViewSet(APIView):
@@ -706,6 +777,56 @@ class CTEnrolViewSet(APIView):
                     1 if rec.get('Force') in (1, '1', True) else 0,
                 ],
             )
+            return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
+class CTClassDetailsViewSet(APIView):
+    """The Class Details page: the caller's running sessions, their staff and seasons, as JSON columns."""
+
+    def get(self, request):
+        try:
+            result = call_proc(
+                "EXEC spCTClassDetails @UID = %s",
+                [request.GET.get('UID')],
+            )
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTSessionSchedCancelViewSet(APIView):
+    """Cancel a session's schedule change that is still waiting for its date (sql/29)."""
+
+    def post(self, request):
+        rec = request.data
+        try:
+            result = call_proc(
+                "EXEC spCTSessionSchedCancel @ActorUID = %s, @CTID = %s",
+                [rec.get('ActorUID'), rec.get('CTID')],
+            )
+            return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CTSchedChangeRunDueViewSet(APIView):
+    """
+    Changes the CTSched code of sessions whose schedule change has come due
+    (sql/29). The class roll already follows the change on its date; this is
+    for the labels. Nightly from the APScheduler (sql/06); this endpoint is
+    for a manual kick. Idempotent. One summary row: Applied, RunAt, Res, Ok.
+    """
+
+    def post(self, request):
+        try:
+            result = call_proc("EXEC spCTSchedChangeRunDue", [])
             return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
                             status=status.HTTP_200_OK)
         except Exception as e:

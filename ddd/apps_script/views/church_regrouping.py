@@ -40,10 +40,10 @@ running one as is. Routes, for urls.py:
     path('churchRegrpTelegramAnswer/', ChurchRegrpTelegramAnswerViewSet.as_view()), # needs X-Sync-Key (the bot worker)
 
 Settings (settings.py or the environment):
-    CHURCH_REGRP_SYNC_KEY   shared secret: Apps Script's sheet sync and the bot worker send it as X-Sync-Key
+    APPS_SCRIPT_SYNC_KEY   shared secret: Apps Script's sheet sync and the bot worker send it as X-Sync-Key
     CHURCH_REGRP_BOT_TOKEN  the Telegram bot's token (falls back to CODEY_BOT_TOKEN); without one nothing is sent
     CHURCH_REGRP_DELETE_AFTER  seconds before the bot deletes a fully answered message (default 120; 0 keeps it)
-    CHURCH_REGRP_APP_URL    the web app's /exec link, for the digest's button
+    APPS_SCRIPT_APP_URL    the web app's /exec link, for the digest's button
                             (messages from a save use the link Apps Script sends)
 
 If the login view you already have is routed somewhere else, either route
@@ -1375,7 +1375,7 @@ class ChurchRegrpSetGroupCategoryViewSet(APIView):
 # Returns every member's row for the Google Sheet — INCLUDING usernames and
 # passwords — so it answers only a request carrying the shared sync key:
 #
-#     settings.py (or the environment):  CHURCH_REGRP_SYNC_KEY = '<long random string>'
+#     settings.py (or the environment):  APPS_SCRIPT_SYNC_KEY = '<long random string>'
 #     Apps Script script property:       SYNC_KEY = the same string
 #
 # With no key configured it refuses everything rather than serving openly.
@@ -1384,7 +1384,7 @@ import hmac
 
 
 def sync_key_ok(request):
-    expected = getattr(settings, 'CHURCH_REGRP_SYNC_KEY', None) or os.environ.get('CHURCH_REGRP_SYNC_KEY')
+    expected = getattr(settings, 'APPS_SCRIPT_SYNC_KEY', None)
     given = request.headers.get('X-Sync-Key') or ''
     return bool(expected) and hmac.compare_digest(str(expected), str(given))
 

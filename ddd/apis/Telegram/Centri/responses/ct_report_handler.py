@@ -16,8 +16,8 @@ no change here.
 
 Worker config vars (heroku config:set ...). Each falls back to Church
 Regrouping's, so on the same server nothing new is needed:
-    CT_ATTENDANCE_API_URL   the Django base, e.g. https://<server>/api/   (-> CHURCH_REGRP_API_URL)
-    CT_ATTENDANCE_SYNC_KEY  the same value as on the Django server       (-> CHURCH_REGRP_SYNC_KEY)
+    APPS_SCRIPT_API_URL   the Django base, e.g. https://<server>/api/   (-> APPS_SCRIPT_API_URL)
+    APPS_SCRIPT_SYNC_KEY  the same value as on the Django server       (-> APPS_SCRIPT_SYNC_KEY)
 
 Copy this file next to the bot and register both handlers (python-telegram-bot v20+),
 beside the Church Regrouping one:
@@ -54,12 +54,12 @@ def _env(*names):
 
 
 def _api(path, body):
-    base = _env('CT_ATTENDANCE_API_URL', 'CHURCH_REGRP_API_URL').rstrip('/') + '/'
+    base = os.environ.get('APPS_SCRIPT_API_URL', '').rstrip('/') + '/'
     req = urllib.request.Request(
         base + path,
         data=json.dumps(body).encode('utf-8'),
         headers={'Content-Type': 'application/json',
-                 'X-Sync-Key': _env('CT_ATTENDANCE_SYNC_KEY', 'CHURCH_REGRP_SYNC_KEY')})
+                 'X-Sync-Key': os.environ.get('APPS_SCRIPT_SYNC_KEY', '')})
     try:
         with urllib.request.urlopen(req, timeout=30) as res:
             return json.loads(res.read().decode('utf-8'))

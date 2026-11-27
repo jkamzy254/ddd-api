@@ -19,8 +19,8 @@ Put this file next to ct_attendance.py and route, in urls.py:
 
 Settings (settings.py or the environment). Each falls back to Church
 Regrouping's, so on the same server and bot nothing new is needed:
-    CT_ATTENDANCE_BOT_TOKEN   -> CHURCH_REGRP_BOT_TOKEN -> CODEY_BOT_TOKEN
-    CT_ATTENDANCE_SYNC_KEY    -> CHURCH_REGRP_SYNC_KEY   (the bot worker sends it as X-Sync-Key)
+    CENTRI_BOT_TOKEN   
+    APPS_SCRIPT_SYNC_KEY    ->    (the bot worker sends it as X-Sync-Key)
 
 In Telegram
 -----------
@@ -95,7 +95,7 @@ def _int(value):
 
 
 def sync_key_ok(request):
-    expected = _setting('CT_ATTENDANCE_SYNC_KEY', 'CHURCH_REGRP_SYNC_KEY')
+    expected = _setting('APPS_SCRIPT_SYNC_KEY', '')
     given = request.headers.get('X-Sync-Key') or ''
     return bool(expected) and hmac.compare_digest(str(expected), str(given))
 
@@ -287,7 +287,7 @@ def report_row(actor_uid, ct_day_id):
 # --- Telegram ----------------------------------------------------------------------------
 
 def _bot_token():
-    return _setting('CT_ATTENDANCE_BOT_TOKEN', 'CHURCH_REGRP_BOT_TOKEN', 'CODEY_BOT_TOKEN')
+    return _setting('CENTRI_BOT_TOKEN', '')
 
 
 def _telegram(method, body):

@@ -15,10 +15,9 @@ A restart of the worker inside that time forgets the deletion, and Telegram
 lets a bot delete its message only in the first 48 hours.
 
 Worker config vars (heroku config:set ...):
-    CHURCH_REGRP_API_URL   the Django base the routes hang off, e.g. https://<server>/api/
+    APPS_SCRIPT_API_URL   the Django base the routes hang off, e.g. https://<server>/api/
                            (the same base Apps Script uses: its API_URL script property)
-    CHURCH_REGRP_SYNC_KEY  the same value as CHURCH_REGRP_SYNC_KEY on the Django server
-
+    APPS_SCRIPT_SYNC_KEY  
 Copy this file next to the bot and register the handler (python-telegram-bot v20+):
 
     from telegram.ext import CallbackQueryHandler
@@ -42,12 +41,12 @@ _tasks = set()      # keeps the delete tasks alive until they finish
 
 
 def _api(path, body):
-    base = os.environ.get('CHURCH_REGRP_API_URL', '').rstrip('/') + '/'
+    base = os.environ.get('APPS_SCRIPT_API_URL', '').rstrip('/') + '/'
     req = urllib.request.Request(
         base + path,
         data=json.dumps(body).encode('utf-8'),
         headers={'Content-Type': 'application/json',
-                 'X-Sync-Key': os.environ.get('CHURCH_REGRP_SYNC_KEY', '')})
+                 'X-Sync-Key': os.environ.get('APPS_SCRIPT_SYNC_KEY', '')})
     try:
         with urllib.request.urlopen(req, timeout=30) as res:
             return json.loads(res.read().decode('utf-8'))

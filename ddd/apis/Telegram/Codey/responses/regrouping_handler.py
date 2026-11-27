@@ -9,6 +9,11 @@ account and answers with what to show: a pop-up, and the message's new text and
 buttons (the list of moves, one move in full, "Accept all?", ...). All the
 logic is on the server; this only relays, so new buttons need no change here.
 
+When everything in a message is answered, the server's answer carries
+DeleteAfter (seconds, 120 by default): this worker then deletes the message.
+A restart of the worker inside that time forgets the deletion, and Telegram
+lets a bot delete its message only in the first 48 hours.
+
 Worker config vars (heroku config:set ...):
     CHURCH_REGRP_API_URL   the Django base the routes hang off, e.g. https://<server>/api/
                            (the same base Apps Script uses: its API_URL script property)
@@ -31,6 +36,9 @@ import urllib.error
 import urllib.request
 
 PREFIX = 'crg:'
+
+_deleting = set()   # (chat_id, message_id) already waiting to be deleted
+_tasks = set()      # keeps the delete tasks alive until they finish
 
 
 def _api(path, body):
@@ -72,6 +80,27 @@ def press(body):
 
 # --- python-telegram-bot (v20+) -------------------------------------------------------
 
+async def _delete_later(bot, chat_id, message_id, delay):
+    try:
+        await asyncio.sleep(delay)
+        await bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except Exception as e:
+        # Already deleted by the user, or older than 48 hours.
+        print('Church Regrouping - delete failed:', e)
+    finally:
+        _deleting.discard((chat_id, message_id))
+
+
+def _schedule_delete(bot, msg, delay):
+    key = (msg.chat_id, msg.message_id)
+    if key in _deleting:
+        return
+    _deleting.add(key)
+    task = asyncio.create_task(_delete_later(bot, key[0], key[1], delay))
+    _tasks.add(task)
+    task.add_done_callback(_tasks.discard)
+
+
 async def ptb_church_regrp_button(update, context):
     from telegram import InlineKeyboardMarkup
 
@@ -83,6 +112,7 @@ async def ptb_church_regrp_button(update, context):
     # A deleted or too-old message arrives as InaccessibleMessage (no text/buttons to edit).
     msg = query.message
     usable = msg is not None and getattr(msg, 'is_accessible', True)
+    assert msg is not None
     markup = msg.reply_markup if usable else None
 
     res = await asyncio.to_thread(press, {
@@ -97,7 +127,15 @@ async def ptb_church_regrp_button(update, context):
     except Exception as e:
         print('Church Regrouping - answer failed:', e)
 
-    if not usable or res.get('Text') is None:
+    if not usable:
+        return
+    try:
+        delay = int(res.get('DeleteAfter') or 0)
+    except (TypeError, ValueError):
+        delay = 0
+    if delay > 0:
+        _schedule_delete(context.bot, msg, delay)
+    if res.get('Text') is None:
         return
     kb = res.get('Keyboard') or []
     try:

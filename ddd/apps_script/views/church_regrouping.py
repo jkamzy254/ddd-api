@@ -42,6 +42,7 @@ running one as is. Routes, for urls.py:
 Settings (settings.py or the environment):
     CHURCH_REGRP_SYNC_KEY   shared secret: Apps Script's sheet sync and the bot worker send it as X-Sync-Key
     CHURCH_REGRP_BOT_TOKEN  the Telegram bot's token (falls back to CODEY_BOT_TOKEN); without one nothing is sent
+    CHURCH_REGRP_DELETE_AFTER  seconds before the bot deletes a fully answered message (default 120; 0 keeps it)
     CHURCH_REGRP_APP_URL    the web app's /exec link, for the digest's button
                             (messages from a save use the link Apps Script sends)
 
@@ -229,6 +230,11 @@ def with_param(url, name, value):
 #
 # Every press re-reads the notice (spChurchRegrpNoticeGet), so the message shows each move
 # as it stands now: answered on the site, cancelled or sent elsewhere included.
+#
+# Once nothing in a message waits for an answer, it keeps only the link button, and the
+# answer to the worker carries DeleteAfter (CHURCH_REGRP_DELETE_AFTER seconds, default 120):
+# the worker then deletes the message. Telegram lets a bot delete its message only in the
+# first 48 hours; after that the message stays, without its buttons.
 
 NOTICE_PAGE = 10
 _ICONS = {'wait': '⏳', 'accepted': '☑️', 'applied': '✅', 'declined': '❌', 'cancelled': '↩️', 'moved': '↪️'}
@@ -327,14 +333,17 @@ def _view(text, keyboard, note=None):
 def notice_list(items, page=0, note=None):
     """(text, keyboard) for the list."""
     nt, nid = items[0], items[0]['NoticeID']
-    pages = max(1, -(-len(items) // NOTICE_PAGE))
-    page = min(max(0, page), pages - 1)
-    shown = items[page * NOTICE_PAGE:(page + 1) * NOTICE_PAGE]
     waiting = _waiting(items)
+    # All answered: the whole list at once (up to 60), and no buttons but the link.
+    pages = max(1, -(-len(items) // NOTICE_PAGE)) if waiting else 1
+    page = min(max(0, page), pages - 1)
+    shown = items[page * NOTICE_PAGE:(page + 1) * NOTICE_PAGE] if waiting else items[:60]
 
     text = ['Hello %s' % (nt.get('ToName') or 'there'), '',
             '%d transfers into %s:' % (len(items), _where(nt)), '']
     text += [_line(it) for it in shown]
+    if len(shown) < len(items) and not waiting:
+        text.append('… and %d more' % (len(items) - len(shown)))
     text.append('')
     if pages > 1:
         text.append('Page %d of %d' % (page + 1, pages))
@@ -344,9 +353,11 @@ def notice_list(items, page=0, note=None):
     else:
         text.append('All answered. Thank you!')
 
-    nums = [_btn(str(it['n']) if _state(it) == 'wait' else '%d %s' % (it['n'], _ICONS[_state(it)]),
-                 'v', nid, it['RequestID']) for it in shown]
-    kb = [nums[i:i + 5] for i in range(0, len(nums), 5)]
+    kb = []
+    if waiting:
+        nums = [_btn(str(it['n']) if _state(it) == 'wait' else '%d %s' % (it['n'], _ICONS[_state(it)]),
+                     'v', nid, it['RequestID']) for it in shown]
+        kb += [nums[i:i + 5] for i in range(0, len(nums), 5)]
     if pages > 1:
         kb.append([_btn('◀', 'l', nid, (page - 1) % pages),
                    _btn('%d / %d' % (page + 1, pages), 'l', nid, page),
@@ -443,12 +454,36 @@ def _label(rows, data):
     return ''
 
 
+def _delete_after():
+    """Seconds before the bot deletes a fully answered message; 0 keeps it."""
+    value = getattr(settings, 'CHURCH_REGRP_DELETE_AFTER', None)
+    if value in (None, ''):
+        value = os.environ.get('CHURCH_REGRP_DELETE_AFTER')
+    try:
+        return max(0, int(value)) if value not in (None, '') else 120
+    except ValueError:
+        return 120
+
+
+def _span(seconds):
+    if seconds % 60 == 0:
+        m = seconds // 60
+        return '%d minute%s' % (m, '' if m == 1 else 's')
+    return '%d seconds' % seconds
+
+
 def telegram_press(uid, name, data, text='', keyboard=None):
-    """One button press by member uid. Returns {Ok, Toast, Alert, Text, Keyboard}:
-       Toast the pop-up; Text / Keyboard the message to show now (Text None: leave it)."""
-    def out(ok, toast, view=None, alert=None):
+    """One button press by member uid. Returns {Ok, Toast, Alert, Text, Keyboard, DeleteAfter}:
+       Toast the pop-up; Text / Keyboard the message to show now (Text None: leave it);
+       DeleteAfter the seconds after which the worker deletes the message (None: keep it)."""
+    def out(ok, toast, view=None, alert=None, final=False):
+        new_text = view[0] if view else None
+        delay = _delete_after() if final and view else 0
+        if delay:
+            note = '\n\n🗑 Everything here is answered. This message will be deleted in %s.' % _span(delay)
+            new_text = new_text[:4096 - len(note)] + note # type: ignore
         return {'Ok': bool(ok), 'Toast': (toast or '')[:190], 'Alert': (not ok) if alert is None else alert,
-                'Text': view[0] if view else None, 'Keyboard': view[1] if view else None}
+                'Text': new_text, 'Keyboard': view[1] if view else None, 'DeleteAfter': delay or None}
 
     p = data.split(':')
 
@@ -462,7 +497,9 @@ def telegram_press(uid, name, data, text='', keyboard=None):
         label = _label(keyboard, data)
         extra = '\n\n' + ('#%s ' % label if label else '') + '%s %s (%s)' % ('✅' if accept else '❌', msg, name)
         new_text = (text or '')[:max(0, 4096 - len(extra))] + extra
-        return out(True, msg, (new_text, _without_buttons(keyboard, p[2])))
+        kept = _without_buttons(keyboard, p[2])
+        left = any(str(b.get('callback_data') or '').startswith('crg:') for row in kept for b in row)
+        return out(True, msg, (new_text, kept), final=not left)
 
     kind = p[1] if len(p) > 1 else ''
     action, arg = None, ''
@@ -482,12 +519,14 @@ def telegram_press(uid, name, data, text='', keyboard=None):
     if not items[0].get('Allowed'):
         return out(False, 'This list was sent to someone else.')
 
+    done = not _waiting(items)
     if kind == 'l':
-        return out(True, '', notice_list(items, int(arg) if arg.isdigit() else 0))
+        return out(True, '', notice_list(items, int(arg) if arg.isdigit() else 0), final=done)
     if kind == 'v':
-        return out(True, '', notice_item(items, arg))
+        # All answered (a number pressed on an older message): the list, without buttons.
+        return out(True, '', notice_list(items) if done and len(items) > 1 else notice_item(items, arg), final=done)
     if kind == 'ask':
-        return out(True, '', notice_ask(items, action))
+        return out(True, '', notice_ask(items, action), final=done)
 
     verb = 'Accept' if action == 'a' else 'Decline'
     icon = '✅' if action == 'a' else '❌'
@@ -497,24 +536,27 @@ def telegram_press(uid, name, data, text='', keyboard=None):
         if it is None:
             return out(False, 'Unknown button.')
         if _state(it) != 'wait':
-            return out(False, 'Already answered: ' + _state_line(it), notice_item(items, arg))
+            view = notice_list(items) if done and len(items) > 1 else notice_item(items, arg)
+            return out(False, 'Already answered: ' + _state_line(it), view, final=done)
         row = _resolve(uid, [arg], verb)[arg]
         ok, msg = bool(row.get('Ok')), _res_text(row)
         items = notice_rows(nid, uid)
+        done = not _waiting(items)
         if len(items) == 1:
-            return out(ok, msg, notice_item(items, arg))
+            return out(ok, msg, notice_item(items, arg), final=done)
         note = '%s %s: %s' % (icon if ok else '⚠️', it.get('Name'), msg)
         if not ok:
-            return out(False, msg, notice_item(items, arg, note))
+            return out(False, msg, notice_item(items, arg, note), final=done)
         # On to the next one still waiting (after this one, then from the top); none left: the list.
         idx = next((i for i, x in enumerate(items) if str(x['RequestID']) == arg), 0)
         nxt = next((x for x in items[idx + 1:] + items[:idx] if _state(x) == 'wait'), None)
-        return out(True, msg, notice_item(items, nxt['RequestID'], note) if nxt else notice_list(items, 0, note))
+        return out(True, msg, notice_item(items, nxt['RequestID'], note) if nxt else notice_list(items, 0, note),
+                   final=nxt is None)
 
     # kind == 'all': every move still waiting, in one go.
     ids = [str(it['RequestID']) for it in _waiting(items)]
     if not ids:
-        return out(False, 'Nothing is waiting any more.', notice_list(items, 0))
+        return out(False, 'Nothing is waiting any more.', notice_list(items, 0), final=True)
     res = _resolve(uid, ids, verb)
     done = [i for i in ids if res[i].get('Ok')]
     failed = [i for i in ids if i not in done]
@@ -524,7 +566,8 @@ def telegram_press(uid, name, data, text='', keyboard=None):
     lines += ['⚠️ %s: %s' % (names.get(i), _res_text(res[i])) for i in failed[:10]]
     lines += ['⚠️ %s: %s' % (names.get(i), res[i]['Warning']) for i in done if res[i].get('Warning')][:10]
     toast = lines[0] + (' %d could not be done.' % len(failed) if failed else '')
-    return out(not failed, toast, notice_list(items, 0, '\n'.join(lines)), alert=bool(failed))
+    return out(not failed, toast, notice_list(items, 0, '\n'.join(lines)), alert=bool(failed),
+               final=not _waiting(items))
 
 
 def _notice_sent(notice_id, message_id):

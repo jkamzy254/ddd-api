@@ -11,6 +11,7 @@ from .views import sept_exam as se
 from .views import mlt as mlt
 from .views import ev_dept_admin as ev
 from .views import church_regrouping as cr
+from .views import ct_class_report as ccr
 from django.views.generic.base import TemplateView
 
 from django.urls import path
@@ -70,6 +71,7 @@ urlpatterns = [
     path('ctStaffUpcoming/',  	   ca.CTStaffUpcomingViewSet.as_view()),
     path('ctMySessions/',  		   ca.CTMySessionsViewSet.as_view()),
     path('ctSessionStudentSummary/',ca.CTSessionStudentSummaryViewSet.as_view()),
+    path('ctTelegramAnswer/', 		ccr.CTTelegramAnswerViewSet.as_view()), # needs X-Sync-Key (Codey worker)
  
 	#HSP
 	path('eduGetMember/', ep.GetMemberViewSet.as_view()),

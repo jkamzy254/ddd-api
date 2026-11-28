@@ -48,6 +48,7 @@ urlpatterns = [
 	path('ctGetTransitionCTDets/', ca.CTGetTransitionCTDetsViewSet.as_view()),
 	path('ctUpdateTransitionCT/', ca.UpdateTransitionCTViewSet.as_view()),
     path('ctUpdateStudentName/',   ca.CTUpdateStudentNameViewSet.as_view()),
+    path('ctUpdateStudentStage/',  ca.CTUpdateStudentStageViewSet.as_view()),
     path('ctGetInactiveReasons/',  ca.CTGetInactiveReasonsViewSet.as_view()),
     path('ctGetTransferOptions/',  ca.CTGetTransferOptionsViewSet.as_view()),
     path('ctGetTransfers/',        ca.CTGetTransfersViewSet.as_view()),

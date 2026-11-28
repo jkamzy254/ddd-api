@@ -310,6 +310,28 @@ class CTUpdateStudentNameViewSet(APIView):
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+class CTUpdateStudentStageViewSet(APIView):
+    """
+    A student's stage (1A ... 3B) on their current course record (sql/39).
+    StageID empty or null = Not set. spCTUpdateStudentStage checks who may,
+    and its trigger logs the change. Answers { Res, Ok, StageID, StageCode, StageSince }.
+    """
+
+    def post(self, request):
+        rec = request.data
+        stage = rec.get('StageID')
+        try:
+            result = call_proc(
+                "EXEC spCTUpdateStudentStage @ActorUID = %s, @UID = %s, @StageID = %s",
+                [rec.get('ActorUID'), rec.get('UID'),
+                 int(stage) if stage not in (None, '') else None],
+            )
+            return Response(result[0] if result else {'Res': 'No response', 'Ok': 0},
+                            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 class CTGetInactiveReasonsViewSet(APIView):
     def get(self, request):
         try:

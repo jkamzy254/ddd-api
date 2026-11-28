@@ -1,26 +1,46 @@
 """
-CT Attendance — class notes and the class report for Telegram (sql/38).
+CT Attendance — class notes, the class report, posting it, and the 10 pm reminder (sql/38).
 
-Put this file next to ct_attendance.py and route, in urls.py:
+Put this file next to ct_attendance.py, which imports the views from it, and route
+them in urls.py with the others (the lines are also in ct_attendance.py):
 
-    from .ct_class_report import (CTClassNoteViewSet, CTClassReportViewSet,
-                                  CTTelegramAnswerViewSet)
+    path('ctClassNote/',        CTClassNoteViewSet.as_view()),
+    path('ctClassReport/',      CTClassReportViewSet.as_view()),
+    path('ctTelegramAnswer/',   CTTelegramAnswerViewSet.as_view()),    # needs X-Sync-Key (the bot worker)
+    path('ctReportReminders/',  CTReportRemindersViewSet.as_view()),   # needs X-Sync-Key
 
-    path('ctClassNote/',       CTClassNoteViewSet.as_view()),
-    path('ctClassReport/',     CTClassReportViewSet.as_view()),
-    path('ctTelegramAnswer/',  CTTelegramAnswerViewSet.as_view()),   # needs X-Sync-Key (the bot worker)
-
-    GET  ctClassNote/    ?CTDayID= &UID=          the day's notes, CanEdit and CanReport for UID
+    GET  ctClassNote/    ?CTDayID= &UID=          the day's notes; CanEdit, CanReport, PostedBy/When
     POST ctClassNote/    { ActorUID, CTDayID, Objectives, StudentResponse, Problems }
-    GET  ctClassReport/  ?CTDayID= &UID=          { Ok, Res, Text, Linked, CanSend, GroupTitle }
-    POST ctClassReport/  { ActorUID, CTDayID, To }  To 'me' (default): ActorUID's own chat;
-                                                    'group': the session's linked group
-    POST ctTelegramAnswer/  from the bot worker: a button press or a command
+    GET  ctClassReport/  ?CTDayID= &UID=          { Ok, Res, Text, Linked, CanSend, GroupTitle,
+                                                    CanPost, PostedBy, PostedWhen, Posts, LongTerm }
+    POST ctClassReport/  { ActorUID, CTDayID, To }  To 'leaders': "Post report", to every current
+                                                    SMN (TID 11, PID 200) and the session's GSN;
+                                                    'me' (default): ActorUID's own chat;
+                                                    'group': the session's linked group.
+                                                    Every send is logged (CTClassReportPostTable).
+    POST ctClassReport/  { Action: 'SetLongTerm', ActorUID, CTID, LongTerm }
+                         the session's long-term threshold (2-30 classes missed in a row)
+    POST ctTelegramAnswer/   from the bot worker: a button press or a command
+    GET/POST ctReportReminders/   the 10 pm reminder or the 11:30 pm auto-send, by hand (see the view)
 
-Settings (settings.py or the environment). Each falls back to Church
-Regrouping's, so on the same server and bot nothing new is needed:
-    CENTRI_BOT_TOKEN   
-    APPS_SCRIPT_SYNC_KEY    ->    (the bot worker sends it as X-Sync-Key)
+The 10 pm reminder and the 11:30 pm auto-send to the SMNs: add both jobs to the
+scheduler (sql/06's updater.py):
+
+    from apps_script.<this app>.ct_class_report import ct_report_reminders, ct_report_autosend
+    scheduler.add_job(ct_report_reminders, CronTrigger(hour=22, timezone=local_tz),
+                      id='ct_report_reminders', replace_existing=True, max_instances=1,
+                      coalesce=True, misfire_grace_time=1800)
+    scheduler.add_job(ct_report_autosend, CronTrigger(hour=23, minute=30, timezone=local_tz),
+                      id='ct_report_autosend', replace_existing=True, max_instances=1,
+                      coalesce=True, misfire_grace_time=1200)
+
+Settings (settings.py or the environment), as the server names them:
+    CENTRI_BOT_TOKEN          the bot that sends the reports and reminders
+    APPS_SCRIPT_SYNC_KEY      the shared secret the bot worker sends as X-Sync-Key
+                              (the worker's CT_ATTENDANCE_SYNC_KEY must hold the same value)
+    CT_ATTENDANCE_APP_URL     the web app's /exec address, for the reminders' link button
+                              (https://script.google.com/macros/s/<id>/exec); without it the
+                              reminders go out with no link
 
 In Telegram
 -----------
@@ -56,10 +76,11 @@ import json
 import os
 import re
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from django.conf import settings
-from django.db import connection
+from django.db import close_old_connections, connection
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -95,7 +116,7 @@ def _int(value):
 
 
 def sync_key_ok(request):
-    expected = _setting('APPS_SCRIPT_SYNC_KEY', '')
+    expected = _setting('APPS_SCRIPT_SYNC_KEY')
     given = request.headers.get('X-Sync-Key') or ''
     return bool(expected) and hmac.compare_digest(str(expected), str(given))
 
@@ -287,7 +308,7 @@ def report_row(actor_uid, ct_day_id):
 # --- Telegram ----------------------------------------------------------------------------
 
 def _bot_token():
-    return _setting('CENTRI_BOT_TOKEN', '')
+    return _setting('CENTRI_BOT_TOKEN')
 
 
 def _telegram(method, body):
@@ -324,10 +345,11 @@ def _group_moved(old_id, new_id):
                        [int(new_id), int(old_id)])
 
 
-def send_report(chat_id, row, private=True):
+def send_report(chat_id, row, private=True, heading=None):
     """Sends the report to chat_id, in as many messages as it takes; the buttons go
-       on the last. Returns (sent, total, Telegram's reason for the last failure)."""
-    chunks = split_text(build_report(row))
+       on the last. heading: a line above it (the 11:30 pm auto-send's warning).
+       Returns (sent, total, Telegram's reason for the last failure)."""
+    chunks = split_text((heading + '\n\n' if heading else '') + build_report(row))
     kb = keyboard(row, private)
     sent, error = 0, None
     for n, text in enumerate(chunks, 1):
@@ -473,6 +495,8 @@ def telegram_press(uid, data, chat_id, private, chat_title=None):
                             kb=[[_btn('✅ Yes, post to ' + _clip(title, 30), 'pc:%s' % day),
                                  _btn('✖ Cancel', 'px:%s' % day)]])
             sent, total, error = send_report(row['GroupChatID'], row, private=False)
+            log_post(uid, day, 'Group', 1 if sent == total else 0, 1,
+                     title if sent == total else '%s: %s' % (title, error), source='Telegram')
             return _ans('Posted to %s.' % title if sent == total else _group_problem(error, title),
                         ok=sent == total, alert=sent != total, kb=keyboard(row), kb_only=True)
     else:
@@ -505,6 +529,200 @@ def telegram_command(uid, command, chat_id, private):
     else:
         return {'Ok': False, 'Text': 'I know /ctreport and /ctgroup.'}
     return {'Ok': True, 'Text': text, 'Keyboard': kb}
+
+
+# --- "Post report": to the SMNs and the session's GSN ------------------------------------------
+
+def _app_url(**params):
+    """The web app's link (CT_ATTENDANCE_APP_URL, the /exec address) opening a page:
+       _app_url(page='ClassSummary', day=105). None when it is not set."""
+    base = _setting('CT_ATTENDANCE_APP_URL') or ''
+    if not base.startswith('https://'):
+        return None
+    query = urllib.parse.urlencode({k: v for k, v in params.items() if v not in (None, '')})
+    return base + (('&' if '?' in base else '?') + query if query else '')
+
+
+def _person_problem(error):
+    e = (error or '').lower()
+    if 'initiate' in e or 'blocked' in e or 'chat not found' in e:
+        return 'has not started a chat with the bot'
+    return error or 'not delivered'
+
+
+def _names(items):
+    return items[0] if len(items) == 1 else ', '.join(items[:-1]) + ' and ' + items[-1]
+
+
+def log_post(actor, day_id, target, sent, total, recipients='', source='Web'):
+    try:
+        call_proc("EXEC spCTClassReportPostLog @ActorUID = %s, @CTDayID = %s, @Target = %s, @Source = %s, "
+                  "@Sent = %s, @Total = %s, @Recipients = %s",
+                  [actor, day_id, target, source, sent, total, (recipients or '')[:1000] or None])
+    except Exception as e:
+        # A send that happened is not undone by a log that failed; say so in the server log.
+        print('CT Attendance - post log failed:', e)
+
+
+def post_report(actor, row, source='Web'):
+    """Sends the report to every current SMN and the session's GSN, each in their own
+       chat, and logs it. Returns {Ok, Res}."""
+    if not row.get('CanPost'):
+        return {'Ok': 0, 'Res': 'Only the GSN or Main JDSN of this session, or an admin, can post its report.'}
+
+    people = call_proc("EXEC spCTClassReportRecipients @CTDayID = %s", [row['CTDayID']])
+    if not people:
+        return {'Ok': 0, 'Res': 'There is nobody to post it to: no current SMN, and no GSN on this session.'}
+
+    reached, missed = [], []
+    for p in people:
+        who = '%s (%s)' % (p.get('Name') or p['UID'], p['Role'])
+        if not p.get('TelID'):
+            missed.append(who + ': no Telegram linked')
+            continue
+        sent, total, error = send_report(p['TelID'], row)
+        if sent == total:
+            reached.append(who)
+        else:
+            missed.append(who + ': ' + _person_problem(error))
+
+    log_post(actor, row['CTDayID'], 'Leaders', len(reached), len(people), '; '.join(reached + missed), source)
+
+    if not reached:
+        return {'Ok': 0, 'Res': 'Not posted. ' + '; '.join(missed) + '.'}
+    return {'Ok': 1, 'Res': 'Posted to %s.%s' % (_names(reached), (' Not reached: %s.' % '; '.join(missed)) if missed else '')}
+
+
+# --- the 10 pm reminder ---------------------------------------------------------------------
+
+def reminder_message(p):
+    """The reminder for one person: the class, what is missing, and a link to it."""
+    day = _date(p.get('CTDate'))
+    title = (p.get('Topic') or '').strip()
+    head = '%s · %s%s' % (p.get('Session') or 'CT', day.strftime('%A %d/%m') if day else '', ' · ' + title if title else '')
+    unmarked = p.get('Unmarked') or 0
+
+    if p.get('IsLead'):
+        lines = ['⏰ Class report not posted yet', head, '',
+                 ('%d student%s on the roll %s no mark yet.' % (unmarked, '' if unmarked == 1 else 's',
+                                                                 'has' if unmarked == 1 else 'have'))
+                 if unmarked else 'Every student on the roll is marked.',
+                 'Please complete the attendance and post the class report '
+                 '(Class Summary → the class → Class report → Post report).',
+                 'At 11:30 pm it goes to the SMN as it stands, marked as not posted.']
+        url = _app_url(page='ClassSummary', day=p['CTDayID'])
+    else:
+        lines = ['⏰ Attendance reminder', head, '',
+                 '%d of your students %s no mark yet. Please complete their attendance.'
+                 % (unmarked, 'has' if unmarked == 1 else 'have')]
+        url = _app_url(page='Attendance')
+
+    body = {'chat_id': str(p['TelID']), 'text': '\n'.join(lines)}
+    if url:
+        body['reply_markup'] = {'inline_keyboard': [[{'text': '🔗 Open CT Attendance', 'url': url}]]}
+    return body
+
+
+def send_report_reminders(run=True, for_date=None):
+    """Reminds about today's classes whose report is not posted (spCTReportRemindersDue).
+       run=False: only lists who would be reminded. Each class is claimed by the first
+       caller, so the four web workers' schedulers remind once.
+       Returns {Classes, Sent, Total, NoTelegram} (run) or the rows (preview)."""
+    rows = call_proc("EXEC spCTReportRemindersDue @Run = %s, @ForDate = %s", [1 if run else 0, for_date or None])
+    if not run:
+        return rows
+
+    by_day = {}
+    for p in rows:
+        by_day.setdefault(p['CTDayID'], []).append(p)
+
+    out = {'Classes': len(by_day), 'Sent': 0, 'Total': 0, 'NoTelegram': 0}
+    for day_id, people in by_day.items():
+        sent, notes = 0, []
+        for p in people:
+            who = p.get('Name') or p['UID']
+            if not p.get('TelID'):
+                out['NoTelegram'] += 1
+                notes.append(who + ': no Telegram')
+                continue
+            ok, info, _ = _telegram('sendMessage', reminder_message(p))
+            sent += 1 if ok else 0
+            notes.append(who + ('' if ok else ': ' + _person_problem(info)))
+        out['Sent'] += sent
+        out['Total'] += len(people)
+        try:
+            call_proc("EXEC spCTReportReminderDone @CTDayID = %s, @Sent = %s, @Total = %s, @Detail = %s",
+                      [day_id, sent, len(people), '; '.join(notes)[:1000]])
+        except Exception as e:
+            print('CT Attendance - reminder log failed:', e)
+    return out
+
+
+# --- 11:30 pm: what is still not posted goes to the SMNs ----------------------------------
+
+AUTO_HEADING = '⚠️ Sent automatically at 11:30 pm: the team has not posted this report.'
+
+
+def send_unposted_to_smn(run=True, for_date=None):
+    """Today's classes still not posted go to every SMN, headed AUTO_HEADING
+       (spCTReportAutoSendDue). Logged as Target 'Auto', which is not a post: the class
+       still reads "Report not posted". Each class is claimed by the first caller.
+       run=False: only lists them. Returns {Classes, Sent, Total, NoTelegram} or the rows."""
+    rows = call_proc("EXEC spCTReportAutoSendDue @Run = %s, @ForDate = %s", [1 if run else 0, for_date or None])
+    if not run:
+        return rows
+
+    by_day = {}
+    for p in rows:
+        by_day.setdefault(p['CTDayID'], []).append(p)
+
+    out = {'Classes': len(by_day), 'Sent': 0, 'Total': 0, 'NoTelegram': 0}
+    for day_id, people in by_day.items():
+        reached, missed = [], []
+        for p in people:
+            who = p.get('Name') or p['UID']
+            if not p.get('TelID'):
+                out['NoTelegram'] += 1
+                missed.append(who + ': no Telegram linked')
+                continue
+            # Read as the SMN: they see every session's reports, and the buttons work for them.
+            row = report_row(p['UID'], day_id)
+            if not row.get('Ok'):
+                missed.append('%s: %s' % (who, row.get('Res')))
+                continue
+            sent, total, error = send_report(p['TelID'], row, heading=AUTO_HEADING)
+            if sent == total:
+                reached.append(who)
+            else:
+                missed.append(who + ': ' + _person_problem(error))
+        detail = '; '.join(reached + missed)
+        out['Sent'] += len(reached)
+        out['Total'] += len(people)
+        log_post(None, day_id, 'Auto', len(reached), len(people), detail, source='Auto')
+        try:
+            call_proc("EXEC spCTReportAutoSendDone @CTDayID = %s, @Sent = %s, @Total = %s, @Detail = %s",
+                      [day_id, len(reached), len(people), detail[:1000]])
+        except Exception as e:
+            print('CT Attendance - auto-send log failed:', e)
+    return out
+
+
+def ct_report_autosend():
+    """The scheduler's job (sql/06's updater.py): 23:30 Australia/Melbourne."""
+    close_old_connections()
+    try:
+        print('ct_report_autosend:', send_unposted_to_smn(run=True))
+    except Exception as e:
+        print('ct_report_autosend failed:', e)
+
+
+def ct_report_reminders():
+    """The scheduler's job (sql/06's updater.py): 22:00 Australia/Melbourne."""
+    close_old_connections()
+    try:
+        print('ct_report_reminders:', send_report_reminders(run=True))
+    except Exception as e:
+        print('ct_report_reminders failed:', e)
 
 
 # --- views ------------------------------------------------------------------------------
@@ -543,36 +761,65 @@ class CTClassNoteViewSet(APIView):
             return _error(e)
 
 
+def _posts(row):
+    posts = row.get('Posts') or []
+    if isinstance(posts, str):
+        try:
+            posts = json.loads(posts or '[]')
+        except ValueError:
+            posts = []
+    return posts
+
+
 class CTClassReportViewSet(APIView):
-    """GET: the report's text, to preview. POST: send it to the actor's own chat (To 'me')
-       or to the session's group (To 'group')."""
+    """GET: the report's text, to preview, and every send of it so far. POST: post it to the
+       SMNs and the GSN (To 'leaders'), or send it to the actor's own chat (To 'me') or the
+       session's group (To 'group'). Every send is logged."""
 
     def get(self, request):
         try:
             row = report_row(request.GET.get('UID'), _int(request.GET.get('CTDayID')))
             if not row.get('Ok'):
                 return _ok({'Ok': 0, 'Res': row.get('Res')})
-            return _ok({'Ok': 1, 'CTDayID': row.get('CTDayID'), 'Text': build_report(row),
+            posts = _posts(row)
+            posted = next((x for x in posts if x.get('Target') == 'Leaders' and (x.get('Sent') or 0) > 0), None)
+            return _ok({'Ok': 1, 'CTDayID': row.get('CTDayID'), 'CTID': row.get('CTID'), 'Text': build_report(row),
                         'Linked': bool(row.get('TelID')), 'CanSend': bool(_bot_token()),
-                        'GroupTitle': (row.get('GroupTitle') or 'the group') if row.get('GroupChatID') else None})
+                        'GroupTitle': (row.get('GroupTitle') or 'the group') if row.get('GroupChatID') else None,
+                        'LongTerm': row.get('LongTerm'), 'CanSetLongTerm': bool(row.get('CanSetLongTerm')),
+                        'CanPost': bool(row.get('CanPost')), 'Posts': posts,
+                        'PostedBy': posted and posted.get('By'), 'PostedWhen': posted and posted.get('When')})
         except Exception as e:
             return _error(e)
 
     def post(self, request):
         rec = request.data
         try:
-            row = report_row(rec.get('ActorUID'), _int(rec.get('CTDayID')))
+            # { Action: 'SetLongTerm', ActorUID, CTID, LongTerm }: the session's threshold.
+            if rec.get('Action') == 'SetLongTerm':
+                rows = call_proc("EXEC spCTSessionLongTermSave @ActorUID = %s, @CTID = %s, @LongTerm = %s",
+                                 [rec.get('ActorUID'), _int(rec.get('CTID')), _int(rec.get('LongTerm'))])
+                return _ok(rows[0] if rows else {'Res': 'No response', 'Ok': 0})
+
+            actor = rec.get('ActorUID')
+            row = report_row(actor, _int(rec.get('CTDayID')))
             if not row.get('Ok'):
                 return _ok({'Ok': 0, 'Res': row.get('Res')})
             if not _bot_token():
                 return _ok({'Ok': 0, 'Res': 'The server has no Telegram bot token set.'})
 
-            if str(rec.get('To') or 'me').lower() == 'group':
+            to = str(rec.get('To') or 'me').lower()
+            if to == 'leaders':
+                return _ok(post_report(actor, row))
+
+            if to == 'group':
                 if not row.get('GroupChatID'):
                     return _ok({'Ok': 0, 'Res': 'This session has no Telegram group yet. Add the bot to the group '
                                                 'and send /ctgroup there.'})
                 title = row.get('GroupTitle') or 'the group'
                 sent, total, error = send_report(row['GroupChatID'], row, private=False)
+                log_post(actor, row['CTDayID'], 'Group', 1 if sent == total else 0, 1,
+                         title if sent == total else '%s: %s' % (title, error))
                 if sent == total:
                     return _ok({'Ok': 1, 'Res': 'Posted to %s%s.' % (title, '' if total == 1 else ' in %d messages' % total)})
                 return _ok({'Ok': 0, 'Res': _group_problem(error, title) if not sent
@@ -582,6 +829,7 @@ class CTClassReportViewSet(APIView):
                 return _ok({'Ok': 0, 'Res': 'Your account has no Telegram linked, so there is nowhere to send it. '
                                             'Copy the report instead.'})
             sent, total, error = send_report(row['TelID'], row)
+            log_post(actor, row['CTDayID'], 'Me', 1 if sent == total else 0, 1, None if sent == total else error)
             if sent == total:
                 return _ok({'Ok': 1, 'Res': 'Sent to your Telegram.' if total == 1
                             else 'Sent to your Telegram in %d messages.' % total})
@@ -634,3 +882,35 @@ class CTTelegramAnswerViewSet(APIView):
         except Exception as e:
             print('CT Attendance - Telegram request failed:', e)
             return refuse('The report could not be made. Please try again, or use the app.')
+
+
+class CTReportRemindersViewSet(APIView):
+    """
+    The night jobs by hand, for a test (X-Sync-Key). Job 'remind' (default) is the 10 pm
+    reminder; 'autosend' the 11:30 pm send of unposted reports to the SMNs.
+        GET  ctReportReminders/   ?Job=autosend&Date=2026-11-28   what it would do (claims nothing)
+        POST ctReportReminders/   { "Job": ..., "Date": ... }      do it now:
+                                                                    { Classes, Sent, Total, NoTelegram }
+    The scheduler calls ct_report_reminders() and ct_report_autosend() directly. Each class
+    is handled once per job, whichever runs first.
+    """
+
+    @staticmethod
+    def _job(name):
+        return send_unposted_to_smn if str(name or '').lower() == 'autosend' else send_report_reminders
+
+    def get(self, request):
+        if not sync_key_ok(request):
+            return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            return _ok(self._job(request.GET.get('Job'))(run=False, for_date=request.GET.get('Date') or None))
+        except Exception as e:
+            return _error(e)
+
+    def post(self, request):
+        if not sync_key_ok(request):
+            return Response({'error': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            return _ok(self._job(request.data.get('Job'))(run=True, for_date=request.data.get('Date') or None))
+        except Exception as e:
+            return _error(e)

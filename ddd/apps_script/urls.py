@@ -72,6 +72,9 @@ urlpatterns = [
     path('ctMySessions/',  		   ca.CTMySessionsViewSet.as_view()),
     path('ctSessionStudentSummary/',ca.CTSessionStudentSummaryViewSet.as_view()),
     path('ctTelegramAnswer/', 		ccr.CTTelegramAnswerViewSet.as_view()), # needs X-Sync-Key (Codey worker)
+    path('ctClassNote/',           ccr.CTClassNoteViewSet.as_view()),
+    path('ctClassReport/',         ccr.CTClassReportViewSet.as_view()),
+    path('ctReportReminders/',     ccr.CTReportRemindersViewSet.as_view()),   # needs X-Sync-Key (night jobs by hand)
  
 	#HSP
 	path('eduGetMember/', ep.GetMemberViewSet.as_view()),

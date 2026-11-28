@@ -831,3 +831,29 @@ class CTSchedChangeRunDueViewSet(APIView):
                             status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+"""
+Class notes, the class report, posting it, and the 10 pm reminder (sql/38).
+
+The views live in ct_class_report.py, which must sit next to this file. They are
+imported here, so urls.py routes them from this module like every view above:
+
+    path('ctClassNote/',        CTClassNoteViewSet.as_view()),
+    path('ctClassReport/',      CTClassReportViewSet.as_view()),
+    path('ctTelegramAnswer/',   CTTelegramAnswerViewSet.as_view()),    # the bot worker, X-Sync-Key
+    path('ctReportReminders/',  CTReportRemindersViewSet.as_view()),   # by hand, X-Sync-Key
+
+The scheduler's jobs, ct_report_reminders (10 pm) and ct_report_autosend (11:30 pm),
+are imported here too.
+"""
+
+from .ct_class_report import (  # noqa: E402,F401
+    CTClassNoteViewSet,
+    CTClassReportViewSet,
+    CTTelegramAnswerViewSet,
+    CTReportRemindersViewSet,
+    ct_report_reminders,
+    ct_report_autosend,
+)
